@@ -1,0 +1,23 @@
+{
+    "server": {
+        "port": "8765",
+        "favicon": "",
+        "title": "DGroup Manager"
+    },
+    "r2_backup": {
+        "account_id": "",
+        "access_key_id": "",
+        "secret_access_key": "",
+        "bucket_name": "",
+        "endpoint": "",
+        "region": ""
+    },
+    "dgroup_postgress": {
+        "port": "5678",
+        "dbname": "dgroup_db",
+        "pass": "dgroup123456",
+        "user": "dgroup",
+        "host": "localhost"
+    },
+    "https": true
+}

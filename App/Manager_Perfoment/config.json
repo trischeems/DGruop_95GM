@@ -1,0 +1,16 @@
+{
+  "app": {
+    "name": "Manager_Perfoment",
+    "title": "DGroup - Quản lý sản xuất",
+    "vendor": "Dgroup"
+  },
+  "server": {
+    "base_url": "http://localhost:8765",
+    "api_prefix": "dgrpi",
+    "timeout_seconds": "30"
+  },
+  "tenant": {
+    "current": "public",
+    "header": "X-Tenant"
+  }
+}

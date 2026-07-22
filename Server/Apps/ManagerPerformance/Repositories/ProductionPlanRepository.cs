@@ -1,0 +1,58 @@
+using DGroup.Server.Apps.ManagerPerformance.Contracts;
+using DGroup.Server.Infrastructure.Data;
+
+namespace DGroup.Server.Apps.ManagerPerformance.Repositories;
+
+public sealed class ProductionPlanRepository : IProductionPlanRepository
+{
+    // SELECT khop DTO (Dapper: snake_case <-> PascalCase). JOIN production_orders lay so don.
+    private const string PlanSelect =
+        "SELECT pp.id, pp.production_order_id, po.order_no, pp.planned_qty, pp.planned_start, " +
+        "pp.planned_end, pp.line_code, pp.status, pp.note " +
+        "FROM production_plans pp LEFT JOIN production_orders po ON po.id = pp.production_order_id";
+
+    public Task<IEnumerable<ProductionPlanDto>> ListAsync(TenantScope scope, long? orderId, int? year, int? month)
+    {
+        // Loc theo don san xuat + thang/nam tao; sap xep theo ngay bat dau (null xuong cuoi), roi id.
+        var sql = $"{PlanSelect} WHERE " + PeriodWhere("pp.created_at") +
+                  (orderId.HasValue ? " AND pp.production_order_id = @orderId" : "") +
+                  " ORDER BY pp.planned_start ASC NULLS LAST, pp.id";
+        return scope.QueryAsync<ProductionPlanDto>(sql, new { orderId, year, month });
+    }
+    // Dieu kien loc theo thang/nam tren cot ngay (@year/@month null = khong loc).
+    private static string PeriodWhere(string col) =>
+        $"(@year IS NULL OR EXTRACT(YEAR FROM {col}) = @year) AND (@month IS NULL OR EXTRACT(MONTH FROM {col}) = @month)";
+
+    public Task<long> InsertAsync(TenantScope scope, CreateProductionPlanRequest req) =>
+        scope.QuerySingleAsync<long>(
+            """
+            INSERT INTO production_plans
+                (production_order_id, planned_qty, planned_start, planned_end, line_code, note)
+            VALUES
+                (@ProductionOrderId, @PlannedQty, @PlannedStart, @PlannedEnd, @LineCode, @Note)
+            RETURNING id
+            """, req);
+
+    public async Task<bool> UpdateStatusAsync(TenantScope scope, long id, string status)
+    {
+        var rows = await scope.ExecuteAsync(
+            """
+            UPDATE production_plans SET
+                status = @status, updated_at = now()
+            WHERE id = @id
+            """, new { id, status });
+        return rows > 0;
+    }
+
+    public async Task<bool> DeleteAsync(TenantScope scope, long id)
+    {
+        var rows = await scope.ExecuteAsync(
+            "DELETE FROM production_plans WHERE id = @id", new { id });
+        return rows > 0;
+    }
+
+    public async Task<bool> UpdateAsync(TenantScope scope, long id, UpdatePlanRequest req) =>
+        await scope.ExecuteAsync(
+            "UPDATE production_plans SET planned_qty = @PlannedQty, line_code = @LineCode, note = COALESCE(@Note, note) WHERE id = @id",
+            new { id, req.PlannedQty, req.LineCode, req.Note }) > 0;
+}

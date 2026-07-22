@@ -1,0 +1,20 @@
+# ---- .NET build output ----
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# ---- PostgreSQL portable (dev, do start_pg.bat sinh ra) ----
+Server/pgsql/
+Server/pgdata/
+Server/pg_download/
+Server/pg_log.txt
+
+# ---- Runtime / logs ----
+logs/
+*.log
+
+# ---- OS ----
+.DS_Store
+Thumbs.db

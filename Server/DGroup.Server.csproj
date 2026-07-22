@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>DGroup.Server</RootNamespace>
+    <AssemblyName>DGroup.Server</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" Version="8.0.3" />
+    <PackageReference Include="Dapper" Version="2.1.35" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- config.json la nguon su that cau hinh; copy ra output de doc canh binary. -->
+    <None Update="config.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="doa.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- File .sql migration/seed cua tung app (server-side) phai co canh binary. -->
+    <None Update="Apps\**\*.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

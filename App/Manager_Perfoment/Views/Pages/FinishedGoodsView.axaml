@@ -1,0 +1,99 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+             x:Class="DGroup.App.ManagerPerformance.Views.Pages.FinishedGoodsView"
+             x:DataType="vm:FinishedGoodsViewModel">
+
+    <!-- Chon don + form nhap TP (Auto), 2 bang chia deu phan con lai (*,*) -->
+    <Grid RowDefinitions="Auto,Auto,*,*,Auto">
+
+        <!-- Chon don -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,12">
+            <TextBlock Grid.Column="0" Classes="label" Text="Chọn đơn"
+                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <AutoCompleteBox Grid.Column="1" ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder, Mode=TwoWay}"
+                         FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
+            <Button Grid.Column="2" Classes="ghost" Content="Làm mới"
+                    Margin="10,0,0,0" Command="{Binding LoadCommand}"/>
+        </Grid>
+
+        <!-- Card: Nhap kho thanh pham (1 hang field + nut) -->
+        <Border Classes="card" Grid.Row="1" Margin="0,0,0,12">
+            <Grid RowDefinitions="Auto,Auto">
+                <TextBlock Grid.Row="0" Classes="h2" Text="Nhập kho thành phẩm" Margin="0,0,0,10"/>
+                <Grid Grid.Row="1" ColumnDefinitions="2*,*,*,Auto">
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Classes="label" Text="Mã hàng"/>
+                        <AutoCompleteBox ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                              FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                        <TextBlock Classes="label" Text="Kho"/>
+                        <AutoCompleteBox ItemsSource="{Binding Warehouses}" SelectedItem="{Binding SelectedWarehouse, Mode=TwoWay}"
+                              FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                        <TextBlock Classes="label" Text="Số lượng nhập"/>
+                        <NumericUpDown Value="{Binding QtyReceived, TargetNullValue=0}" Minimum="0"/>
+                    </StackPanel>
+                    <Button Grid.Column="3" Classes="accent" Content="↑ Nhập kho TP"
+                            VerticalAlignment="Bottom"
+                            Command="{Binding ReceiveCommand}" IsEnabled="{Binding !IsBusy}"/>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Card: Phieu nhap TP (chon 1 phieu -> Xoa phieu co popup canh bao) -->
+        <Border Classes="card" Grid.Row="2">
+            <Grid RowDefinitions="Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="0,0,0,10">
+                    <TextBlock Grid.Column="0" Classes="h2" Text="Phiếu nhập TP" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Classes="label" Text="Tháng" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox Grid.Column="2" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" Width="100" Margin="0,0,6,0"/>
+                    <ComboBox Grid.Column="3" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" Width="90" Margin="0,0,8,0"/>
+                    <Button Grid.Column="4" Classes="danger" Content="Xoá phiếu"
+                            Command="{Binding DeleteReceiptCommand}"
+                            IsEnabled="{Binding SelectedReceipt, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                </Grid>
+                <DataGrid Grid.Row="1" ItemsSource="{Binding Receipts}" IsReadOnly="True"
+                          SelectedItem="{Binding SelectedReceipt}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Số phiếu" Binding="{Binding ReceiptNo}" Width="2*" MinWidth="150"/>
+                        <DataGridTextColumn Header="Mã hàng" Binding="{Binding ProductId}" Width="72"/>
+                        <DataGridTextColumn Header="Tên mã hàng" Binding="{Binding ProductName}" Width="2*" MinWidth="170"/>
+                        <DataGridTextColumn Header="Kho" Binding="{Binding WarehouseName}" Width="*" MinWidth="90"/>
+                        <DataGridTextColumn Header="SL nhập" Binding="{Binding QtyReceived, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="100"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <!-- Card: Doi chieu hao hut -->
+        <Border Classes="card" Grid.Row="3" Margin="0,12,0,0">
+            <Grid RowDefinitions="Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                    <TextBlock Grid.Column="0" Classes="h2" Text="Đối chiếu hao hụt" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Classes="accent" Content="Tính hao hụt"
+                            Command="{Binding GenerateLossCommand}"/>
+                </Grid>
+                <DataGrid Grid.Row="1" ItemsSource="{Binding Losses}" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="NVL" Binding="{Binding MaterialId}" Width="72"/>
+                        <DataGridTextColumn Header="Tên NVL" Binding="{Binding MaterialName}" Width="2*" MinWidth="160"/>
+                        <DataGridTextColumn Header="Cấp phát" Binding="{Binding QtyIssued, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="100"/>
+                        <DataGridTextColumn Header="Định mức" Binding="{Binding QtyStandard, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="100"/>
+                        <DataGridTextColumn Header="Hao hụt" Binding="{Binding QtyVariance, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="100"/>
+                        <DataGridTextColumn Header="SL TP" Binding="{Binding FinishedQty, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="90"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="4" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
+
+    </Grid>
+</UserControl>

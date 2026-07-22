@@ -1,0 +1,74 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+        x:Class="DGroup.App.ManagerPerformance.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        WindowState="Maximized"
+        Width="1280" Height="800"
+        MinWidth="1024" MinHeight="600"
+        Background="{StaticResource AppBackgroundBrush}"
+        Title="DGroup - Quản lý sản xuất">
+    <!-- WindowState=Maximized: luon mo full man hinh; Width/Height chi la kich thuoc
+         khi nguoi dung bam restore. -->
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Grid ColumnDefinitions="220,*">
+
+        <!-- ============ SIDEBAR ============ -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <!-- Logo -->
+                <Border DockPanel.Dock="Top" Padding="14,14,14,10"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="36" Height="36" CornerRadius="4"
+                                Background="{StaticResource AccentBrush}">
+                            <TextBlock Text="DG" Foreground="White" FontWeight="Bold" FontSize="14"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding AppTitle}" Classes="h2"/>
+                            <TextBlock Text="{Binding AppSubtitle}" Classes="muted" FontSize="11"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Menu -->
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding NavItems}" Margin="0,6">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:NavItem">
+                                <Button Classes="nav"
+                                        Classes.active="{Binding IsSelected}"
+                                        Command="{Binding $parent[ItemsControl].((vm:MainWindowViewModel)DataContext).SelectCommand}"
+                                        CommandParameter="{Binding}"
+                                        Content="{Binding Label}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <!-- ============ VUNG CONTENT ============ -->
+        <DockPanel Grid.Column="1" Margin="16,12,16,12">
+            <!-- Header trang -->
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Classes="h1" Text="{Binding CurrentPage.Title}"/>
+                    <TextBlock Classes="muted" Text="{Binding CurrentPage.Subtitle}"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Noi dung trang (ViewLocator map PageViewModel -> View) -->
+            <ContentControl Content="{Binding CurrentPage}"/>
+        </DockPanel>
+    </Grid>
+</Window>

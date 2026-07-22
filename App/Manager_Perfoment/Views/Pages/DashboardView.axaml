@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+             x:Class="DGroup.App.ManagerPerformance.Views.Pages.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+
+    <!-- Hang KPI (Auto) + bang Sap het hang chiem toan bo phan con lai (*) -->
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Hang the KPI -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,*,*" Margin="0,0,0,12">
+            <Border Classes="card" Grid.Column="0" Margin="0,0,6,0">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="label" Text="DÒNG TỒN KHO"/>
+                    <TextBlock Classes="kpi" Text="{Binding MaterialCount}"/>
+                    <TextBlock Classes="muted" Text="mã NVL có trong kho"/>
+                </StackPanel>
+            </Border>
+            <Border Classes="card" Grid.Column="1" Margin="3,0">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="label" Text="TỒN KHẢ DỤNG"/>
+                    <TextBlock Classes="kpi" Text="{Binding TotalAvailable, StringFormat='{}{0:0.####}'}"/>
+                    <TextBlock Classes="muted" Text="tổng số lượng khả dụng"/>
+                </StackPanel>
+            </Border>
+            <Border Classes="card" Grid.Column="2" Margin="6,0,0,0">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="label" Text="CẢNH BÁO TỒN THẤP"/>
+                    <TextBlock Classes="kpi" Text="{Binding LowStockCount}"
+                               Foreground="{StaticResource DangerBrush}"/>
+                    <TextBlock Classes="muted" Text="NVL dưới ngưỡng tồn"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Bang Sap het hang: lap day phan con lai cua cua so -->
+        <Border Classes="card" Grid.Row="1">
+            <Grid RowDefinitions="Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="0,0,0,10">
+                    <TextBlock Grid.Column="0" Classes="h2" Text="Sắp hết hàng" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Classes="label" Text="Tháng" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox Grid.Column="2" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" Width="100" Margin="0,0,6,0"/>
+                    <ComboBox Grid.Column="3" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" Width="90" Margin="0,0,8,0"/>
+                    <Button Grid.Column="4" Classes="ghost" Content="Làm mới"
+                            Command="{Binding LoadCommand}"/>
+                </Grid>
+                <DataGrid Grid.Row="1" ItemsSource="{Binding LowStock}" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Mã" Binding="{Binding Sku}" Width="*" MinWidth="120"/>
+                        <DataGridTextColumn Header="Tên NVL" Binding="{Binding Name}" Width="2*" MinWidth="220"/>
+                        <DataGridTextColumn Header="Khả dụng" Binding="{Binding TotalAvailable, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="100"/>
+                        <DataGridTextColumn Header="Ngưỡng" Binding="{Binding ReorderLevel, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="100"/>
+                        <DataGridTextColumn Header="Cỡ lô mua" Binding="{Binding ReorderQuantity, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="110"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <!-- Trang thai ket noi -->
+        <TextBlock Grid.Row="2" Classes="muted" Text="{Binding ConnectionState}" Margin="0,8,0,0"/>
+
+    </Grid>
+</UserControl>

@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+             x:Class="DGroup.App.ManagerPerformance.Views.Pages.ProductsView"
+             x:DataType="vm:ProductsViewModel">
+
+    <!-- Form gon phia tren (Auto), bang danh muc chiem het phan con lai (*) -->
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Card 1: Tao ma hang -->
+        <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
+            <Grid RowDefinitions="Auto,Auto">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                    <TextBlock Classes="h2" Text="Tạo mã hàng" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Classes="accent" Content="+ Tạo mã hàng"
+                            Command="{Binding CreateCommand}" IsEnabled="{Binding !IsBusy}"/>
+                </Grid>
+                <Grid Grid.Row="1" ColumnDefinitions="*,2*,*">
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Classes="label" Text="SKU"/>
+                        <TextBox Text="{Binding NewSku}" Watermark="VD: SP-001"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                        <TextBlock Classes="label" Text="Tên"/>
+                        <TextBox Text="{Binding NewName}" Watermark="VD: Áo sơ mi"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Classes="label" Text="ĐVT"/>
+                        <AutoCompleteBox ItemsSource="{Binding Uoms}" SelectedItem="{Binding SelectedUom, Mode=TwoWay}"
+                              FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Card 2: Danh muc ma hang — hang field sua tren dau bang -->
+        <Border Classes="card" Grid.Row="1">
+            <Grid RowDefinitions="Auto,Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="0,0,0,10">
+                    <TextBlock Grid.Column="0" Classes="h2" Text="Danh mục mã hàng" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Classes="label" Text="Tháng" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox Grid.Column="2" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" Width="100" Margin="0,0,6,0"/>
+                    <ComboBox Grid.Column="3" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" Width="90" Margin="0,0,8,0"/>
+                    <Button Grid.Column="4" Classes="ghost" Content="Làm mới" Command="{Binding LoadCommand}"/>
+                </Grid>
+                <Grid Grid.Row="1" ColumnDefinitions="*,2*,*,Auto,Auto,Auto" Margin="0,0,0,10"
+                      IsEnabled="{Binding SelectedListProduct, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Classes="label" Text="SKU (không sửa)"/>
+                        <TextBox Text="{Binding EditSku}" IsReadOnly="True"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                        <TextBlock Classes="label" Text="Tên"/>
+                        <TextBox Text="{Binding EditName}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                        <TextBlock Classes="label" Text="ĐVT"/>
+                        <AutoCompleteBox ItemsSource="{Binding Uoms}" SelectedItem="{Binding EditUom, Mode=TwoWay}"
+                              FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    <CheckBox Grid.Column="3" Content="Hoạt động" IsChecked="{Binding EditIsActive}"
+                              VerticalAlignment="Bottom" Margin="0,0,10,4"/>
+                    <Button Grid.Column="4" Classes="accent" Content="Lưu" Margin="0,0,8,0"
+                            VerticalAlignment="Bottom" Command="{Binding SaveProductCommand}"/>
+                    <Button Grid.Column="5" Classes="danger" Content="Xoá"
+                            VerticalAlignment="Bottom" Command="{Binding DeleteProductCommand}"/>
+                </Grid>
+                <DataGrid Grid.Row="2" ItemsSource="{Binding Products}" IsReadOnly="True"
+                          SelectedItem="{Binding SelectedListProduct}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="72"/>
+                        <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="*" MinWidth="140"/>
+                        <DataGridTextColumn Header="Tên" Binding="{Binding Name}" Width="2*" MinWidth="220"/>
+                        <DataGridTextColumn Header="ĐVT" Binding="{Binding UomName}" Width="*" MinWidth="110"/>
+                        <DataGridCheckBoxColumn Header="Hoạt động" Binding="{Binding IsActive}" Width="*" MinWidth="90"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="2" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
+
+    </Grid>
+</UserControl>

@@ -1,0 +1,29 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DGroup.App.ManagerPerformance.App"
+             xmlns:local="using:DGroup.App.ManagerPerformance"
+             RequestedThemeVariant="Light">
+             <!-- Light mode theo yeu cau. -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <!-- Ghi de mau accent he thong (mac dinh teal cua Windows) sang XANH DUONG cong so,
+         de focus ring/selection cua control dong bo voi nut 'accent'. -->
+    <Application.Resources>
+        <Color x:Key="SystemAccentColor">#2563EB</Color>
+        <Color x:Key="SystemAccentColorDark1">#1D4ED8</Color>
+        <Color x:Key="SystemAccentColorDark2">#1E40AF</Color>
+        <Color x:Key="SystemAccentColorDark3">#1E3A8A</Color>
+        <Color x:Key="SystemAccentColorLight1">#60A5FA</Color>
+        <Color x:Key="SystemAccentColorLight2">#93C5FD</Color>
+        <Color x:Key="SystemAccentColorLight3">#BFDBFE</Color>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <StyleInclude Source="/Styles/Theme.axaml" />
+    </Application.Styles>
+</Application>

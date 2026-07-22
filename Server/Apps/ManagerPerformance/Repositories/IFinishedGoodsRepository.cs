@@ -1,0 +1,28 @@
+using DGroup.Server.Apps.ManagerPerformance.Contracts;
+using DGroup.Server.Infrastructure.Data;
+
+namespace DGroup.Server.Apps.ManagerPerformance.Repositories;
+
+/// <summary>Truy van/ghi phieu nhap kho thanh pham. Ghi PHAI trong 1 transaction cua scope.</summary>
+public interface IFinishedGoodsRepository
+{
+    /// <summary>Danh sach phieu nhap (loc theo lenh san xuat neu co), moi nhat truoc.</summary>
+    Task<IEnumerable<FinishedGoodsReceiptDto>> ListAsync(TenantScope scope, long? orderId, int? year, int? month);
+
+    /// <summary>Tao phieu nhap thanh pham (receipt_no sinh trong SQL 'NTP-'+timestamp). Tra ve id.</summary>
+    Task<long> InsertAsync(TenantScope scope, CreateFinishedGoodsRequest req);
+
+    /// <summary>Danh dau lenh san xuat da hoan thanh (COMPLETED) neu dang CONFIRMED/IN_PROGRESS. Tra ve so dong cap nhat.</summary>
+    Task<int> MarkOrderCompletedAsync(TenantScope scope, long orderId);
+    // ----- Xoa phieu nhap TP -----
+    /// <summary>Anh huong khi xoa phieu: trang thai don, so phieu con lai, hao hut. Null neu khong ton tai.</summary>
+    Task<FinishedGoodsImpactDto?> GetImpactAsync(TenantScope scope, long id);
+    /// <summary>Id don cua 1 phieu (null neu phieu khong ton tai).</summary>
+    Task<long?> GetOrderIdAsync(TenantScope scope, long id);
+    /// <summary>Xoa phieu nhap TP. Tra ve true neu co dong bi xoa.</summary>
+    Task<bool> DeleteAsync(TenantScope scope, long id);
+    /// <summary>Dem so phieu nhap TP con lai cua don.</summary>
+    Task<long> CountByOrderAsync(TenantScope scope, long orderId);
+    /// <summary>Tra don ve IN_PROGRESS neu dang COMPLETED (khi xoa het phieu nhap TP).</summary>
+    Task<int> RevertOrderToInProgressAsync(TenantScope scope, long orderId);
+}

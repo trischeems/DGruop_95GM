@@ -1,0 +1,162 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+             x:Class="DGroup.App.ManagerPerformance.Views.Pages.MonthCompareView"
+             x:DataType="vm:MonthCompareViewModel">
+
+    <!-- Header dieu khien (Auto) + vung bieu do CUON DOC (*) -->
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Thanh dieu khien: nam, che do, cac thang chon -->
+        <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Năm" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding YearOptions}" SelectedItem="{Binding Year}"
+                              Width="100" Margin="0,0,14,0"/>
+                    <TextBlock Grid.Column="2" Classes="label" Text="Chế độ" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox Grid.Column="3" ItemsSource="{Binding ModeOptions}" SelectedItem="{Binding Mode}"
+                              Width="220"/>
+                    <TextBlock Grid.Column="4" Classes="muted" Text="{Binding Status}"
+                               VerticalAlignment="Center" Margin="14,0,0,0"/>
+                    <Button Grid.Column="5" Classes="ghost" Content="Làm mới" Command="{Binding LoadCommand}"/>
+                </Grid>
+                <!-- Chon cac thang de so sanh (chi hien o che do so sanh) -->
+                <ItemsControl ItemsSource="{Binding MonthChecks}" IsVisible="{Binding IsCompareMode}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="14"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:MonthCheck">
+                            <CheckBox Content="{Binding Label}" IsChecked="{Binding IsSelected}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- Cac khoi bieu do: cuon xuong duoi -->
+        <ScrollViewer Grid.Row="1" Name="Scroller">
+            <StackPanel Spacing="12">
+
+                <!-- 1. San luong: SL dat vs TP nhap kho -->
+                <Border Classes="card">
+                    <Grid RowDefinitions="Auto,Auto">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+                            <TextBlock Classes="h2" Text="Sản lượng: SL đặt theo đơn vs Thành phẩm nhập kho" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Classes="label" Text="Kiểu" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding ChartTypeOptions}"
+                                      SelectedItem="{Binding ProductionChartType}" Width="96"/>
+                        </Grid>
+                        <lvc:CartesianChart Grid.Row="1" Height="320"
+                                            Series="{Binding ProductionSeries}"
+                                            XAxes="{Binding XAxes}" YAxes="{Binding QtyYAxes}"
+                                            LegendPosition="Top"/>
+                    </Grid>
+                </Border>
+
+                <!-- 2. So don tao moi -->
+                <Border Classes="card">
+                    <Grid RowDefinitions="Auto,Auto">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+                            <TextBlock Classes="h2" Text="Số đơn sản xuất tạo mới" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Classes="label" Text="Kiểu" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding ChartTypeOptions}"
+                                      SelectedItem="{Binding OrderChartType}" Width="96"/>
+                        </Grid>
+                        <lvc:CartesianChart Grid.Row="1" Height="300"
+                                            Series="{Binding OrderSeries}"
+                                            XAxes="{Binding XAxes}" YAxes="{Binding QtyYAxes}"
+                                            LegendPosition="Top"/>
+                    </Grid>
+                </Border>
+
+                <!-- 3. NVL nhap vs xuat (SL) -->
+                <Border Classes="card">
+                    <Grid RowDefinitions="Auto,Auto">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+                            <TextBlock Classes="h2" Text="Nguyên vật liệu: nhập kho vs xuất kho (số lượng)" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Classes="label" Text="Kiểu" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding ChartTypeOptions}"
+                                      SelectedItem="{Binding StockChartType}" Width="96"/>
+                        </Grid>
+                        <lvc:CartesianChart Grid.Row="1" Height="320"
+                                            Series="{Binding StockSeries}"
+                                            XAxes="{Binding XAxes}" YAxes="{Binding QtyYAxes}"
+                                            LegendPosition="Top"/>
+                    </Grid>
+                </Border>
+
+                <!-- 4. Gia tri nhap/xuat kho (VND) -->
+                <Border Classes="card">
+                    <Grid RowDefinitions="Auto,Auto">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+                            <TextBlock Classes="h2" Text="Giá trị nhập / xuất kho NVL (VND)" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Classes="label" Text="Kiểu" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding ChartTypeOptions}"
+                                      SelectedItem="{Binding ValueChartType}" Width="96"/>
+                        </Grid>
+                        <lvc:CartesianChart Grid.Row="1" Height="320"
+                                            Series="{Binding ValueSeries}"
+                                            XAxes="{Binding XAxes}" YAxes="{Binding MoneyYAxes}"
+                                            LegendPosition="Top"/>
+                    </Grid>
+                </Border>
+
+                <!-- 5. Hao hut -->
+                <Border Classes="card">
+                    <Grid RowDefinitions="Auto,Auto">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+                            <TextBlock Classes="h2" Text="Hao hụt NVL (cấp phát − định mức)" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Classes="label" Text="Kiểu" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding ChartTypeOptions}"
+                                      SelectedItem="{Binding LossChartType}" Width="96"/>
+                        </Grid>
+                        <lvc:CartesianChart Grid.Row="1" Height="300"
+                                            Series="{Binding LossSeries}"
+                                            XAxes="{Binding XAxes}" YAxes="{Binding QtyYAxes}"
+                                            LegendPosition="Top"/>
+                    </Grid>
+                </Border>
+
+                <!-- 6. Canh bao -->
+                <Border Classes="card">
+                    <Grid RowDefinitions="Auto,Auto">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+                            <TextBlock Classes="h2" Text="Cảnh báo phát sinh" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Classes="label" Text="Kiểu" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding ChartTypeOptions}"
+                                      SelectedItem="{Binding AlertChartType}" Width="96"/>
+                        </Grid>
+                        <lvc:CartesianChart Grid.Row="1" Height="300"
+                                            Series="{Binding AlertSeries}"
+                                            XAxes="{Binding XAxes}" YAxes="{Binding QtyYAxes}"
+                                            LegendPosition="Top"/>
+                    </Grid>
+                </Border>
+
+                <!-- 7. Bieu do TRON: ty trong giua cac thang theo chi so chon -->
+                <Border Classes="card">
+                    <Grid RowDefinitions="Auto,Auto">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+                            <TextBlock Classes="h2" Text="Tỷ trọng giữa các tháng (biểu đồ tròn)" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Classes="label" Text="Chỉ số" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding PieMetricOptions}"
+                                      SelectedItem="{Binding PieMetric}" Width="190"/>
+                        </Grid>
+                        <lvc:PieChart Grid.Row="1" Height="420"
+                                      Series="{Binding PieSeries}"
+                                      LegendPosition="Right"/>
+                    </Grid>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

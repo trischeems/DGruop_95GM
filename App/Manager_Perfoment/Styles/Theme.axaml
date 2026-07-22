@@ -1,0 +1,226 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============ BANG MAU LIGHT MODE (kieu ERP kho - trung tinh, khong mau me) ============ -->
+    <Styles.Resources>
+        <Color x:Key="AppBackgroundColor">#F3F4F6</Color>
+        <Color x:Key="SidebarColor">#FFFFFF</Color>
+        <Color x:Key="CardColor">#FFFFFF</Color>
+        <Color x:Key="BorderColor">#D9DDE3</Color>
+        <Color x:Key="GridLineColor">#E8EAED</Color>
+        <Color x:Key="HeaderBgColor">#F3F4F6</Color>
+        <Color x:Key="TextColor">#1F2937</Color>
+        <Color x:Key="MutedTextColor">#6B7280</Color>
+        <Color x:Key="AccentColor">#2563EB</Color>
+        <Color x:Key="AccentHoverColor">#1D4ED8</Color>
+        <Color x:Key="AccentSoftColor">#DBEAFE</Color>
+        <Color x:Key="DangerColor">#DC2626</Color>
+        <Color x:Key="SuccessColor">#059669</Color>
+
+        <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}"/>
+        <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource SidebarColor}"/>
+        <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
+        <SolidColorBrush x:Key="GridLineBrush" Color="{StaticResource GridLineColor}"/>
+        <SolidColorBrush x:Key="HeaderBgBrush" Color="{StaticResource HeaderBgColor}"/>
+        <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
+        <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+        <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}"/>
+        <SolidColorBrush x:Key="AccentSoftBrush" Color="{StaticResource AccentSoftColor}"/>
+        <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}"/>
+        <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
+    </Styles.Resources>
+
+    <!-- ============ CARD (khoi vuong van, vien ro, khong bong) ============ -->
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="14"/>
+    </Style>
+
+    <!-- ============ NUT MENU SIDEBAR ============ -->
+    <Style Selector="Button.nav">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+        <Setter Property="Padding" Value="12,9"/>
+        <Setter Property="Margin" Value="8,1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+    <Style Selector="Button.nav:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#EEF1F4"/>
+        <Setter Property="TextBlock.Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+    <!-- Trang thai dang chon (class 'active' gan tu binding) -->
+    <Style Selector="Button.nav.active">
+        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.nav.active:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="TextBlock.Foreground" Value="White"/>
+    </Style>
+
+    <!-- ============ NUT ACCENT (nut chinh) ============ -->
+    <Style Selector="Button.accent">
+        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="14,0"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.accent:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource AccentHoverBrush}"/>
+    </Style>
+
+    <!-- Nut XOA (mau do canh bao) -->
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="{StaticResource DangerBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="14,0"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#B91C1C"/>
+    </Style>
+
+    <!-- Nut phu (vien) -->
+    <Style Selector="Button.ghost">
+        <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="14,0"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#EEF1F4"/>
+    </Style>
+
+    <!-- ============ CHU ============ -->
+    <Style Selector="TextBlock.h1">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+    <Style Selector="TextBlock.h2">
+        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+    <Style Selector="TextBlock.muted">
+        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+        <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <Style Selector="TextBlock.kpi">
+        <Setter Property="FontSize" Value="26"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+    </Style>
+    <Style Selector="TextBlock.label">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+        <Setter Property="Margin" Value="0,0,0,3"/>
+    </Style>
+
+    <!-- ============ O NHAP LIEU (cung cao 34, VUONG - khong bo goc) ============ -->
+    <!-- Yeu cau: field/dropdown KHONG bo goc (CornerRadius=0); chi NUT moi bo goc. -->
+    <Style Selector="TextBox">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <!-- NumericUpDown: AN nut +/- (ShowButtonSpinner=False) cho gon, chi con o so; vuong goc. -->
+    <!-- MAC DINH: o SO LUONG -> hien so gon (0.## bo .0000 thua), buoc nhay 1. -->
+    <Style Selector="NumericUpDown">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="MinWidth" Value="90"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="ShowButtonSpinner" Value="False"/>
+        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FormatString" Value="0.####"/>
+        <Setter Property="Increment" Value="1"/>
+    </Style>
+    <!-- O TIEN (class 'money'): hien VND kieu 1.000.000 (dau . ngan, khong thap phan). -->
+    <Style Selector="NumericUpDown.money">
+        <Setter Property="FormatString" Value="#,##0"/>
+        <Setter Property="Increment" Value="1000"/>
+    </Style>
+    <Style Selector="ButtonSpinner">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <!-- O SEARCH co goi y (thay menu chon du lieu): go de loc, danh sach goi y cuon duoc. -->
+    <Style Selector="AutoCompleteBox">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="MaxDropDownHeight" Value="320"/>
+        <Setter Property="Watermark" Value="Gõ để tìm..."/>
+    </Style>
+
+    <!-- ComboBox (field menu option): vuong goc, dong bo chieu cao. -->
+    <Style Selector="ComboBox">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ============ DATAGRID kieu so kho: ke o day du, header xam, dong gon ============ -->
+    <Style Selector="DataGrid">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="GridLinesVisibility" Value="All"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource GridLineBrush}"/>
+        <Setter Property="VerticalGridLinesBrush" Value="{StaticResource GridLineBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="RowBackground" Value="White"/>
+        <Setter Property="RowHeight" Value="34"/>
+        <Setter Property="ColumnHeaderHeight" Value="36"/>
+        <Setter Property="CanUserResizeColumns" Value="True"/>
+        <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <Style Selector="DataGridColumnHeader">
+        <Setter Property="Background" Value="{StaticResource HeaderBgBrush}"/>
+        <Setter Property="Foreground" Value="#374151"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Padding" Value="10,0"/>
+    </Style>
+    <Style Selector="DataGridCell">
+        <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <!-- Dong duoc chon: nen xanh rat nhat, chu giu nguyen mau -->
+    <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+        <Setter Property="Fill" Value="{StaticResource AccentSoftBrush}"/>
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+    <Style Selector="DataGridRow:selected DataGridCell TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+</Styles>

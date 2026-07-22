@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+             x:Class="DGroup.App.ManagerPerformance.Views.Pages.AlertsView"
+             x:DataType="vm:AlertsViewModel">
+
+    <!-- 1 card duy nhat: bang canh bao chiem toan bo trang -->
+    <Border Classes="card">
+        <Grid RowDefinitions="Auto,*">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto" Margin="0,0,0,10">
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Classes="h2" Text="Cảnh báo đang mở"/>
+                    <TextBlock Classes="muted" Text="{Binding Status}"/>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Classes="label" Text="Tháng" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox Grid.Column="2" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" Width="100" Margin="0,0,6,0"/>
+                <ComboBox Grid.Column="3" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" Width="90" Margin="0,0,8,0"/>
+                <Button Grid.Column="4" Classes="accent" Content="Tạo cảnh báo" Margin="0,0,8,0"
+                        Command="{Binding GenerateCommand}" IsEnabled="{Binding !IsBusy}"/>
+                <Button Grid.Column="5" Classes="ghost" Content="Đã xem" Margin="0,0,8,0"
+                        Command="{Binding AcknowledgeCommand}"/>
+                <Button Grid.Column="6" Classes="ghost" Content="Đã xử lý" Margin="0,0,8,0"
+                        Command="{Binding ResolveCommand}"/>
+                <Button Grid.Column="7" Classes="ghost" Content="Làm mới" Command="{Binding LoadCommand}"/>
+            </Grid>
+            <DataGrid Grid.Row="1" ItemsSource="{Binding Alerts}" SelectedItem="{Binding SelectedAlert}"
+                      IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Loại" Binding="{Binding AlertType}" Width="*" MinWidth="140"/>
+                    <DataGridTextColumn Header="Mức" Binding="{Binding Severity}" Width="0.5*" MinWidth="80"/>
+                    <DataGridTextColumn Header="Đối tượng" Binding="{Binding EntityType}" Width="*" MinWidth="130"/>
+                    <DataGridTextColumn Header="Nội dung" Binding="{Binding Message}" Width="3*" MinWidth="260"/>
+                    <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="*" MinWidth="110"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </Border>
+</UserControl>

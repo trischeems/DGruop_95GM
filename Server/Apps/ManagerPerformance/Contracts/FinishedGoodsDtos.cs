@@ -1,0 +1,32 @@
+namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+
+/// <summary>Phieu nhap kho thanh pham (khop finished_goods_receipts + ten product/kho/don join san).</summary>
+public sealed record FinishedGoodsReceiptDto(
+    long Id,
+    string ReceiptNo,
+    long ProductionOrderId,
+    string? OrderNo,         // So don (join production_orders)
+    long ProductId,
+    string? ProductSku,      // SKU ma hang (join products) - hien thi canh ProductId
+    string? ProductName,     // Ten ma hang (join products)
+    long WarehouseId,
+    string? WarehouseName,   // Ten kho (join warehouses) - hien thi canh WarehouseId
+    decimal QtyReceived,
+    DateTime ReceivedAt);
+
+/// <summary>Yeu cau nhap kho thanh pham tu 1 lenh san xuat.</summary>
+public sealed record CreateFinishedGoodsRequest(
+    long ProductionOrderId,
+    long ProductId,
+    long WarehouseId,
+    decimal QtyReceived,
+    string? Note);
+
+/// <summary>Anh huong khi xoa phieu nhap TP: trang thai don + hao hut se lech.</summary>
+public sealed record FinishedGoodsImpactDto(
+    string ReceiptNo,
+    decimal QtyReceived,
+    string OrderStatus,
+    long OrderReceiptCount,
+    long LossReportCount,
+    bool WillRevertOrder);

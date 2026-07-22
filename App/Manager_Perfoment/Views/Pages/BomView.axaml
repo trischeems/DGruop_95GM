@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+             x:Class="DGroup.App.ManagerPerformance.Views.Pages.BomView"
+             x:DataType="vm:BomViewModel">
+
+    <!-- Chon ma hang (Auto) + 2 khoi bang chia deu phan con lai (*,*) -->
+    <Grid RowDefinitions="Auto,*,*,Auto">
+
+        <!-- Chon ma hang + lam moi -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto" Margin="0,0,0,12">
+            <TextBlock Grid.Column="0" Classes="label" Text="Chọn mã hàng" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <AutoCompleteBox Grid.Column="1" ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                             FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
+            <TextBlock Grid.Column="2" Classes="label" Text="Tháng" VerticalAlignment="Center" Margin="10,0,6,0"/>
+            <ComboBox Grid.Column="3" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" Width="100" Margin="0,0,6,0"/>
+            <ComboBox Grid.Column="4" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" Width="90"/>
+            <Button Grid.Column="5" Classes="ghost" Content="Làm mới" Margin="10,0,0,0"
+                    Command="{Binding LoadCommand}"/>
+        </Grid>
+
+        <!-- Cac phien ban BOM: tao ban moi + duyet ngay trong cung card -->
+        <Border Classes="card" Grid.Row="1">
+            <Grid RowDefinitions="Auto,Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="0,0,0,10">
+                    <TextBlock Grid.Column="0" Classes="h2" Text="Các phiên bản BOM" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Classes="ghost" Content="Gửi duyệt" Margin="0,0,8,0"
+                            Command="{Binding SubmitCommand}"/>
+                    <Button Grid.Column="2" Classes="accent" Content="Duyệt (ACTIVE)" Margin="0,0,8,0"
+                            Command="{Binding ApproveCommand}"/>
+                    <Button Grid.Column="3" Classes="ghost" Content="Từ chối" Margin="0,0,8,0"
+                            Command="{Binding RejectCommand}"/>
+                    <Button Grid.Column="4" Classes="danger" Content="Xoá BOM"
+                            Command="{Binding DeleteBomCommand}"/>
+                </Grid>
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                    <TextBox Grid.Column="0" Text="{Binding NewBomNote}" Watermark="Ghi chú bản định mức mới"
+                             Margin="0,0,8,0"/>
+                    <Button Grid.Column="1" Classes="accent" Content="+ Tạo BOM"
+                            Command="{Binding CreateBomCommand}" IsEnabled="{Binding !IsBusy}"/>
+                </Grid>
+                <DataGrid Grid.Row="2" ItemsSource="{Binding Boms}" SelectedItem="{Binding SelectedBom}"
+                          IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="72"/>
+                        <DataGridTextColumn Header="Phiên bản" Binding="{Binding Version}" Width="*" MinWidth="90"/>
+                        <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="*" MinWidth="130"/>
+                        <DataGridTextColumn Header="Ghi chú" Binding="{Binding Note}" Width="3*" MinWidth="220"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <!-- Dinh muc cua BOM dang chon -->
+        <Border Classes="card" Grid.Row="2" Margin="0,12,0,0">
+            <Grid RowDefinitions="Auto,Auto,*">
+                <TextBlock Grid.Row="0" Classes="h2" Text="Định mức của BOM đang chọn (bấm 1 dòng để nạp lên form sửa)" Margin="0,0,0,10"/>
+                <Grid Grid.Row="1" ColumnDefinitions="2*,*,*,Auto,Auto" Margin="0,0,0,10">
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Classes="label" Text="Nguyên vật liệu"/>
+                        <AutoCompleteBox ItemsSource="{Binding Materials}" SelectedItem="{Binding SelectedMaterial, Mode=TwoWay}"
+                              FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                        <TextBlock Classes="label" Text="ĐM/đơn vị"/>
+                        <NumericUpDown Value="{Binding NewQtyPerUnit, TargetNullValue=0}" Minimum="0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                        <TextBlock Classes="label" Text="Hao hụt %"/>
+                        <NumericUpDown Value="{Binding NewWastePct, TargetNullValue=0}" Minimum="0"/>
+                    </StackPanel>
+                    <Button Grid.Column="3" Classes="accent" Content="Lưu định mức" Margin="0,0,8,0"
+                            VerticalAlignment="Bottom" Command="{Binding AddItemCommand}"/>
+                    <Button Grid.Column="4" Classes="danger" Content="Xoá dòng"
+                            VerticalAlignment="Bottom" Command="{Binding DeleteItemCommand}"
+                            IsEnabled="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                </Grid>
+                <DataGrid Grid.Row="2" ItemsSource="{Binding Items}" IsReadOnly="True"
+                          SelectedItem="{Binding SelectedItem}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="NVL" Binding="{Binding MaterialId}" Width="72"/>
+                        <DataGridTextColumn Header="Tên NVL" Binding="{Binding MaterialName}" Width="2*" MinWidth="180"/>
+                        <DataGridTextColumn Header="ĐM/đơn vị" Binding="{Binding QtyPerUnit, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="110"/>
+                        <DataGridTextColumn Header="Hao hụt %" Binding="{Binding WastePct, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="100"/>
+                        <DataGridTextColumn Header="Ghi chú" Binding="{Binding Note}" Width="2*" MinWidth="180"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="3" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
+
+    </Grid>
+</UserControl>
