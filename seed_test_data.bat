@@ -71,10 +71,13 @@ echo   Dang nap du lieu... (script tu don du lieu cu truoc khi nap)
 echo(
 
 set "PGPASSWORD=%PG_PASS%"
+REM Ep client encoding = UTF8: file seed .sql la UTF-8 (tieng Viet co dau).
+REM Neu khong ep, console Windows co the doc theo WIN1252 -> loi byte 0x90.
+set "PGCLIENTENCODING=UTF8"
 
 REM  -v tenant=%TENANT% : truyen ten schema vao SQL (script dung :"tenant").
 "%PG_BIN%\psql.exe" -h %PG_HOST% -p %PG_PORT% -U %PG_USER% -d %PG_DBNAME% ^
-    -v ON_ERROR_STOP=1 -v tenant=%TENANT% -f "%SEED_SQL%"
+    --set=client_encoding=UTF8 -v ON_ERROR_STOP=1 -v tenant=%TENANT% -f "%SEED_SQL%"
 
 if errorlevel 1 (
     echo(
