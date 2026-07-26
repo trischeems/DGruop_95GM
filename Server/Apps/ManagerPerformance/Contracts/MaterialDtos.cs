@@ -1,12 +1,14 @@
 namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
 
-/// <summary>Ban ghi NVL tra ve client (khop cot bang materials).</summary>
+/// <summary>Ban ghi NVL tra ve client (khop cot bang materials + ma/ten DVT join san).</summary>
 public sealed record MaterialDto(
     long Id,
     string Sku,
     string Name,
     long? CategoryId,
     long UomId,
+    string? UomCode,     // ma DVT (kg/m/cai...) - hien canh so luong
+    string? UomName,     // ten DVT
     decimal ReorderLevel,
     decimal ReorderQuantity,
     decimal StandardCost,

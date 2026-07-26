@@ -3,6 +3,9 @@ using DGroup.Server.Infrastructure.Data;
 
 namespace DGroup.Server.Apps.ManagerPerformance.Repositories;
 
+/// <summary>1 dong plan da khoa (FOR UPDATE) phuc vu kiem tra chuyen trang thai.</summary>
+public sealed record PlanLockRow(long ProductionOrderId, string Status, decimal PlannedQty);
+
 /// <summary>Truy van/ghi bang production_plans (Dapper raw SQL). Nhan TenantScope (da co tx dung schema).</summary>
 public interface IProductionPlanRepository
 {
@@ -12,4 +15,11 @@ public interface IProductionPlanRepository
     /// <summary>Sua so luong ke hoach / ma chuyen / ghi chu.</summary>
     Task<bool> UpdateAsync(TenantScope scope, long id, UpdatePlanRequest req);
     Task<bool> DeleteAsync(TenantScope scope, long id);
+
+    /// <summary>SL dat cua don (khoa dong FOR UPDATE de chong race khi kiem tra tong ke hoach). Null neu khong co don.</summary>
+    Task<decimal?> LockOrderQuantityAsync(TenantScope scope, long orderId);
+    /// <summary>Tong planned_qty hien co cua don, tru 1 plan (excludePlanId) khi dang sua. 0 neu chua co.</summary>
+    Task<decimal> SumPlannedQtyAsync(TenantScope scope, long orderId, long? excludePlanId);
+    /// <summary>Doc (production_order_id, status, planned_qty) cua 1 plan, khoa dong FOR UPDATE. Null neu khong co.</summary>
+    Task<PlanLockRow?> LockPlanAsync(TenantScope scope, long id);
 }

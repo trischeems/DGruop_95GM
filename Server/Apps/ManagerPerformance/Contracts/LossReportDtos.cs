@@ -11,7 +11,11 @@ public sealed record LossReportDto(
     long MaterialId,
     string? MaterialSku,     // SKU NVL (join materials) - hien thi canh MaterialId
     string? MaterialName,    // Ten NVL (join materials)
+    string? MaterialUomCode, // Ma DVT NVL (join units_of_measure qua materials.uom_id)
+    string? MaterialUomName, // Ten DVT NVL
     decimal QtyIssued,
     decimal QtyStandard,
     decimal QtyVariance,
-    decimal FinishedQty);
+    decimal FinishedQty,
+    string? ProductUomCode,  // Ma DVT thanh pham (join units_of_measure qua products.uom_id)
+    string? ProductUomName); // Ten DVT thanh pham

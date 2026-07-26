@@ -25,6 +25,12 @@ public sealed class ProductRepository : IProductRepository
         scope.QueryFirstOrDefaultAsync<ProductDto>(
             $"{ProductSelect} WHERE p.id = @id", new { id });
 
+    // Kiem tra trung SKU (khong phan biet hoa thuong) truoc khi tao -> loi 400 co nghia
+    // thay vi de DB nem 23505 -> 500 kho hieu.
+    public Task<bool> SkuExistsAsync(TenantScope scope, string sku) =>
+        scope.ExecuteScalarAsync<bool>(
+            "SELECT EXISTS(SELECT 1 FROM products WHERE lower(sku) = lower(@sku))", new { sku });
+
     public Task<long> InsertAsync(TenantScope scope, CreateProductRequest req) =>
         scope.QuerySingleAsync<long>(
             """

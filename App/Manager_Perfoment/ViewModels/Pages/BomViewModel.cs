@@ -21,7 +21,37 @@ public sealed partial class BomViewModel : PageViewModel
 
     // Danh muc ma hang, phien ban BOM, NVL, dinh muc
     public ObservableCollection<Product> Products { get; } = new();
+    // Danh sach ma hang hien o COT TRAI (da loc theo o tim ListFilter).
+    public ObservableCollection<Product> FilteredProducts { get; } = new();
     public ObservableCollection<Bom> Boms { get; } = new();
+    // Danh sach NVL da loc (cho danh sach ben trai trong dialog them dinh muc).
+    public ObservableCollection<Material> FilteredMaterials { get; } = new();
+    [ObservableProperty] private string _materialListFilter = "";
+    partial void OnMaterialListFilterChanged(string value) => ApplyMaterialFilter();
+    private void ApplyMaterialFilter()
+    {
+        var kw = (MaterialListFilter ?? "").Trim();
+        FilteredMaterials.Clear();
+        foreach (var m in Materials)
+            if (kw.Length == 0
+                || (m.Name?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (m.Sku?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false))
+                FilteredMaterials.Add(m);
+    }
+
+    // O tim cot trai: loc Products theo ten / SKU.
+    [ObservableProperty] private string _listFilter = "";
+    partial void OnListFilterChanged(string value) => ApplyProductFilter();
+    private void ApplyProductFilter()
+    {
+        var kw = (ListFilter ?? "").Trim();
+        FilteredProducts.Clear();
+        foreach (var p in Products)
+            if (kw.Length == 0
+                || (p.Name?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (p.Sku?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false))
+                FilteredProducts.Add(p);
+    }
     public ObservableCollection<Material> Materials { get; } = new();
     public ObservableCollection<BomItem> Items { get; } = new();
 
@@ -36,6 +66,10 @@ public sealed partial class BomViewModel : PageViewModel
     [ObservableProperty] private decimal _newQtyPerUnit = 1;
     [ObservableProperty] private decimal _newWastePct = 0;
     [ObservableProperty] private BomItem? _selectedItem;
+
+    // Dialog "them NHIEU NVL cung luc": luoi cac dong dinh muc cho, luu 1 lan.
+    public ObservableCollection<BomLineInput> BomLines { get; } = new();
+    [ObservableProperty] private BomLineInput? _selectedBomLine;
 
     partial void OnSelectedItemChanged(BomItem? value)
     {
@@ -93,6 +127,7 @@ public sealed partial class BomViewModel : PageViewModel
         var ps = await _api.GetProductsAsync(false, pfy, pfm);
         Products.Clear();
         foreach (var p in ps) Products.Add(p);
+        ApplyProductFilter();   // cap nhat danh sach ma hang cot trai
         // Chon lai; chan hook de khoi kich hoat LoadBoms 2 lan.
         _suppressSelectionHook = true;
         SelectedProduct = Products.FirstOrDefault(p => p.Id == keepProduct);
@@ -101,6 +136,7 @@ public sealed partial class BomViewModel : PageViewModel
         var ms = await _api.GetMaterialsAsync(false, pfy, pfm);
         Materials.Clear();
         foreach (var m in ms) Materials.Add(m);
+        ApplyMaterialFilter();   // danh sach NVL cho dialog them dinh muc
         SelectedMaterial = Materials.FirstOrDefault(m => m.Id == keepMaterial);
 
         await LoadBomsCoreAsync(selectBomId);
@@ -180,6 +216,59 @@ public sealed partial class BomViewModel : PageViewModel
             await LoadItemsAsync();
             Status = "Đã lưu định mức.";
         });
+    }
+
+    // ----- Dialog "Thêm nhiều NVL cùng lúc" -----
+
+    /// <summary>Thêm 1 dòng NVL vào lưới định mức (trong dialog). Chặn trùng NVL.</summary>
+    [RelayCommand]
+    private void AddBomLine()
+    {
+        if (SelectedMaterial is null) { Status = "Chọn NVL để thêm dòng."; return; }
+        if (NewQtyPerUnit <= 0) { Status = "ĐM/đơn vị phải > 0."; return; }
+        if (BomLines.Any(l => l.Material?.Id == SelectedMaterial.Id))
+        {
+            Status = $"NVL {SelectedMaterial.Sku} đã có trong danh sách.";
+            return;
+        }
+        BomLines.Add(new BomLineInput { Material = SelectedMaterial, QtyPerUnit = NewQtyPerUnit, WastePct = NewWastePct });
+        SelectedMaterial = null; NewQtyPerUnit = 1; NewWastePct = 0;
+        Status = $"Danh sách có {BomLines.Count} NVL.";
+    }
+
+    /// <summary>Xoá dòng đang chọn khỏi lưới.</summary>
+    [RelayCommand]
+    private void RemoveBomLine()
+    {
+        if (SelectedBomLine is null) { Status = "Chọn một dòng để xoá."; return; }
+        BomLines.Remove(SelectedBomLine);
+    }
+
+    /// <summary>Mở CỬA SỔ riêng để thêm NHIỀU NVL cùng lúc vào BOM đang chọn, lưu 1 lần.</summary>
+    [RelayCommand]
+    private async Task AddManyItemsAsync()
+    {
+        if (SelectedBom is null) { Status = "Chọn một phiên bản BOM trước."; return; }
+        if (!await ConfirmIfBomLockedAsync("Thêm định mức")) { Status = "Đã huỷ thao tác."; return; }
+        BomLines.Clear();
+        SelectedMaterial = null; NewQtyPerUnit = 1; NewWastePct = 0;
+        var form = new Views.Dialogs.BomItemsFormView { DataContext = this };
+        await DialogService.ShowFormAsync(
+            $"Thêm định mức — BOM v{SelectedBom.Version}", form, async () =>
+            {
+                if (BomLines.Count == 0) return "Chưa có NVL nào. Bấm 'Thêm dòng' để thêm.";
+                // Luu tung dong (server upsert). Trung NVL da co trong BOM se ghi de dinh muc.
+                foreach (var l in BomLines.ToList())
+                    await _api.UpsertBomItemAsync(SelectedBom!.Id, new
+                    {
+                        materialId = l.Material!.Id, qtyPerUnit = l.QtyPerUnit, wastePct = l.WastePct, note = (string?)null,
+                    });
+                var n = BomLines.Count;
+                BomLines.Clear();
+                await LoadItemsAsync();
+                Status = $"Đã thêm/cập nhật {n} dòng định mức.";
+                return null;
+            }, saveText: "Lưu tất cả", width: 900, height: 560, scrollable: false);
     }
 
     /// <summary>Xoa dong dinh muc dang chon (popup canh bao neu BOM khong con DRAFT).</summary>

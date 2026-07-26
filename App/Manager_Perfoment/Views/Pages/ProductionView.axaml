@@ -8,101 +8,184 @@
              x:Class="DGroup.App.ManagerPerformance.Views.Pages.ProductionView"
              x:DataType="vm:ProductionViewModel">
 
-    <!-- Chon don (Auto), form cap nhat cong doan (Auto), form xuat kho (Auto),
-         bang cong doan chiem het phan con lai (*) -->
-    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+    <!-- 2 COT: trai = danh sach DON (o tim + list); phai = cong doan + phieu xuat cua don. -->
+    <Grid ColumnDefinitions="288,*">
 
-        <!-- Chon don -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto" Margin="0,0,0,12">
-            <TextBlock Grid.Column="0" Classes="label" Text="Chọn đơn" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <AutoCompleteBox Grid.Column="1" ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder, Mode=TwoWay}"
-                         FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
-            <TextBlock Grid.Column="2" Classes="label" Text="Tháng" VerticalAlignment="Center" Margin="10,0,6,0"/>
-            <ComboBox Grid.Column="3" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" Width="100" Margin="0,0,6,0"/>
-            <ComboBox Grid.Column="4" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" Width="90"/>
-            <Button Grid.Column="5" Classes="ghost" Content="Làm mới" Margin="10,0,0,0"
-                    Command="{Binding LoadCommand}"/>
-            <Button Grid.Column="6" Classes="ghost" Content="Khởi tạo công đoạn" Margin="10,0,0,0"
-                    Command="{Binding InitStepsCommand}"/>
+        <!-- ===== COT TRAI: danh sach don ===== -->
+        <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
+            <Grid RowDefinitions="Auto,Auto,Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                    <TextBlock Grid.Column="0" Classes="h2" Text="Đơn sản xuất" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Classes="ghost" Content="⟳" Command="{Binding LoadCommand}"
+                            ToolTip.Tip="Làm mới danh sách"/>
+                </Grid>
+                <!-- Loc thang/nam + nut khoi tao cong doan -->
+                <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,0,0,6">
+                    <ComboBox Grid.Column="0" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" HorizontalAlignment="Stretch" Margin="0,0,4,0"/>
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" HorizontalAlignment="Stretch"/>
+                </Grid>
+                <TextBox Grid.Row="2" Text="{Binding ListFilter}" Watermark="Tìm số đơn / mã hàng..." Margin="0,0,0,8"/>
+                <ListBox Grid.Row="3" Classes="master" ItemsSource="{Binding FilteredOrders}"
+                         SelectedItem="{Binding SelectedOrder, Mode=TwoWay}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:ProductionOrder">
+                            <StackPanel Spacing="1">
+                                <TextBlock Classes="itemmain" Text="{Binding OrderNo}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Classes="itemsub" Text="{Binding ProductName}"/>
+                                    <TextBlock FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"
+                                               Text="{Binding Status}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <!-- ===== COT PHAI: cong doan + phieu xuat cua don dang chon ===== -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto">
+
+            <!-- Card: Cap nhat cong doan dang chon + nut Khoi tao cong doan -->
+            <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
+                <Grid RowDefinitions="Auto,Auto">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                        <TextBlock Grid.Column="0" Classes="h2" Text="Cập nhật công đoạn đang chọn" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Button Classes="ghost" Content="Khởi tạo công đoạn"
+                                    Command="{Binding InitStepsCommand}"
+                                    ToolTip.Tip="Sinh các bước theo quy trình đã chọn của đơn"/>
+                            <Button Classes="accent" Content="🧭 Quy trình của đơn"
+                                    Command="{Binding OpenRoutingDialogCommand}" IsEnabled="{Binding !IsBusy}"
+                                    ToolTip.Tip="Chọn mẫu quy trình, bắt đầu từ bước giữa, thêm/bỏ/nhảy bước riêng cho đơn"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,Auto">
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Classes="label" Text="Trạng thái"/>
+                            <ComboBox ItemsSource="{Binding StepStatusOptions}"
+                                      SelectedItem="{Binding SelectedStepStatus}" HorizontalAlignment="Stretch"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                            <TextBlock Classes="label" Text="Vào"/>
+                            <NumericUpDown Value="{Binding QtyIn, TargetNullValue=0}" Minimum="0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                            <TextBlock Classes="label" Text="Ra"/>
+                            <NumericUpDown Value="{Binding QtyOut, TargetNullValue=0}" Minimum="0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Margin="0,0,8,0">
+                            <TextBlock Classes="label" Text="Lỗi"/>
+                            <NumericUpDown Value="{Binding QtyDefect, TargetNullValue=0}" Minimum="0"/>
+                        </StackPanel>
+                        <Button Grid.Column="4" Classes="accent" Content="Cập nhật công đoạn"
+                                VerticalAlignment="Bottom" Command="{Binding UpdateStepCommand}"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Card: Xuat kho NVL cho san xuat -> mo CUA SO rieng (phieu nhieu dong). -->
+            <Border Classes="card" Grid.Row="1" Margin="0,0,0,12">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Classes="h2" Text="Xuất kho NVL cho sản xuất"/>
+                        <TextBlock Classes="muted" Text="Chọn đơn ở cột trái, rồi mở cửa sổ riêng để xuất nhiều NVL cùng lúc."/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Classes="accent" Content="↓ Xuất kho NVL" VerticalAlignment="Center"
+                            Command="{Binding OpenIssueDialogCommand}" IsEnabled="{Binding !IsBusy}"/>
+                </Grid>
+            </Border>
+
+            <!-- Row 2: trai = bang cong doan; phai = danh sach phieu xuat NVL da xuat cho don. -->
+            <Grid Grid.Row="2" ColumnDefinitions="2*,*">
+                <Border Classes="card" Grid.Column="0" Margin="0,0,6,0">
+                    <Grid RowDefinitions="Auto,*">
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,10">
+                            <TextBlock Classes="h2" Text="Công đoạn của đơn" VerticalAlignment="Center"/>
+                            <TextBlock Classes="muted" VerticalAlignment="Center"
+                                       Text="{Binding SelectedOrder.RoutingName, StringFormat='· quy trình: {0}'}"/>
+                        </StackPanel>
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep}"
+                                  IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="TT" Binding="{Binding Seq}" Width="66"/>
+                                <DataGridTextColumn Header="Công đoạn" Binding="{Binding StageName}" Width="2*" MinWidth="160"/>
+                                <DataGridTemplateColumn Header="Trạng thái" Width="*" MinWidth="130">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontWeight="SemiBold"
+                                                       Margin="12,0,0,0"
+                                                       Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="Bỏ qua" Width="*" MinWidth="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"
+                                                       Foreground="#D97706"
+                                                       Text="{Binding IsSkipped, Converter={StaticResource BoolToSkipped}}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="Vào" Width="*" MinWidth="105">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding QtyIn, StringFormat='{}{0:0.####}'}"/>
+                                                <TextBlock Text="{Binding ProductUomCode}" Classes="uom"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="Ra" Width="*" MinWidth="105">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding QtyOut, StringFormat='{}{0:0.####}'}"/>
+                                                <TextBlock Text="{Binding ProductUomCode}" Classes="uom"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="Lỗi" Width="*" MinWidth="95">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding QtyDefect, StringFormat='{}{0:0.####}'}"/>
+                                                <TextBlock Text="{Binding ProductUomCode}" Classes="uom"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+                <Border Classes="card" Grid.Column="1" Margin="6,0,0,0">
+                    <Grid RowDefinitions="Auto,*">
+                        <TextBlock Grid.Row="0" Classes="h2" Text="Phiếu xuất NVL đã xuất" Margin="0,0,0,10"/>
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding Issues}" IsReadOnly="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Số phiếu" Binding="{Binding IssueNo}" Width="2*" MinWidth="140"/>
+                                <DataGridTemplateColumn Header="Trạng thái" Width="*" MinWidth="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontWeight="SemiBold"
+                                                       Margin="12,0,0,0"
+                                                       Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Ngày xuất" Binding="{Binding IssuedAt, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" Width="*" MinWidth="120"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <TextBlock Grid.Row="3" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
         </Grid>
-
-        <!-- Card: Cap nhat cong doan dang chon (form len tren) -->
-        <Border Classes="card" Grid.Row="1" Margin="0,0,0,12">
-            <Grid RowDefinitions="Auto,Auto">
-                <TextBlock Grid.Row="0" Classes="h2" Text="Cập nhật công đoạn đang chọn" Margin="0,0,0,10"/>
-                <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,Auto">
-                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="Trạng thái"/>
-                        <ComboBox ItemsSource="{Binding StepStatusOptions}"
-                                  SelectedItem="{Binding SelectedStepStatus}" HorizontalAlignment="Stretch"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="Vào"/>
-                        <NumericUpDown Value="{Binding QtyIn, TargetNullValue=0}" Minimum="0"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="2" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="Ra"/>
-                        <NumericUpDown Value="{Binding QtyOut, TargetNullValue=0}" Minimum="0"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="3" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="Lỗi"/>
-                        <NumericUpDown Value="{Binding QtyDefect, TargetNullValue=0}" Minimum="0"/>
-                    </StackPanel>
-                    <Button Grid.Column="4" Classes="accent" Content="Cập nhật công đoạn"
-                            VerticalAlignment="Bottom" Command="{Binding UpdateStepCommand}"/>
-                </Grid>
-            </Grid>
-        </Border>
-
-        <!-- Card: Xuat kho NVL cho san xuat (form len tren) -->
-        <Border Classes="card" Grid.Row="2" Margin="0,0,0,12">
-            <Grid RowDefinitions="Auto,Auto">
-                <TextBlock Grid.Row="0" Classes="h2" Text="Xuất kho NVL cho sản xuất" Margin="0,0,0,10"/>
-                <Grid Grid.Row="1" ColumnDefinitions="*,2*,*,*,Auto">
-                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="Kho"/>
-                        <AutoCompleteBox ItemsSource="{Binding Warehouses}" SelectedItem="{Binding SelectedWarehouse, Mode=TwoWay}"
-                              FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="Nguyên vật liệu"/>
-                        <AutoCompleteBox ItemsSource="{Binding Materials}" SelectedItem="{Binding SelectedMaterial, Mode=TwoWay}"
-                              FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="2" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="Số lượng xuất"/>
-                        <NumericUpDown Value="{Binding IssueQty, TargetNullValue=0}" Minimum="0"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="3" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="Đơn giá (VND)"/>
-                        <NumericUpDown Classes="money" Value="{Binding IssueUnitCost, TargetNullValue=0}" Minimum="0"/>
-                    </StackPanel>
-                    <Button Grid.Column="4" Classes="accent" Content="↓ Xuất kho"
-                            VerticalAlignment="Bottom"
-                            Command="{Binding IssueCommand}" IsEnabled="{Binding !IsBusy}"/>
-                </Grid>
-            </Grid>
-        </Border>
-
-        <!-- Card: Bang cong doan (xuong duoi, gian het chieu cao con lai) -->
-        <Border Classes="card" Grid.Row="3">
-            <Grid RowDefinitions="Auto,*">
-                <TextBlock Grid.Row="0" Classes="h2" Text="Công đoạn Cắt → May → QC → Nhập TP" Margin="0,0,0,10"/>
-                <DataGrid Grid.Row="1" ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep}"
-                          IsReadOnly="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="TT" Binding="{Binding Seq}" Width="60"/>
-                        <DataGridTextColumn Header="Công đoạn" Binding="{Binding StageName}" Width="2*" MinWidth="160"/>
-                        <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="*" MinWidth="130"/>
-                        <DataGridTextColumn Header="Vào" Binding="{Binding QtyIn, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="90"/>
-                        <DataGridTextColumn Header="Ra" Binding="{Binding QtyOut, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="90"/>
-                        <DataGridTextColumn Header="Lỗi" Binding="{Binding QtyDefect, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="80"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Grid>
-        </Border>
-
-        <TextBlock Grid.Row="4" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
-
     </Grid>
 </UserControl>

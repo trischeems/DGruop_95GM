@@ -1,0 +1,110 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="860" d:DesignHeight="500"
+             x:Class="DGroup.App.ManagerPerformance.Views.Dialogs.OrderRoutingFormView"
+             x:DataType="vm:ProductionViewModel">
+    <!-- Quy trinh cua 1 don: trai = danh muc cong doan (them buoc le); phai = chon mau + buoc hien tai. -->
+    <Grid ColumnDefinitions="260,*">
+
+        <!-- ===== COT TRAI: danh muc cong doan ===== -->
+        <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
+                <TextBlock Grid.Row="0" Classes="h2" Text="Công đoạn có sẵn" Margin="0,0,0,8"/>
+                <TextBox Grid.Row="1" Text="{Binding StageListFilter}" Watermark="Tìm tên / mã..." Margin="0,0,0,8"/>
+                <ListBox Grid.Row="2" Classes="master" ItemsSource="{Binding FilteredStages}"
+                         SelectedItem="{Binding SelectedStage, Mode=TwoWay}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:Stage">
+                            <StackPanel Spacing="1">
+                                <TextBlock Classes="itemmain" Text="{Binding Name}"/>
+                                <TextBlock Classes="itemsub" Text="{Binding Code}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Button Grid.Row="3" Classes="ghost" Content="+ Thêm bước lẻ vào đơn" Margin="0,8,0,0"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                        Command="{Binding AddOrderStepCommand}"
+                        ToolTip.Tip="Thêm ngay công đoạn này vào đơn, không cần áp lại mẫu"/>
+            </Grid>
+        </Border>
+
+        <!-- ===== COT PHAI: chon mau + buoc hien tai ===== -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto">
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                <TextBlock Classes="label" Text="Mẫu quy trình áp cho đơn"/>
+                <ComboBox ItemsSource="{Binding Routings}" SelectedItem="{Binding SelectedRouting, Mode=TwoWay}"
+                          HorizontalAlignment="Stretch">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:Routing">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding Name}"/>
+                                <TextBlock Classes="uom" Text="{Binding StepCount, StringFormat='{}{0} bước'}"/>
+                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#16A34A"
+                                           Text="mặc định" IsVisible="{Binding IsDefault}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*" Margin="0,0,0,8">
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                    <TextBlock Classes="label" Text="Bắt đầu từ bước thứ"/>
+                    <NumericUpDown Value="{Binding ApplyStartSeq, TargetNullValue=1}" Minimum="1" Width="130"/>
+                </StackPanel>
+                <CheckBox Grid.Column="1" IsChecked="{Binding ApplyReplace}" Content="Xoá bước chưa làm rồi sinh lại"
+                          VerticalAlignment="Bottom" Margin="0,0,0,6"/>
+                <TextBlock Grid.Column="2" Classes="muted" TextWrapping="Wrap" VerticalAlignment="Bottom"
+                           Margin="12,0,0,6"
+                           Text="Không phải đơn nào cũng bắt đầu từ bước 1 — hàng đã cắt sẵn có thể bắt đầu ngay từ May."/>
+            </Grid>
+
+            <!-- Cac buoc hien tai cua don -->
+            <Border Classes="card" Grid.Row="2">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <TextBlock Grid.Row="0" Classes="h2" Text="Các bước hiện tại của đơn" Margin="0,0,0,8"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep}"
+                              IsReadOnly="True" MinHeight="160">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="TT" Binding="{Binding Seq}" Width="60"/>
+                            <DataGridTextColumn Header="Công đoạn" Binding="{Binding StageName}" Width="2*" MinWidth="170"/>
+                            <DataGridTemplateColumn Header="Trạng thái" Width="*" MinWidth="130">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"
+                                                   Text="{Binding Status}"
+                                                   Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Bỏ qua" Width="*" MinWidth="110">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"
+                                                   Foreground="#D97706"
+                                                   Text="{Binding IsSkipped, Converter={StaticResource BoolToSkipped}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                        <Button Classes="ghost" Content="↑ Lên"   Command="{Binding MoveStepUpCommand}"/>
+                        <Button Classes="ghost" Content="↓ Xuống"  Command="{Binding MoveStepDownCommand}"/>
+                        <Button Classes="ghost" Content="⤼ Bỏ qua / Bỏ đánh dấu" Command="{Binding ToggleSkipStepCommand}"/>
+                        <Button Classes="danger" Content="✕ Xoá bước" Command="{Binding DeleteOrderStepCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TextBlock Grid.Row="3" Classes="muted" Margin="0,8,0,0" TextWrapping="Wrap"
+                       Text="Bấm 'Áp quy trình' để sinh lại các bước theo mẫu. Các nút trên tác dụng ngay, không cần bấm 'Áp quy trình'."/>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,74 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="420"
+             x:Class="DGroup.App.ManagerPerformance.Views.Dialogs.OrderFormView"
+             x:DataType="vm:ProductionOrdersViewModel">
+    <!-- Tao don san xuat: trai = danh sach ma hang (tim + chon); phai = thong tin don + quy trinh. -->
+    <Grid ColumnDefinitions="260,*">
+
+        <!-- ===== COT TRAI: danh sach ma hang ===== -->
+        <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
+            <Grid RowDefinitions="Auto,Auto,*">
+                <TextBlock Grid.Row="0" Classes="h2" Text="Mã hàng" Margin="0,0,0,8"/>
+                <TextBox Grid.Row="1" Text="{Binding ProductListFilter}" Watermark="Tìm tên / SKU..." Margin="0,0,0,8"/>
+                <ListBox Grid.Row="2" Classes="master" ItemsSource="{Binding FilteredProducts}"
+                         SelectedItem="{Binding SelectedProduct, Mode=TwoWay}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:Product">
+                            <StackPanel Spacing="1">
+                                <TextBlock Classes="itemmain" Text="{Binding Name}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Classes="itemsub" Text="{Binding Sku}"/>
+                                    <TextBlock Classes="itemsub" Text="{Binding UomCode}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <!-- ===== COT PHAI: thong tin don ===== -->
+        <StackPanel Grid.Column="1" Spacing="12" VerticalAlignment="Top">
+            <StackPanel>
+                <TextBlock Classes="label" Text="Số đơn"/>
+                <TextBox Text="{Binding NewOrderNo}" Watermark="VD: PO-001"/>
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Classes="label" Text="Mã hàng đã chọn"/>
+                <TextBox Text="{Binding SelectedProduct.Name}" IsReadOnly="True"
+                         Watermark="Bấm chọn ở danh sách bên trái"/>
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Classes="label" Text="Số lượng"/>
+                <NumericUpDown Value="{Binding NewQuantity, TargetNullValue=0}" Minimum="0"/>
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Classes="label" Text="Quy trình sản xuất"/>
+                <ComboBox ItemsSource="{Binding Routings}" SelectedItem="{Binding SelectedRouting, Mode=TwoWay}"
+                          HorizontalAlignment="Stretch">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:Routing">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding Name}"/>
+                                <TextBlock Classes="uom" Text="{Binding StepCount, StringFormat='{}{0} bước'}"/>
+                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#16A34A"
+                                           Text="mặc định" IsVisible="{Binding IsDefault}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+
+            <TextBlock Classes="muted" TextWrapping="Wrap"
+                       Text="Quy trình quyết định các công đoạn sinh ra cho đơn. Sau khi tạo, vào trang Sản xuất vẫn có thể thêm/bỏ/nhảy bước riêng cho đơn này."/>
+        </StackPanel>
+    </Grid>
+</UserControl>

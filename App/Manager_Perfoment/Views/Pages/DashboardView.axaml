@@ -51,9 +51,36 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Mã" Binding="{Binding Sku}" Width="*" MinWidth="120"/>
                         <DataGridTextColumn Header="Tên NVL" Binding="{Binding Name}" Width="2*" MinWidth="220"/>
-                        <DataGridTextColumn Header="Khả dụng" Binding="{Binding TotalAvailable, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="100"/>
-                        <DataGridTextColumn Header="Ngưỡng" Binding="{Binding ReorderLevel, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="100"/>
-                        <DataGridTextColumn Header="Cỡ lô mua" Binding="{Binding ReorderQuantity, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="110"/>
+                        <DataGridTemplateColumn Header="Khả dụng" Width="*" MinWidth="115">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding TotalAvailable, StringFormat='{}{0:0.####}'}"/>
+                                        <TextBlock Text="{Binding UomCode}" Classes="uom"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Ngưỡng" Width="*" MinWidth="115">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding ReorderLevel, StringFormat='{}{0:0.####}'}"/>
+                                        <TextBlock Text="{Binding UomCode}" Classes="uom"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Cỡ lô mua" Width="*" MinWidth="125">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding ReorderQuantity, StringFormat='{}{0:0.####}'}"/>
+                                        <TextBlock Text="{Binding UomCode}" Classes="uom"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

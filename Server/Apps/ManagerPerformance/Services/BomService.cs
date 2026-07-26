@@ -51,6 +51,14 @@ public sealed class BomService
 
         return _db.RunAsync(_tenant.Tenant, async scope =>
         {
+            // GUARD: chi sua dinh muc khi BOM dang DRAFT. Ban da trinh duyet/ACTIVE/ARCHIVED
+            // la ban da CHOT -> khong cho sua (tao ban moi neu can dieu chinh).
+            var st = await _repo.GetStatusAsync(scope, bomId);
+            if (st is null) throw new ArgumentException($"Khong tim thay dinh muc id={bomId}.");
+            if (st != "DRAFT")
+                throw new ArgumentException(
+                    $"Chi sua duoc dinh muc o trang thai DRAFT (hien tai: {st}). Hay tao ban dinh muc moi de dieu chinh.");
+
             // Da co dong NVL nay chua? -> quyet dinh loai lich su ADD_ITEM / UPDATE_QTY.
             var existing = await _repo.ListItemsAsync(scope, bomId);
             var isNew = !existing.Any(i => i.MaterialId == req.MaterialId);
@@ -68,6 +76,13 @@ public sealed class BomService
     public Task DeleteItemAsync(long bomId, long materialId, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, async scope =>
         {
+            // GUARD: chi xoa dong dinh muc khi BOM dang DRAFT (ban chua chot).
+            var st = await _repo.GetStatusAsync(scope, bomId);
+            if (st is null) throw new ArgumentException($"Khong tim thay dinh muc id={bomId}.");
+            if (st != "DRAFT")
+                throw new ArgumentException(
+                    $"Chi xoa dong dinh muc khi BOM o trang thai DRAFT (hien tai: {st}).");
+
             await _repo.DeleteItemAsync(scope, bomId, materialId);
             await _repo.InsertHistoryAsync(
                 scope, bomId, null, materialId, "REMOVE_ITEM", null, null, null);
@@ -92,6 +107,13 @@ public sealed class BomService
     public Task ApproveAsync(long id, DecisionRequest req, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, async scope =>
         {
+            // GUARD: chi duyet duoc BOM dang cho duyet. Chan duyet lai ban da ACTIVE/REJECTED/DRAFT.
+            var status = await _repo.GetStatusAsync(scope, id);
+            if (status is null) throw new ArgumentException($"Khong tim thay dinh muc id={id}.");
+            if (status != "PENDING_APPROVAL")
+                throw new ArgumentException(
+                    $"Chi duyet duoc dinh muc dang cho duyet (PENDING_APPROVAL). Hien tai: {status}.");
+
             await _repo.DecideLatestPendingApprovalAsync(scope, id, "APPROVED", req.DecidedBy, req.Note);
             await _repo.ArchiveActiveOfSameProductAsync(scope, id); // phai truoc khi kich hoat (partial unique)
             await _repo.ActivateAsync(scope, id);
@@ -103,6 +125,13 @@ public sealed class BomService
     public Task RejectAsync(long id, DecisionRequest req, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, async scope =>
         {
+            // GUARD: chi tu choi duoc BOM dang cho duyet.
+            var status = await _repo.GetStatusAsync(scope, id);
+            if (status is null) throw new ArgumentException($"Khong tim thay dinh muc id={id}.");
+            if (status != "PENDING_APPROVAL")
+                throw new ArgumentException(
+                    $"Chi tu choi duoc dinh muc dang cho duyet (PENDING_APPROVAL). Hien tai: {status}.");
+
             await _repo.DecideLatestPendingApprovalAsync(scope, id, "REJECTED", req.DecidedBy, req.Note);
             await _repo.SetStatusAsync(scope, id, "REJECTED");
             await _repo.InsertHistoryAsync(

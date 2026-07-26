@@ -5,15 +5,18 @@ namespace DGroup.Server.Apps.ManagerPerformance.Repositories;
 
 public sealed class MaterialRepository : IMaterialRepository
 {
-    // Cot khop DTO (Dapper: snake_case <-> PascalCase da bat o DapperConfig).
-    private const string Cols =
-        "id, sku, name, category_id, uom_id, reorder_level, reorder_quantity, standard_cost, is_active";
+    // SELECT khop DTO. JOIN units_of_measure de tra kem ma/ten DVT canh so luong.
+    private const string MaterialSelect =
+        "SELECT m.id, m.sku, m.name, m.category_id, m.uom_id, " +
+        "u.code AS uom_code, u.name AS uom_name, " +
+        "m.reorder_level, m.reorder_quantity, m.standard_cost, m.is_active " +
+        "FROM materials m LEFT JOIN units_of_measure u ON u.id = m.uom_id";
 
     public Task<IEnumerable<MaterialDto>> ListAsync(TenantScope scope, bool activeOnly, int? year, int? month)
     {
-        var sql = $"SELECT {Cols} FROM materials WHERE " + PeriodWhere("created_at") +
-                  (activeOnly ? " AND is_active" : "") +
-                  " ORDER BY name";
+        var sql = $"{MaterialSelect} WHERE " + PeriodWhere("m.created_at") +
+                  (activeOnly ? " AND m.is_active" : "") +
+                  " ORDER BY m.name";
         return scope.QueryAsync<MaterialDto>(sql, new { year, month });
     }
     // Dieu kien loc theo thang/nam tren cot ngay (@year/@month null = khong loc).
@@ -22,7 +25,12 @@ public sealed class MaterialRepository : IMaterialRepository
 
     public Task<MaterialDto?> GetByIdAsync(TenantScope scope, long id) =>
         scope.QueryFirstOrDefaultAsync<MaterialDto>(
-            $"SELECT {Cols} FROM materials WHERE id = @id", new { id });
+            $"{MaterialSelect} WHERE m.id = @id", new { id });
+
+    // Kiem tra trung SKU (khong phan biet hoa thuong) truoc khi tao.
+    public Task<bool> SkuExistsAsync(TenantScope scope, string sku) =>
+        scope.ExecuteScalarAsync<bool>(
+            "SELECT EXISTS(SELECT 1 FROM materials WHERE lower(sku) = lower(@sku))", new { sku });
 
     public Task<long> InsertAsync(TenantScope scope, CreateMaterialRequest req) =>
         scope.QuerySingleAsync<long>(

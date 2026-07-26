@@ -8,71 +8,114 @@
              x:Class="DGroup.App.ManagerPerformance.Views.Pages.ProductionPlansView"
              x:DataType="vm:ProductionPlansViewModel">
 
-    <!-- Chon don (Auto), form tao ke hoach (Auto), danh sach chiem het phan con lai (*) -->
-    <Grid RowDefinitions="Auto,Auto,*,Auto">
+    <!-- 2 COT: trai = danh sach DON (o tim + list bam chon); phai = chi tiet ke hoach cua don. -->
+    <Grid ColumnDefinitions="288,*">
 
-        <!-- Chon don -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,12">
-            <TextBlock Grid.Column="0" Classes="label" Text="Chọn đơn" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <AutoCompleteBox Grid.Column="1" ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder, Mode=TwoWay}"
-                         FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
-            <Button Grid.Column="2" Classes="ghost" Content="Làm mới" Margin="10,0,0,0"
-                    Command="{Binding LoadCommand}"/>
+        <!-- ===== COT TRAI: danh sach don ===== -->
+        <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
+            <Grid RowDefinitions="Auto,Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                    <TextBlock Grid.Column="0" Classes="h2" Text="Đơn sản xuất" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Classes="ghost" Content="⟳" Command="{Binding LoadCommand}"
+                            ToolTip.Tip="Làm mới danh sách"/>
+                </Grid>
+                <TextBox Grid.Row="1" Text="{Binding ListFilter}" Watermark="Tìm số đơn / mã hàng..." Margin="0,0,0,8"/>
+                <ListBox Grid.Row="2" Classes="master" ItemsSource="{Binding FilteredOrders}"
+                         SelectedItem="{Binding SelectedOrder, Mode=TwoWay}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:ProductionOrder">
+                            <StackPanel Spacing="1">
+                                <TextBlock Classes="itemmain" Text="{Binding OrderNo}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Classes="itemsub" Text="{Binding ProductName}"/>
+                                    <TextBlock FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"
+                                               Text="{Binding Status}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <!-- ===== COT PHAI: chi tiet ke hoach cua don dang chon ===== -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+
+            <!-- Card: Tao ke hoach (nut -> cua so rieng) + o SUA ke hoach dang chon (inline). -->
+            <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
+                <Grid RowDefinitions="Auto,Auto">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Classes="h2" Text="Kế hoạch"/>
+                            <TextBlock Classes="muted" Text="Tạo kế hoạch mới ở cửa sổ riêng. Sửa: bấm 1 dòng ở bảng dưới rồi đổi ô tại đây và bấm Lưu."/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="accent" Content="+ Tạo kế hoạch" VerticalAlignment="Center"
+                                Command="{Binding CreateCommand}" IsEnabled="{Binding !IsBusy}"/>
+                    </Grid>
+                    <Grid Grid.Row="1" ColumnDefinitions="*,*"
+                          IsEnabled="{Binding SelectedPlan, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Classes="label" Text="SL kế hoạch (sửa dòng đang chọn)"/>
+                            <NumericUpDown Value="{Binding NewPlannedQty, TargetNullValue=0}" Minimum="0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Classes="label" Text="Mã chuyền (sửa dòng đang chọn)"/>
+                            <TextBox Text="{Binding NewLineCode}" Watermark="VD: C1 (có thể để trống)"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Card: Danh sach ke hoach + hanh dong tren ke hoach dang chon -->
+            <Border Classes="card" Grid.Row="1">
+                <Grid RowDefinitions="Auto,*">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto" Margin="0,0,0,10">
+                        <TextBlock Grid.Column="0" Classes="h2" Text="Danh sách kế hoạch" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Classes="label" Text="Tháng" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" Width="100" Margin="0,0,6,0"/>
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" Width="90" Margin="0,0,8,0"/>
+                        <ComboBox Grid.Column="4" ItemsSource="{Binding StatusOptions}"
+                                  SelectedItem="{Binding SelectedStatus}" Width="160" Margin="0,0,8,0"/>
+                        <Button Grid.Column="5" Classes="ghost" Content="Đổi trạng thái" Margin="0,0,8,0"
+                                Command="{Binding UpdateStatusCommand}"/>
+                        <Button Grid.Column="6" Classes="accent" Content="Lưu" Margin="0,0,8,0"
+                                Command="{Binding SavePlanCommand}"/>
+                        <Button Grid.Column="7" Classes="danger" Content="Xoá"
+                                Command="{Binding DeleteCommand}"/>
+                    </Grid>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Plans}" SelectedItem="{Binding SelectedPlan}"
+                              IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="86"/>
+                            <DataGridTextColumn Header="Đơn" Binding="{Binding ProductionOrderId}" Width="86"/>
+                            <DataGridTextColumn Header="Số đơn" Binding="{Binding OrderNo}" Width="2*" MinWidth="150"/>
+                            <DataGridTemplateColumn Header="SL kế hoạch" Width="*" MinWidth="125">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding PlannedQty, StringFormat='{}{0:0.####}'}"/>
+                                            <TextBlock Text="{Binding ProductUomCode}" Classes="uom"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Chuyền" Binding="{Binding LineCode}" Width="*" MinWidth="100"/>
+                            <DataGridTemplateColumn Header="Trạng thái" Width="*" MinWidth="130">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontWeight="SemiBold"
+                                                   Margin="12,0,0,0"
+                                                   Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <TextBlock Grid.Row="2" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
         </Grid>
-
-        <!-- Card: Tao ke hoach -->
-        <Border Classes="card" Grid.Row="1" Margin="0,0,0,12">
-            <Grid RowDefinitions="Auto,Auto">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
-                    <TextBlock Classes="h2" Text="Tạo kế hoạch" VerticalAlignment="Center"/>
-                    <Button Grid.Column="1" Classes="accent" Content="+ Tạo kế hoạch"
-                            Command="{Binding CreateCommand}" IsEnabled="{Binding !IsBusy}"/>
-                </Grid>
-                <Grid Grid.Row="1" ColumnDefinitions="*,*">
-                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="SL kế hoạch"/>
-                        <NumericUpDown Value="{Binding NewPlannedQty, TargetNullValue=0}" Minimum="0"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1">
-                        <TextBlock Classes="label" Text="Mã chuyền"/>
-                        <TextBox Text="{Binding NewLineCode}" Watermark="VD: C1"/>
-                    </StackPanel>
-                </Grid>
-            </Grid>
-        </Border>
-
-        <!-- Card: Danh sach ke hoach + hanh dong tren ke hoach dang chon -->
-        <Border Classes="card" Grid.Row="2">
-            <Grid RowDefinitions="Auto,*">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto" Margin="0,0,0,10">
-                    <TextBlock Grid.Column="0" Classes="h2" Text="Danh sách kế hoạch" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="1" Classes="label" Text="Tháng" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <ComboBox Grid.Column="2" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" Width="100" Margin="0,0,6,0"/>
-                    <ComboBox Grid.Column="3" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" Width="90" Margin="0,0,8,0"/>
-                    <ComboBox Grid.Column="4" ItemsSource="{Binding StatusOptions}"
-                              SelectedItem="{Binding SelectedStatus}" Width="160" Margin="0,0,8,0"/>
-                    <Button Grid.Column="5" Classes="ghost" Content="Đổi trạng thái" Margin="0,0,8,0"
-                            Command="{Binding UpdateStatusCommand}"/>
-                    <Button Grid.Column="6" Classes="accent" Content="Lưu" Margin="0,0,8,0"
-                            Command="{Binding SavePlanCommand}"/>
-                    <Button Grid.Column="7" Classes="danger" Content="Xoá"
-                            Command="{Binding DeleteCommand}"/>
-                </Grid>
-                <DataGrid Grid.Row="1" ItemsSource="{Binding Plans}" SelectedItem="{Binding SelectedPlan}"
-                          IsReadOnly="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="72"/>
-                        <DataGridTextColumn Header="Đơn" Binding="{Binding ProductionOrderId}" Width="72"/>
-                        <DataGridTextColumn Header="Số đơn" Binding="{Binding OrderNo}" Width="2*" MinWidth="150"/>
-                        <DataGridTextColumn Header="SL kế hoạch" Binding="{Binding PlannedQty, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="110"/>
-                        <DataGridTextColumn Header="Chuyền" Binding="{Binding LineCode}" Width="*" MinWidth="100"/>
-                        <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="*" MinWidth="130"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Grid>
-        </Border>
-
-        <TextBlock Grid.Row="3" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
-
     </Grid>
 </UserControl>

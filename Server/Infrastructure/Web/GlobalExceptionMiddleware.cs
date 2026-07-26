@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Npgsql;
 
 namespace DGroup.Server.Infrastructure.Web;
 
@@ -27,6 +28,15 @@ public sealed class GlobalExceptionMiddleware
         {
             _logger.LogWarning(ex, "Bad request tai {Path}", ctx.Request.Path);
             await WriteError(ctx, StatusCodes.Status400BadRequest, "BAD_REQUEST", ex.Message);
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            // Vi pham rang buoc duy nhat (vd SKU/order_no trung) -> 409, thong bao ro thay vi 500.
+            // Phong truong hop race qua duoc pre-check o service.
+            _logger.LogWarning(ex, "Trung du lieu (unique) tai {Path}: {Constraint}",
+                ctx.Request.Path, ex.ConstraintName);
+            await WriteError(ctx, StatusCodes.Status409Conflict, "DUPLICATE",
+                "Du lieu bi trung (ma da ton tai). Vui long kiem tra lai.");
         }
         catch (Exception ex)
         {

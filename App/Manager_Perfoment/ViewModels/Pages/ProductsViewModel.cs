@@ -85,22 +85,24 @@ public sealed partial class ProductsViewModel : PageViewModel
         Status = $"{Products.Count} mã hàng.";
     }
 
+    /// <summary>Mo CUA SO rieng de tao ma hang. Dien xong bam Luu -> goi API, dong dialog, nap lai.</summary>
     [RelayCommand]
     private async Task CreateAsync()
     {
-        if (string.IsNullOrWhiteSpace(NewSku) || string.IsNullOrWhiteSpace(NewName) || SelectedUom is null)
+        NewSku = ""; NewName = ""; SelectedUom = null;
+        var form = new Views.Dialogs.ProductFormView { DataContext = this };
+        await DialogService.ShowFormAsync("Tạo mã hàng", form, async () =>
         {
-            Status = "Nhập SKU, tên và chọn ĐVT.";
-            return;
-        }
-        await RunAsync("Đang tạo...", async () =>
-        {
+            if (string.IsNullOrWhiteSpace(NewSku)) return "Nhập SKU.";
+            if (string.IsNullOrWhiteSpace(NewName)) return "Nhập tên mã hàng.";
+            if (SelectedUom is null) return "Chọn đơn vị tính.";
+
             var sku = NewSku.Trim();
             var id = await _api.CreateProductAsync(new { sku, name = NewName.Trim(), uomId = SelectedUom!.Id });
-            NewSku = ""; NewName = "";
             await LoadCoreAsync();
             Status = $"Đã tạo mã hàng id={id} ({sku}).";
-        });
+            return null;
+        }, saveText: "Tạo mã hàng", height: 320);
     }
 
     /// <summary>Luu thay doi cua ma hang dang chon (hang field tren dau bang).</summary>

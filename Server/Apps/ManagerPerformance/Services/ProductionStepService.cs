@@ -54,14 +54,40 @@ public sealed class ProductionStepService
         // Khop CHECK qty_out+qty_defect<=qty_in (tru khi qty_in=0).
         if (req.QtyIn > 0 && req.QtyOut + req.QtyDefect > req.QtyIn)
             throw new ArgumentException("qty_out + qty_defect khong duoc vuot qua qty_in.");
+        // ROT: khi DONE thi ra + loi PHAI bang vao (khong that thoat san luong khong ro).
+        //      Dang lam do (chua DONE) van cho phep ra + loi < vao.
+        if (req.Status == "DONE" && req.QtyIn > 0 && req.QtyOut + req.QtyDefect != req.QtyIn)
+            throw new ArgumentException(
+                $"Cong doan DONE: SL ra ({req.QtyOut:0.####}) + SL loi ({req.QtyDefect:0.####}) phai bang SL vao ({req.QtyIn:0.####}).");
 
         return _db.RunAsync(_tenant.Tenant, async scope =>
         {
-            // Khoa dong buoc; khong ton tai -> bao NOT_FOUND cho controller.
-            var locked = await _repo.LockStepAsync(scope, id);
-            if (locked is null) return false;
+            // Khoa dong buoc + lay ngu canh (don, ma cong doan); khong ton tai -> NOT_FOUND.
+            var ctx = await _repo.LockStepContextAsync(scope, id);
+            if (ctx is null) return false;
+
+            // CHAN sua khi cong doan da KET THUC (DONE/CANCELLED) -> khong sua so lieu nguoc.
+            if (ctx.Status is "DONE" or "CANCELLED")
+                throw new ArgumentException(
+                    $"Cong doan da o trang thai {ctx.Status}, khong sua duoc so lieu. " +
+                    "Neu can dieu chinh, hay mo lai cong doan truoc.");
 
             await _repo.UpdateStepAsync(scope, id, req);
+
+            // ----- LIEN KET TRANG THAI MODULE (cung transaction) -----
+            // Khi bat dau san xuat 1 cong doan (IN_PROGRESS): keo don + ke hoach sang IN_PROGRESS.
+            if (req.Status == "IN_PROGRESS")
+            {
+                await _repo.MarkOrderInProgressAsync(scope, ctx.ProductionOrderId);
+                await _repo.MarkPlansInProgressAsync(scope, ctx.ProductionOrderId);
+            }
+            // Khi cong doan CUOI (FG_RECEIPT - nhap kho TP) DONE: keo ke hoach sang DONE.
+            // (Don se COMPLETED khi nhap kho thanh pham o module Kho TP.)
+            else if (req.Status == "DONE" && ctx.StageCode == "FG_RECEIPT")
+            {
+                await _repo.MarkPlansDoneAsync(scope, ctx.ProductionOrderId);
+            }
+
             return true;
         }, ct);
     }

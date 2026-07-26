@@ -23,6 +23,25 @@ public sealed partial class MaterialsViewModel : PageViewModel
     public ObservableCollection<MaterialStock> Stock { get; } = new();
     public ObservableCollection<Uom> Uoms { get; } = new();
     public ObservableCollection<Warehouse> Warehouses { get; } = new();
+    // Danh sach NVL da loc (cho danh sach ben trai trong dialog nhap kho).
+    public ObservableCollection<Material> FilteredMaterials { get; } = new();
+    [ObservableProperty] private string _materialListFilter = "";
+    partial void OnMaterialListFilterChanged(string value) => ApplyMaterialFilter();
+    private void ApplyMaterialFilter()
+    {
+        var kw = (MaterialListFilter ?? "").Trim();
+        FilteredMaterials.Clear();
+        foreach (var m in Materials)
+            if (kw.Length == 0
+                || (m.Name?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (m.Sku?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false))
+                FilteredMaterials.Add(m);
+    }
+
+    // Phieu nhap NHIEU DONG: cac dong NVL cho vao phieu (luu 1 lan).
+    public ObservableCollection<ReceiptLine> ReceiptLines { get; } = new();
+    // Lich su giao dich kho cua NVL dang chon trong bang ton (don gia tung lan nhap/xuat).
+    public ObservableCollection<StockTransaction> History { get; } = new();
 
     // Form tao NVL (chon ĐVT tu dropdown thay vi go id)
     [ObservableProperty] private string _newSku = "";
@@ -32,11 +51,17 @@ public sealed partial class MaterialsViewModel : PageViewModel
     [ObservableProperty] private decimal _newReorderQuantity = 0;
     [ObservableProperty] private decimal _newStandardCost = 0;
 
-    // Form nhap kho (chon kho & NVL tu dropdown)
+    // Form nhap kho: kho chung cho ca phieu + o nhap 1 dong (bam "Them dong" de day vao luoi).
     [ObservableProperty] private Warehouse? _receiveWarehouse;
     [ObservableProperty] private Material? _receiveMaterial;
     [ObservableProperty] private decimal _receiveQuantity = 0;
     [ObservableProperty] private decimal _receiveUnitCost = 0;
+    // Dong dang chon trong luoi phieu (de xoa).
+    [ObservableProperty] private ReceiptLine? _selectedReceiptLine;
+    // NVL dang chon trong bang ton (de xem lich su giao dich).
+    [ObservableProperty] private MaterialStock? _selectedStockRow;
+
+    partial void OnSelectedStockRowChanged(MaterialStock? value) => _ = LoadHistoryAsync(value?.MaterialId);
 
     // Hang sua tren dau bang danh muc: bam 1 dong -> tu nap du lieu vao cac field.
     [ObservableProperty] private Material? _selectedListMaterial;
@@ -99,6 +124,7 @@ public sealed partial class MaterialsViewModel : PageViewModel
         var (fy, fm) = FilterPeriod;
         var mats = await _api.GetMaterialsAsync(activeOnly: false, year: fy, month: fm);
         Materials.Clear(); foreach (var m in mats) Materials.Add(m);
+        ApplyMaterialFilter();   // danh sach NVL cho dialog nhap kho
         ReceiveMaterial = Materials.FirstOrDefault(m => m.Id == keepMat);
         SelectedListMaterial = Materials.FirstOrDefault(m => m.Id == keepListSel);
 
@@ -108,16 +134,22 @@ public sealed partial class MaterialsViewModel : PageViewModel
         Status = $"{Materials.Count} NVL · {Stock.Count} dòng tồn kho.";
     }
 
+    /// <summary>Mo CUA SO rieng de tao NVL. Dien xong bam Luu -> goi API, dong dialog, nap lai bang.</summary>
     [RelayCommand]
     private async Task CreateMaterialAsync()
     {
-        if (string.IsNullOrWhiteSpace(NewSku) || string.IsNullOrWhiteSpace(NewName) || SelectedUom is null)
+        // Reset o nhap cho lan tao moi.
+        NewSku = ""; NewName = ""; SelectedUom = null;
+        NewReorderLevel = 0; NewReorderQuantity = 0; NewStandardCost = 0;
+
+        var form = new Views.Dialogs.MaterialFormView { DataContext = this };
+        await DialogService.ShowFormAsync("Tạo nguyên vật liệu", form, async () =>
         {
-            Status = "Nhập SKU, Tên và chọn ĐVT trước khi tạo.";
-            return;
-        }
-        await RunAsync("Đang tạo NVL...", async () =>
-        {
+            // Validate ngay trong dialog: tra ve chuoi loi -> giu dialog mo.
+            if (string.IsNullOrWhiteSpace(NewSku)) return "Nhập SKU.";
+            if (string.IsNullOrWhiteSpace(NewName)) return "Nhập tên NVL.";
+            if (SelectedUom is null) return "Chọn đơn vị tính.";
+
             var sku = NewSku.Trim();
             var id = await _api.CreateMaterialAsync(new
             {
@@ -125,31 +157,81 @@ public sealed partial class MaterialsViewModel : PageViewModel
                 categoryId = (long?)null, reorderLevel = NewReorderLevel,
                 reorderQuantity = NewReorderQuantity, standardCost = NewStandardCost,
             });
-            NewSku = ""; NewName = "";
             await LoadCoreAsync();
             Status = $"Đã tạo NVL id={id} ({sku}).";
-        });
+            return null; // thanh cong -> dong dialog
+        }, saveText: "Tạo NVL", height: 360);
     }
 
+    /// <summary>Them 1 dong NVL vao phieu nhap (luoi). Chan trung NVL trong cung phieu.</summary>
     [RelayCommand]
-    private async Task ReceiveStockAsync()
+    private void AddReceiptLine()
     {
-        if (ReceiveMaterial is null || ReceiveWarehouse is null || ReceiveQuantity <= 0)
+        if (ReceiveMaterial is null) { Status = "Chọn NVL để thêm dòng."; return; }
+        if (ReceiveQuantity <= 0) { Status = "Số lượng nhập phải > 0."; return; }
+        if (ReceiptLines.Any(l => l.Material?.Id == ReceiveMaterial.Id))
         {
-            Status = "Chọn kho, NVL và số lượng nhập > 0.";
+            Status = $"NVL {ReceiveMaterial.Sku} đã có trong phiếu. Xoá dòng cũ nếu muốn sửa.";
             return;
         }
-        await RunAsync("Đang nhập kho...", async () =>
+        ReceiptLines.Add(new ReceiptLine
         {
-            var r = await _api.ReceiveStockAsync(new
-            {
-                warehouseId = ReceiveWarehouse!.Id, materialId = ReceiveMaterial!.Id,
-                quantity = ReceiveQuantity, unitCost = ReceiveUnitCost, note = "Nhập từ app",
-            });
-            ReceiveQuantity = 0;
-            await LoadCoreAsync();
-            Status = $"Đã nhập kho. Tồn sau nhập NVL {r.MaterialId} = {r.BalanceAfter}.";
+            Material = ReceiveMaterial, QtyReceived = ReceiveQuantity, UnitCost = ReceiveUnitCost,
         });
+        // Reset o nhap dong cho lan sau.
+        ReceiveMaterial = null; ReceiveQuantity = 0; ReceiveUnitCost = 0;
+        Status = $"Phiếu có {ReceiptLines.Count} dòng. Bấm 'Lưu phiếu nhập' để nhập kho.";
+    }
+
+    /// <summary>Xoa dong dang chon khoi phieu nhap.</summary>
+    [RelayCommand]
+    private void RemoveReceiptLine()
+    {
+        if (SelectedReceiptLine is null) { Status = "Chọn một dòng trong phiếu để xoá."; return; }
+        ReceiptLines.Remove(SelectedReceiptLine);
+        Status = $"Phiếu còn {ReceiptLines.Count} dòng.";
+    }
+
+    /// <summary>Mo CUA SO rieng "Nhap kho phieu nhieu dong". Them nhieu NVL roi luu 1 lan.</summary>
+    [RelayCommand]
+    private async Task OpenReceiptDialogAsync()
+    {
+        ReceiptLines.Clear();
+        ReceiveWarehouse = null; ReceiveMaterial = null; ReceiveQuantity = 0; ReceiveUnitCost = 0;
+        var form = new Views.Dialogs.ReceiptFormView { DataContext = this };
+        await DialogService.ShowFormAsync("Nhập kho (phiếu nhiều dòng)", form, async () =>
+        {
+            if (ReceiveWarehouse is null) return "Chọn kho nhập.";
+            if (ReceiptLines.Count == 0) return "Phiếu chưa có dòng NVL nào. Bấm '+ Thêm dòng' trước.";
+
+            var r = await _api.CreateReceiptAsync(new
+            {
+                warehouseId = ReceiveWarehouse!.Id,
+                note = "Nhập từ app",
+                items = ReceiptLines.Select(l => new
+                {
+                    materialId = l.Material!.Id, qtyReceived = l.QtyReceived, unitCost = l.UnitCost,
+                }).ToArray(),
+            });
+            var n = ReceiptLines.Count;
+            ReceiptLines.Clear();
+            await LoadCoreAsync();
+            Status = $"Đã lưu phiếu nhập {r.ReceiptNo} ({r.LineCount} dòng NVL).";
+            return null;
+        }, saveText: "Lưu phiếu nhập", width: 900, height: 540, scrollable: false);
+    }
+
+    // Nap lich su giao dich kho cua 1 NVL (khi chon dong trong bang ton).
+    private async Task LoadHistoryAsync(long? materialId)
+    {
+        History.Clear();
+        if (materialId is null) return;
+        try
+        {
+            var txns = await _api.GetStockTransactionsAsync(materialId, 50);
+            foreach (var t in txns) History.Add(t);
+        }
+        catch { /* im lang: lich su chi la phu, khong chan thao tac chinh */ }
     }
 
     /// <summary>Luu thay doi cua dong NVL dang chon (hang field tren dau bang).</summary>

@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="560"
+             x:Class="DGroup.App.ManagerPerformance.Views.Dialogs.MaterialFormView"
+             x:DataType="vm:MaterialsViewModel">
+    <!-- Than form Tao NVL — hien trong cua so dialog rieng. Bind vao MaterialsViewModel. -->
+    <StackPanel Spacing="12">
+        <Grid ColumnDefinitions="*,2*" >
+            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock Classes="label" Text="SKU"/>
+                <TextBox Text="{Binding NewSku}" Watermark="VD: VAI-001"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+                <TextBlock Classes="label" Text="Tên NVL"/>
+                <TextBox Text="{Binding NewName}" Watermark="VD: Vải cotton"/>
+            </StackPanel>
+        </Grid>
+        <StackPanel>
+            <TextBlock Classes="label" Text="Đơn vị tính"/>
+            <AutoCompleteBox ItemsSource="{Binding Uoms}" SelectedItem="{Binding SelectedUom, Mode=TwoWay}"
+                             FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
+        </StackPanel>
+        <Grid ColumnDefinitions="*,*,*">
+            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock Classes="label" Text="Ngưỡng tồn thấp"/>
+                <NumericUpDown Value="{Binding NewReorderLevel, TargetNullValue=0}" Minimum="0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                <TextBlock Classes="label" Text="Cỡ lô mua"/>
+                <NumericUpDown Value="{Binding NewReorderQuantity, TargetNullValue=0}" Minimum="0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Classes="label" Text="Đơn giá (VND)"/>
+                <NumericUpDown Classes="money" Value="{Binding NewStandardCost, TargetNullValue=0}" Minimum="0"/>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</UserControl>

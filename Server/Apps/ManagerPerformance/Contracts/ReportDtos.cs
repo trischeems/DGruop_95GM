@@ -20,6 +20,8 @@ public sealed record OrderMaterialRequirementDto(
     long MaterialId,
     string? MaterialSku,     // SKU NVL (join materials) - hien thi canh MaterialId
     string? MaterialName,    // Ten NVL (join materials)
+    string? MaterialUomCode, // Ma DVT NVL (join units_of_measure) - hien canh cac so luong
+    string? MaterialUomName, // Ten DVT NVL
     decimal RequiredQty,
     decimal TotalAvailable,
     decimal ShortageQty,

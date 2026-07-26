@@ -35,9 +35,11 @@ public sealed class ManagerPerformanceModule : IAppModule
         services.AddScoped<IProductionPlanRepository, ProductionPlanRepository>();
         services.AddScoped<IProductionStepRepository, ProductionStepRepository>();
         services.AddScoped<IMaterialIssueRepository, MaterialIssueRepository>();
+        services.AddScoped<IStockReceiptRepository, StockReceiptRepository>();
         services.AddScoped<IFinishedGoodsRepository, FinishedGoodsRepository>();
         services.AddScoped<ILossReportRepository, LossReportRepository>();
         services.AddScoped<IAlertRepository, AlertRepository>();
+        services.AddScoped<IRoutingRepository, RoutingRepository>();
 
         // Service (nghiep vu + dieu phoi transaction).
         services.AddScoped<MaterialService>();
@@ -50,8 +52,10 @@ public sealed class ManagerPerformanceModule : IAppModule
         services.AddScoped<ProductionPlanService>();
         services.AddScoped<ProductionStepService>();
         services.AddScoped<MaterialIssueService>();
+        services.AddScoped<StockReceiptService>();
         services.AddScoped<FinishedGoodsService>();
         services.AddScoped<LossReportService>();
         services.AddScoped<AlertService>();
+        services.AddScoped<RoutingService>();
     }
 }

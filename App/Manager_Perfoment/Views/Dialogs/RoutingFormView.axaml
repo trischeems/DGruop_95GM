@@ -1,0 +1,89 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="520"
+             x:Class="DGroup.App.ManagerPerformance.Views.Dialogs.RoutingFormView"
+             x:DataType="vm:RoutingsViewModel">
+    <!-- Soan 1 mau quy trinh: trai = danh muc cong doan (tim + chon); phai = thong tin mau + chuoi buoc. -->
+    <Grid ColumnDefinitions="260,*">
+
+        <!-- ===== COT TRAI: danh muc cong doan ===== -->
+        <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
+                <TextBlock Grid.Row="0" Classes="h2" Text="Công đoạn có sẵn" Margin="0,0,0,8"/>
+                <TextBox Grid.Row="1" Text="{Binding StageListFilter}" Watermark="Tìm tên / mã..." Margin="0,0,0,8"/>
+                <ListBox Grid.Row="2" Classes="master" ItemsSource="{Binding FilteredStages}"
+                         SelectedItem="{Binding SelectedStage, Mode=TwoWay}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:Stage">
+                            <StackPanel Spacing="1">
+                                <TextBlock Classes="itemmain" Text="{Binding Name}"/>
+                                <TextBlock Classes="itemsub" Text="{Binding Code}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Button Grid.Row="3" Classes="accent" Content="+ Thêm bước" Margin="0,8,0,0"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                        Command="{Binding AddLineCommand}"/>
+            </Grid>
+        </Border>
+
+        <!-- ===== COT PHAI: thong tin mau + chuoi buoc ===== -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto">
+
+            <!-- Thong tin mau -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,2*" Margin="0,0,0,8">
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Classes="label" Text="Mã quy trình"/>
+                    <TextBox Text="{Binding RoutingCode}" Watermark="vd RT-AO"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Classes="label" Text="Tên quy trình"/>
+                    <TextBox Text="{Binding RoutingName}" Watermark="vd Quy trình áo thun in"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Classes="label" Text="Ghi chú"/>
+                    <TextBox Text="{Binding RoutingNote}" Watermark="Mô tả ngắn về quy trình này"/>
+                </StackPanel>
+                <CheckBox Grid.Column="1" IsChecked="{Binding RoutingIsDefault}" Content="Mặc định"
+                          VerticalAlignment="Bottom" Margin="0,0,10,6"
+                          ToolTip.Tip="Đơn không chọn quy trình sẽ dùng mẫu này"/>
+                <CheckBox Grid.Column="2" IsChecked="{Binding RoutingIsActive}" Content="Đang dùng"
+                          VerticalAlignment="Bottom" Margin="0,0,0,6"/>
+            </Grid>
+
+            <!-- Chuoi buoc -->
+            <Border Classes="card" Grid.Row="2">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <TextBlock Grid.Row="0" Classes="h2" Text="Các bước của quy trình (theo thứ tự)" Margin="0,0,0,8"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Lines}" SelectedItem="{Binding SelectedLine}"
+                              IsReadOnly="False" MinHeight="180">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="TT" Binding="{Binding Seq}" Width="60" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Mã công đoạn" Binding="{Binding Stage.Code}" Width="*" MinWidth="130" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Tên công đoạn" Binding="{Binding Stage.Name}" Width="2*" MinWidth="170" IsReadOnly="True"/>
+                            <DataGridCheckBoxColumn Header="Có thể bỏ" Binding="{Binding IsOptional}" Width="110"/>
+                            <DataGridTextColumn Header="Ghi chú" Binding="{Binding Note}" Width="2*" MinWidth="140"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                        <Button Classes="ghost" Content="↑ Lên"  Command="{Binding MoveLineUpCommand}"/>
+                        <Button Classes="ghost" Content="↓ Xuống" Command="{Binding MoveLineDownCommand}"/>
+                        <Button Classes="ghost" Content="✕ Bỏ bước" Command="{Binding RemoveLineCommand}"
+                                IsEnabled="{Binding SelectedLine, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TextBlock Grid.Row="3" Classes="muted" Margin="0,8,0,0" TextWrapping="Wrap"
+                       Text="Chọn công đoạn ở cột trái rồi bấm '+ Thêm bước'. Đánh dấu 'Có thể bỏ' cho bước không bắt buộc — khi chạy đơn có thể nhảy qua."/>
+        </Grid>
+    </Grid>
+</UserControl>

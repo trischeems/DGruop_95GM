@@ -19,9 +19,11 @@ public sealed class ReportRepository : IReportRepository
     private const string ReqSelect =
         "SELECT v.production_order_id, v.order_no, v.order_status, v.material_id, " +
         "m.sku AS material_sku, m.name AS material_name, " +
+        "u.code AS material_uom_code, u.name AS material_uom_name, " +
         "v.required_qty, v.total_available, v.shortage_qty, v.suggested_purchase_qty " +
         "FROM v_order_material_requirement v " +
-        "LEFT JOIN materials m ON m.id = v.material_id";
+        "LEFT JOIN materials m ON m.id = v.material_id " +
+        "LEFT JOIN units_of_measure u ON u.id = m.uom_id";
 
     public Task<IEnumerable<MaxOutputByProductDto>> MaxOutputByProductAsync(TenantScope scope) =>
         scope.QueryAsync<MaxOutputByProductDto>(
@@ -44,7 +46,9 @@ public sealed class ReportRepository : IReportRepository
         scope.QueryAsync<MaterialStockDto>(
             """
             SELECT vs.material_id, vs.sku, vs.name, vs.reorder_level, vs.reorder_quantity,
-                   vs.total_on_hand, vs.total_reserved, vs.total_available, vs.is_low_stock
+                   vs.total_on_hand, vs.total_reserved, vs.total_available, vs.is_low_stock,
+                   vs.last_unit_cost, vs.avg_unit_cost, vs.stock_value,
+                   vs.uom_code, vs.uom_name
             FROM v_material_stock vs
             JOIN materials m ON m.id = vs.material_id
             WHERE vs.is_low_stock

@@ -9,10 +9,15 @@ public sealed class LossReportRepository : ILossReportRepository
     private const string LossSelect =
         "SELECT lr.id, lr.production_order_id, po.order_no, lr.material_id, " +
         "m.sku AS material_sku, m.name AS material_name, " +
-        "lr.qty_issued, lr.qty_standard, lr.qty_variance, lr.finished_qty " +
+        "mu.code AS material_uom_code, mu.name AS material_uom_name, " +
+        "lr.qty_issued, lr.qty_standard, lr.qty_variance, lr.finished_qty, " +
+        "pu.code AS product_uom_code, pu.name AS product_uom_name " +
         "FROM loss_reports lr " +
         "LEFT JOIN materials m ON m.id = lr.material_id " +
-        "LEFT JOIN production_orders po ON po.id = lr.production_order_id";
+        "LEFT JOIN units_of_measure mu ON mu.id = m.uom_id " +
+        "LEFT JOIN production_orders po ON po.id = lr.production_order_id " +
+        "LEFT JOIN products p ON p.id = po.product_id " +
+        "LEFT JOIN units_of_measure pu ON pu.id = p.uom_id";
 
     public Task<IEnumerable<LossReportDto>> ListAsync(TenantScope scope, long? orderId)
     {
@@ -35,8 +40,10 @@ public sealed class LossReportRepository : ILossReportRepository
         scope.QueryAsync<BomItemDto>(
             """
             SELECT bi.id, bi.bom_id, bi.material_id, m.sku AS material_sku, m.name AS material_name,
+                   u.code AS material_uom_code, u.name AS material_uom_name,
                    bi.qty_per_unit, bi.waste_pct, bi.note
             FROM bom_items bi LEFT JOIN materials m ON m.id = bi.material_id
+            LEFT JOIN units_of_measure u ON u.id = m.uom_id
             WHERE bi.bom_id = @bomId ORDER BY bi.material_id
             """,
             new { bomId });

@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="460"
+             x:Class="DGroup.App.ManagerPerformance.Views.Dialogs.BomItemsFormView"
+             x:DataType="vm:BomViewModel">
+    <!-- 2 COT: trai = danh sach NVL (tim + bam chon); phai = nhap DM/hao hut + luoi cac dong da them. -->
+    <Grid ColumnDefinitions="260,*">
+
+        <!-- ===== COT TRAI: danh sach NVL ===== -->
+        <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
+            <Grid RowDefinitions="Auto,Auto,*">
+                <TextBlock Grid.Row="0" Classes="h2" Text="Nguyên vật liệu" Margin="0,0,0,8"/>
+                <TextBox Grid.Row="1" Text="{Binding MaterialListFilter}" Watermark="Tìm tên / SKU..." Margin="0,0,0,8"/>
+                <ListBox Grid.Row="2" Classes="master" ItemsSource="{Binding FilteredMaterials}"
+                         SelectedItem="{Binding SelectedMaterial, Mode=TwoWay}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:Material">
+                            <StackPanel Spacing="1">
+                                <TextBlock Classes="itemmain" Text="{Binding Name}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Classes="itemsub" Text="{Binding Sku}"/>
+                                    <TextBlock Classes="itemsub" Text="{Binding UomCode}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <!-- ===== COT PHAI: nhap dinh muc + luoi ===== -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*">
+            <TextBlock Grid.Row="0" Classes="muted" Margin="0,0,0,8"
+                       Text="Bấm chọn NVL ở danh sách trái, nhập định mức + hao hụt rồi bấm '+ Thêm dòng'. Xong bấm 'Lưu tất cả'."/>
+            <!-- O nhap dinh muc cho NVL dang chon -->
+            <Grid Grid.Row="1" ColumnDefinitions="*,*,Auto" Margin="0,0,0,10">
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Classes="label" Text="ĐM/đơn vị"/>
+                    <NumericUpDown Value="{Binding NewQtyPerUnit, TargetNullValue=0}" Minimum="0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                    <TextBlock Classes="label" Text="Hao hụt %"/>
+                    <NumericUpDown Value="{Binding NewWastePct, TargetNullValue=0}" Minimum="0"/>
+                </StackPanel>
+                <Button Grid.Column="2" Classes="accent" Content="+ Thêm dòng" VerticalAlignment="Bottom"
+                        Command="{Binding AddBomLineCommand}"/>
+            </Grid>
+            <!-- Luoi cac dong da them + nut xoa dong -->
+            <Grid Grid.Row="2" RowDefinitions="*,Auto">
+                <DataGrid Grid.Row="0" ItemsSource="{Binding BomLines}" SelectedItem="{Binding SelectedBomLine}"
+                          IsReadOnly="True" MinHeight="150">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="NVL" Binding="{Binding Material.Sku}" Width="*" MinWidth="110"/>
+                        <DataGridTextColumn Header="Tên" Binding="{Binding Material.Name}" Width="2*" MinWidth="160"/>
+                        <DataGridTemplateColumn Header="ĐM/đơn vị" Width="*" MinWidth="110">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding QtyPerUnit, StringFormat='{}{0:0.####}'}"/>
+                                        <TextBlock Text="{Binding Material.UomCode}" Classes="uom"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Hao hụt %" Width="*" MinWidth="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding WastePct, StringFormat='{}{0:0.####}'}"/>
+                                        <TextBlock Text="%" Classes="uom"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <Button Grid.Row="1" Classes="ghost" Content="Xoá dòng đang chọn" HorizontalAlignment="Left" Margin="0,8,0,0"
+                        Command="{Binding RemoveBomLineCommand}"
+                        IsEnabled="{Binding SelectedBomLine, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

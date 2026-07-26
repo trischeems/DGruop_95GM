@@ -20,6 +20,8 @@ public sealed partial class FinishedGoodsViewModel : PageViewModel
     [ObservableProperty] private bool _isBusy;
 
     public ObservableCollection<ProductionOrder> Orders { get; } = new();
+    // Danh sach don hien o COT TRAI (da loc theo o tim ListFilter).
+    public ObservableCollection<ProductionOrder> FilteredOrders { get; } = new();
     public ObservableCollection<Product> Products { get; } = new();
     public ObservableCollection<Warehouse> Warehouses { get; } = new();
     public ObservableCollection<FinishedGoodsReceipt> Receipts { get; } = new();
@@ -30,6 +32,21 @@ public sealed partial class FinishedGoodsViewModel : PageViewModel
     [ObservableProperty] private Warehouse? _selectedWarehouse;
     [ObservableProperty] private decimal _qtyReceived = 0;
     [ObservableProperty] private FinishedGoodsReceipt? _selectedReceipt;
+
+    // O tim cot trai: loc Orders theo so don / ten ma hang / SKU.
+    [ObservableProperty] private string _listFilter = "";
+    partial void OnListFilterChanged(string value) => ApplyOrderFilter();
+    private void ApplyOrderFilter()
+    {
+        var kw = (ListFilter ?? "").Trim();
+        FilteredOrders.Clear();
+        foreach (var o in Orders)
+            if (kw.Length == 0
+                || (o.OrderNo?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (o.ProductName?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (o.ProductSku?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false))
+                FilteredOrders.Add(o);
+    }
 
 
     // ===== Bo loc thang/nam ("Tất cả" = khong loc; "Cả năm" = ca nam dang chon) =====
@@ -62,6 +79,7 @@ public sealed partial class FinishedGoodsViewModel : PageViewModel
         var os = await _api.GetOrdersAsync(null, ofy, ofm);
         Orders.Clear();
         foreach (var o in os) Orders.Add(o);
+        ApplyOrderFilter();   // cap nhat danh sach cot trai
         // Chon lai; chan hook de khoi kich hoat LoadDetail 2 lan.
         _suppressSelectionHook = true;
         SelectedOrder = Orders.FirstOrDefault(o => o.Id == keepOrder);
@@ -70,7 +88,11 @@ public sealed partial class FinishedGoodsViewModel : PageViewModel
         var ps = await _api.GetProductsAsync(false, ofy, ofm);
         Products.Clear();
         foreach (var p in ps) Products.Add(p);
-        SelectedProduct = Products.FirstOrDefault(p => p.Id == keepProduct);
+        // Neu dang chon don -> khoa ma hang theo don; nguoc lai giu lua chon cu.
+        SelectedProduct = SelectedOrder is not null
+            ? Products.FirstOrDefault(p => p.Id == SelectedOrder.ProductId)
+            : Products.FirstOrDefault(p => p.Id == keepProduct);
+        OnPropertyChanged(nameof(ProductLocked));
 
         var ws = await _api.GetWarehousesAsync();
         Warehouses.Clear();
@@ -82,8 +104,17 @@ public sealed partial class FinishedGoodsViewModel : PageViewModel
 
     private bool _suppressSelectionHook;
 
+    // M6-20: khi da chon don thi ma hang bi KHOA (tu dien theo don) de tranh nhap nham mat hang.
+    // ProductLocked = true khi co don -> AutoCompleteBox mã hàng chuyen readonly tren UI.
+    public bool ProductLocked => SelectedOrder is not null;
+
     partial void OnSelectedOrderChanged(ProductionOrder? value)
     {
+        // Auto-fill ma hang theo don dang chon (khop ProductId cua don).
+        if (value is not null)
+            SelectedProduct = Products.FirstOrDefault(p => p.Id == value.ProductId);
+        OnPropertyChanged(nameof(ProductLocked));
+
         if (_suppressSelectionHook) return;
         _ = LoadDetailAsync();
     }

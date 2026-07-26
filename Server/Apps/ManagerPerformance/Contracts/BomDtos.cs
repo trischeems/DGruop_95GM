@@ -16,6 +16,8 @@ public sealed record BomItemDto(
     long MaterialId,
     string? MaterialSku,     // SKU NVL (join materials) - hien thi canh MaterialId
     string? MaterialName,    // Ten NVL (join materials)
+    string? MaterialUomCode, // Ma DVT NVL (join units_of_measure) - hien thi canh so dinh muc
+    string? MaterialUomName, // Ten DVT NVL (join units_of_measure)
     decimal QtyPerUnit,
     decimal WastePct,
     string? Note);

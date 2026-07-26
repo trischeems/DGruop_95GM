@@ -64,12 +64,14 @@ public sealed class BomItem
 {
     [JsonPropertyName("id")]           public long Id { get; set; }
     [JsonPropertyName("bomId")]        public long BomId { get; set; }
-    [JsonPropertyName("materialId")]   public long MaterialId { get; set; }
-    [JsonPropertyName("materialSku")]  public string? MaterialSku { get; set; }   // SKU NVL (join server)
-    [JsonPropertyName("materialName")] public string? MaterialName { get; set; }  // ten NVL (join server)
-    [JsonPropertyName("qtyPerUnit")]   public decimal QtyPerUnit { get; set; }
-    [JsonPropertyName("wastePct")]     public decimal WastePct { get; set; }
-    [JsonPropertyName("note")]         public string? Note { get; set; }
+    [JsonPropertyName("materialId")]      public long MaterialId { get; set; }
+    [JsonPropertyName("materialSku")]     public string? MaterialSku { get; set; }   // SKU NVL (join server)
+    [JsonPropertyName("materialName")]    public string? MaterialName { get; set; }  // ten NVL (join server)
+    [JsonPropertyName("materialUomCode")] public string? MaterialUomCode { get; set; } // ma DVT NVL
+    [JsonPropertyName("materialUomName")] public string? MaterialUomName { get; set; }
+    [JsonPropertyName("qtyPerUnit")]      public decimal QtyPerUnit { get; set; }
+    [JsonPropertyName("wastePct")]        public decimal WastePct { get; set; }
+    [JsonPropertyName("note")]            public string? Note { get; set; }
 }
 
 /// <summary>BOM day du (header + items).</summary>
@@ -98,11 +100,15 @@ public sealed class ProductionOrder
     [JsonPropertyName("productId")]   public long ProductId { get; set; }
     [JsonPropertyName("productSku")]  public string? ProductSku { get; set; }   // SKU ma hang (join server)
     [JsonPropertyName("productName")] public string? ProductName { get; set; }  // ten ma hang (join server)
+    [JsonPropertyName("productUomCode")] public string? ProductUomCode { get; set; }  // ma DVT thanh pham
+    [JsonPropertyName("productUomName")] public string? ProductUomName { get; set; }
     [JsonPropertyName("bomId")]       public long? BomId { get; set; }
     [JsonPropertyName("quantity")]    public decimal Quantity { get; set; }
     [JsonPropertyName("status")]      public string Status { get; set; } = "";
     [JsonPropertyName("dueDate")]     public DateTime? DueDate { get; set; }
     [JsonPropertyName("confirmedAt")] public DateTime? ConfirmedAt { get; set; }
+    [JsonPropertyName("routingId")]   public long? RoutingId { get; set; }     // mau quy trinh da chon
+    [JsonPropertyName("routingName")] public string? RoutingName { get; set; }  // ten mau quy trinh
     public override string ToString() => OrderNo;
 }
 
@@ -114,6 +120,8 @@ public sealed class Reservation
     [JsonPropertyName("materialId")]        public long MaterialId { get; set; }
     [JsonPropertyName("materialSku")]       public string? MaterialSku { get; set; }   // SKU NVL (join server)
     [JsonPropertyName("materialName")]      public string? MaterialName { get; set; }  // ten NVL (join server)
+    [JsonPropertyName("materialUomCode")]   public string? MaterialUomCode { get; set; } // ma DVT NVL
+    [JsonPropertyName("materialUomName")]   public string? MaterialUomName { get; set; }
     [JsonPropertyName("warehouseId")]       public long WarehouseId { get; set; }
     [JsonPropertyName("warehouseName")]     public string? WarehouseName { get; set; } // ten kho (join server)
     [JsonPropertyName("qtyReserved")]       public decimal QtyReserved { get; set; }
@@ -132,6 +140,8 @@ public sealed class ProductionPlan
     [JsonPropertyName("lineCode")]          public string? LineCode { get; set; }
     [JsonPropertyName("status")]            public string Status { get; set; } = "";
     [JsonPropertyName("note")]              public string? Note { get; set; }
+    [JsonPropertyName("productUomCode")]    public string? ProductUomCode { get; set; }  // ma DVT thanh pham
+    [JsonPropertyName("productUomName")]    public string? ProductUomName { get; set; }
 }
 
 /// <summary>Cong doan san xuat (production_steps + stage).</summary>
@@ -150,6 +160,9 @@ public sealed class ProductionStep
     [JsonPropertyName("startedAt")]         public DateTime? StartedAt { get; set; }
     [JsonPropertyName("finishedAt")]        public DateTime? FinishedAt { get; set; }
     [JsonPropertyName("note")]              public string? Note { get; set; }
+    [JsonPropertyName("isSkipped")]         public bool IsSkipped { get; set; }          // true = buoc bi BO QUA cho don
+    [JsonPropertyName("productUomCode")]    public string? ProductUomCode { get; set; }  // ma DVT thanh pham
+    [JsonPropertyName("productUomName")]    public string? ProductUomName { get; set; }
 }
 
 /// <summary>Ket qua xuat kho (material_issues).</summary>
@@ -181,6 +194,8 @@ public sealed class FinishedGoodsReceipt
     [JsonPropertyName("productId")]         public long ProductId { get; set; }
     [JsonPropertyName("productSku")]        public string? ProductSku { get; set; }    // SKU ma hang (join server)
     [JsonPropertyName("productName")]       public string? ProductName { get; set; }   // ten ma hang (join server)
+    [JsonPropertyName("productUomCode")]    public string? ProductUomCode { get; set; } // ma DVT thanh pham
+    [JsonPropertyName("productUomName")]    public string? ProductUomName { get; set; }
     [JsonPropertyName("warehouseId")]       public long WarehouseId { get; set; }
     [JsonPropertyName("warehouseName")]     public string? WarehouseName { get; set; } // ten kho (join server)
     [JsonPropertyName("qtyReceived")]       public decimal QtyReceived { get; set; }
@@ -196,6 +211,10 @@ public sealed class LossReport
     [JsonPropertyName("materialId")]        public long MaterialId { get; set; }
     [JsonPropertyName("materialSku")]       public string? MaterialSku { get; set; }   // SKU NVL (join server)
     [JsonPropertyName("materialName")]      public string? MaterialName { get; set; }  // ten NVL (join server)
+    [JsonPropertyName("materialUomCode")]   public string? MaterialUomCode { get; set; } // ma DVT NVL (cho cap phat/dinh muc/hao hut)
+    [JsonPropertyName("materialUomName")]   public string? MaterialUomName { get; set; }
+    [JsonPropertyName("productUomCode")]    public string? ProductUomCode { get; set; }  // ma DVT thanh pham (cho SL TP)
+    [JsonPropertyName("productUomName")]    public string? ProductUomName { get; set; }
     [JsonPropertyName("qtyIssued")]         public decimal QtyIssued { get; set; }
     [JsonPropertyName("qtyStandard")]       public decimal QtyStandard { get; set; }
     [JsonPropertyName("qtyVariance")]       public decimal QtyVariance { get; set; }
@@ -238,6 +257,8 @@ public sealed class OrderMaterialRequirement
     [JsonPropertyName("materialId")]           public long MaterialId { get; set; }
     [JsonPropertyName("materialSku")]          public string? MaterialSku { get; set; }   // SKU NVL (join server)
     [JsonPropertyName("materialName")]         public string? MaterialName { get; set; }  // ten NVL (join server)
+    [JsonPropertyName("materialUomCode")]      public string? MaterialUomCode { get; set; } // ma DVT NVL
+    [JsonPropertyName("materialUomName")]      public string? MaterialUomName { get; set; }
     [JsonPropertyName("requiredQty")]          public decimal RequiredQty { get; set; }
     [JsonPropertyName("totalAvailable")]       public decimal TotalAvailable { get; set; }
     [JsonPropertyName("shortageQty")]          public decimal ShortageQty { get; set; }
@@ -315,4 +336,53 @@ public sealed class MonthlyStats
     [JsonPropertyName("fgQty")]          public decimal FgQty { get; set; }
     [JsonPropertyName("lossVariance")]   public decimal LossVariance { get; set; }
     [JsonPropertyName("alertCount")]     public long AlertCount { get; set; }
+}
+
+// =====================================================================================
+// QUY TRINH SAN XUAT LINH HOAT (V006)
+// =====================================================================================
+
+/// <summary>1 cong doan trong danh muc (Cat vai, May, QC, In, Dong goi...).</summary>
+public sealed class Stage
+{
+    [JsonPropertyName("id")]       public long Id { get; set; }
+    [JsonPropertyName("code")]     public string Code { get; set; } = "";
+    [JsonPropertyName("name")]     public string Name { get; set; } = "";
+    [JsonPropertyName("seq")]      public int Seq { get; set; }
+    [JsonPropertyName("isActive")] public bool IsActive { get; set; }
+    public override string ToString() => $"{Name} ({Code})";
+}
+
+/// <summary>1 mau quy trinh san xuat = 1 chuoi cong doan.</summary>
+public sealed class Routing
+{
+    [JsonPropertyName("id")]        public long Id { get; set; }
+    [JsonPropertyName("code")]      public string Code { get; set; } = "";
+    [JsonPropertyName("name")]      public string Name { get; set; } = "";
+    [JsonPropertyName("note")]      public string? Note { get; set; }
+    [JsonPropertyName("isActive")]  public bool IsActive { get; set; }
+    [JsonPropertyName("isDefault")] public bool IsDefault { get; set; }
+    [JsonPropertyName("stepCount")] public int StepCount { get; set; }
+    [JsonPropertyName("createdAt")] public DateTime CreatedAt { get; set; }
+    public override string ToString() => IsDefault ? $"{Name} (mac dinh)" : Name;
+}
+
+/// <summary>1 buoc trong mau quy trinh.</summary>
+public sealed class RoutingStep
+{
+    [JsonPropertyName("id")]         public long Id { get; set; }
+    [JsonPropertyName("routingId")]  public long RoutingId { get; set; }
+    [JsonPropertyName("stageId")]    public long StageId { get; set; }
+    [JsonPropertyName("stageCode")]  public string StageCode { get; set; } = "";
+    [JsonPropertyName("stageName")]  public string StageName { get; set; } = "";
+    [JsonPropertyName("seq")]        public int Seq { get; set; }
+    [JsonPropertyName("isOptional")] public bool IsOptional { get; set; }
+    [JsonPropertyName("note")]       public string? Note { get; set; }
+}
+
+/// <summary>Mau quy trinh + day du cac buoc (GET /routings/{id}).</summary>
+public sealed class RoutingDetail
+{
+    [JsonPropertyName("routing")] public Routing? Routing { get; set; }
+    [JsonPropertyName("steps")]   public List<RoutingStep> Steps { get; set; } = new();
 }

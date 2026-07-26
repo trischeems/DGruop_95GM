@@ -64,6 +64,18 @@ public sealed partial class ApiClient
     public Task<StockTransactionResult> ReceiveStockAsync(object request, CancellationToken ct = default) =>
         PostAsync<StockTransactionResult>($"{_prefix}/stock/receive", request, ct);
 
+    /// <summary>Tao phieu nhap kho NHIEU DONG (cong ton mọi dong trong 1 transaction).</summary>
+    public Task<StockReceiptResult> CreateReceiptAsync(object request, CancellationToken ct = default) =>
+        PostAsync<StockReceiptResult>($"{_prefix}/stock/receipts", request, ct);
+
+    /// <summary>Danh sach phieu nhap kho (loc theo kho neu co).</summary>
+    public Task<List<StockReceipt>> GetReceiptsAsync(long? warehouseId = null, CancellationToken ct = default) =>
+        GetListAsync<StockReceipt>($"{_prefix}/stock/receipts" + (warehouseId.HasValue ? $"?warehouseId={warehouseId}" : ""), ct);
+
+    /// <summary>Lich su giao dich kho (don gia tung lan), loc theo NVL neu co.</summary>
+    public Task<List<StockTransaction>> GetStockTransactionsAsync(long? materialId = null, int limit = 200, CancellationToken ct = default) =>
+        GetListAsync<StockTransaction>($"{_prefix}/stock/transactions?limit={limit}" + (materialId.HasValue ? $"&materialId={materialId}" : ""), ct);
+
     // ----- Bao cao -----
     public Task<List<MaterialStock>> GetLowStockAsync(int? year = null, int? month = null, CancellationToken ct = default) =>
         GetListAsync<MaterialStock>($"{_prefix}/reports/low-stock?x=1{Period(year, month)}", ct);

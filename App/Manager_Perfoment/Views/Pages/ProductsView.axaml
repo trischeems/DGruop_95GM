@@ -10,29 +10,15 @@
     <!-- Form gon phia tren (Auto), bang danh muc chiem het phan con lai (*) -->
     <Grid RowDefinitions="Auto,*,Auto">
 
-        <!-- Card 1: Tao ma hang -->
+        <!-- Card 1: Tao ma hang -> mo CUA SO rieng de nhap. -->
         <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
-            <Grid RowDefinitions="Auto,Auto">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
-                    <TextBlock Classes="h2" Text="Tạo mã hàng" VerticalAlignment="Center"/>
-                    <Button Grid.Column="1" Classes="accent" Content="+ Tạo mã hàng"
-                            Command="{Binding CreateCommand}" IsEnabled="{Binding !IsBusy}"/>
-                </Grid>
-                <Grid Grid.Row="1" ColumnDefinitions="*,2*,*">
-                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="SKU"/>
-                        <TextBox Text="{Binding NewSku}" Watermark="VD: SP-001"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="Tên"/>
-                        <TextBox Text="{Binding NewName}" Watermark="VD: Áo sơ mi"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="2">
-                        <TextBlock Classes="label" Text="ĐVT"/>
-                        <AutoCompleteBox ItemsSource="{Binding Uoms}" SelectedItem="{Binding SelectedUom, Mode=TwoWay}"
-                              FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
-                    </StackPanel>
-                </Grid>
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Classes="h2" Text="Mã hàng"/>
+                    <TextBlock Classes="muted" Text="Tạo mã hàng mới trong một cửa sổ riêng cho tiện nhập."/>
+                </StackPanel>
+                <Button Grid.Column="1" Classes="accent" Content="+ Tạo mã hàng" VerticalAlignment="Center"
+                        Command="{Binding CreateCommand}" IsEnabled="{Binding !IsBusy}"/>
             </Grid>
         </Border>
 
@@ -71,7 +57,7 @@
                 <DataGrid Grid.Row="2" ItemsSource="{Binding Products}" IsReadOnly="True"
                           SelectedItem="{Binding SelectedListProduct}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="72"/>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="86"/>
                         <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="*" MinWidth="140"/>
                         <DataGridTextColumn Header="Tên" Binding="{Binding Name}" Width="2*" MinWidth="220"/>
                         <DataGridTextColumn Header="ĐVT" Binding="{Binding UomName}" Width="*" MinWidth="110"/>

@@ -20,12 +20,23 @@ public sealed partial class ProductionOrdersViewModel : PageViewModel
     [ObservableProperty] private bool _isBusy;
 
     public ObservableCollection<Product> Products { get; } = new();
+    /// <summary>Ma hang sau khi loc theo o tim o cot trai dialog tao don.</summary>
+    public ObservableCollection<Product> FilteredProducts { get; } = new();
+    /// <summary>Cac mau quy trinh dang dung — chon khi tao don (V006).</summary>
+    public ObservableCollection<Routing> Routings { get; } = new();
     public ObservableCollection<ProductionOrder> Orders { get; } = new();
     public ObservableCollection<Reservation> Reservations { get; } = new();
     public ObservableCollection<OrderMaterialRequirement> Requirements { get; } = new();
 
     [ObservableProperty] private Product? _selectedProduct;
     [ObservableProperty] private ProductionOrder? _selectedOrder;
+
+    /// <summary>O tim ma hang o cot trai dialog tao don.</summary>
+    [ObservableProperty] private string _productListFilter = "";
+    partial void OnProductListFilterChanged(string value) => ApplyProductFilter();
+
+    /// <summary>Mau quy trinh chon khi tao don (null = dung mau mac dinh cua he thong).</summary>
+    [ObservableProperty] private Routing? _selectedRouting;
 
     [ObservableProperty] private string _newOrderNo = "";
     [ObservableProperty] private decimal _newQuantity = 1;
@@ -65,7 +76,16 @@ public sealed partial class ProductionOrdersViewModel : PageViewModel
         var ps = await _api.GetProductsAsync(false, pfy, pfm);
         Products.Clear();
         foreach (var p in ps) Products.Add(p);
+        ApplyProductFilter();
         SelectedProduct = Products.FirstOrDefault(p => p.Id == keepProduct);
+
+        // Mau quy trinh de chon khi tao don.
+        var keepRouting = SelectedRouting?.Id;
+        var rts = await _api.GetRoutingsAsync(activeOnly: true);
+        Routings.Clear();
+        foreach (var r in rts) Routings.Add(r);
+        SelectedRouting = Routings.FirstOrDefault(r => r.Id == keepRouting)
+                          ?? Routings.FirstOrDefault(r => r.IsDefault);
 
         var (fy, fm) = FilterPeriod;
         var os = await _api.GetOrdersAsync(null, fy, fm);
@@ -78,6 +98,17 @@ public sealed partial class ProductionOrdersViewModel : PageViewModel
         await LoadDetailAsync();
 
         Status = $"{Orders.Count} đơn.";
+    }
+
+    private void ApplyProductFilter()
+    {
+        var kw = (ProductListFilter ?? "").Trim();
+        FilteredProducts.Clear();
+        foreach (var p in Products)
+            if (kw.Length == 0
+                || (p.Name?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (p.Sku?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false))
+                FilteredProducts.Add(p);
     }
 
     private bool _suppressSelectionHook;
@@ -107,17 +138,20 @@ public sealed partial class ProductionOrdersViewModel : PageViewModel
         foreach (var q in rq) Requirements.Add(q);
     }
 
+    /// <summary>Mo CUA SO rieng de tao don san xuat. Dien xong bam Luu -> goi API, dong dialog, nap lai.</summary>
     [RelayCommand]
     private async Task CreateAsync()
     {
-        if (SelectedProduct is null || string.IsNullOrWhiteSpace(NewOrderNo))
+        NewOrderNo = ""; SelectedProduct = null; NewQuantity = 1;
+        ProductListFilter = "";
+        SelectedRouting ??= Routings.FirstOrDefault(r => r.IsDefault) ?? Routings.FirstOrDefault();
+        var form = new Views.Dialogs.OrderFormView { DataContext = this };
+        await DialogService.ShowFormAsync("Tạo đơn sản xuất", form, async () =>
         {
-            Status = "Nhập số đơn và chọn mã hàng.";
-            return;
-        }
+            if (string.IsNullOrWhiteSpace(NewOrderNo)) return "Nhập số đơn.";
+            if (SelectedProduct is null) return "Chọn mã hàng.";
+            if (NewQuantity <= 0) return "Số lượng phải > 0.";
 
-        await RunAsync("Đang tạo đơn...", async () =>
-        {
             var orderNo = NewOrderNo.Trim();
             var id = await _api.CreateOrderAsync(new
             {
@@ -126,13 +160,15 @@ public sealed partial class ProductionOrdersViewModel : PageViewModel
                 bomId = (long?)null,
                 quantity = NewQuantity,
                 dueDate = (string?)null,
-                note = (string?)null
+                note = (string?)null,
+                routingId = SelectedRouting?.Id
             });
-            NewOrderNo = "";
-            // Nap lai va chon ngay don vua tao de thay chi tiet nhu cau/giu cho.
             await LoadCoreAsync(id);
-            Status = $"Đã tạo đơn {orderNo} (DRAFT).";
-        });
+            Status = SelectedRouting is null
+                ? $"Đã tạo đơn {orderNo} (DRAFT)."
+                : $"Đã tạo đơn {orderNo} (DRAFT) — quy trình {SelectedRouting.Name}.";
+            return null;
+        }, saveText: "Tạo đơn", width: 860, height: 470, scrollable: false);
     }
 
     [RelayCommand]

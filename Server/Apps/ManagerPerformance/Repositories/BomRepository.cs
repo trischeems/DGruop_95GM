@@ -9,11 +9,13 @@ public sealed class BomRepository : IBomRepository
     private const string HeaderCols =
         "id, product_id, version, status, effective_from, note";
 
-    // JOIN materials de tra kem SKU/ten NVL canh MaterialId.
+    // JOIN materials de tra kem SKU/ten NVL canh MaterialId; JOIN units_of_measure lay DVT.
     private const string ItemSelect =
         "SELECT bi.id, bi.bom_id, bi.material_id, m.sku AS material_sku, m.name AS material_name, " +
+        "u.code AS material_uom_code, u.name AS material_uom_name, " +
         "bi.qty_per_unit, bi.waste_pct, bi.note " +
-        "FROM bom_items bi LEFT JOIN materials m ON m.id = bi.material_id";
+        "FROM bom_items bi LEFT JOIN materials m ON m.id = bi.material_id " +
+        "LEFT JOIN units_of_measure u ON u.id = m.uom_id";
 
     public Task<IEnumerable<BomDto>> ListAsync(TenantScope scope, long? productId)
     {

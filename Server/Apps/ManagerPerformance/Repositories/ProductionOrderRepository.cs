@@ -9,15 +9,21 @@ public sealed class ProductionOrderRepository : IProductionOrderRepository
     // JOIN products de tra kem SKU/ten ma hang -> UI hien thi ten canh ProductId.
     private const string OrderSelect =
         "SELECT po.id, po.order_no, po.product_id, p.sku AS product_sku, p.name AS product_name, " +
-        "po.bom_id, po.quantity, po.status, po.due_date, po.confirmed_at " +
-        "FROM production_orders po LEFT JOIN products p ON p.id = po.product_id";
+        "pu.code AS product_uom_code, pu.name AS product_uom_name, " +
+        "po.bom_id, po.quantity, po.status, po.due_date, po.confirmed_at, " +
+        "po.routing_id, rt.name AS routing_name " +
+        "FROM production_orders po LEFT JOIN products p ON p.id = po.product_id " +
+        "LEFT JOIN units_of_measure pu ON pu.id = p.uom_id " +
+        "LEFT JOIN production_routings rt ON rt.id = po.routing_id";
 
-    // JOIN materials + warehouses de tra kem ten NVL/kho canh MaterialId/WarehouseId.
+    // JOIN materials + units_of_measure + warehouses de tra kem ten NVL/DVT/kho canh MaterialId/WarehouseId.
     private const string ReservationSelect =
         "SELECT r.id, r.production_order_id, r.material_id, m.sku AS material_sku, m.name AS material_name, " +
+        "u.code AS material_uom_code, u.name AS material_uom_name, " +
         "r.warehouse_id, w.name AS warehouse_name, r.qty_reserved, r.status " +
         "FROM material_reservations r " +
         "LEFT JOIN materials m ON m.id = r.material_id " +
+        "LEFT JOIN units_of_measure u ON u.id = m.uom_id " +
         "LEFT JOIN warehouses w ON w.id = r.warehouse_id";
 
     public Task<IEnumerable<ProductionOrderDto>> ListAsync(TenantScope scope, string? status, int? year, int? month)
@@ -38,11 +44,12 @@ public sealed class ProductionOrderRepository : IProductionOrderRepository
     public Task<long> InsertAsync(TenantScope scope, CreateProductionOrderRequest req) =>
         scope.QuerySingleAsync<long>(
             """
-            INSERT INTO production_orders (order_no, product_id, bom_id, quantity, status, due_date, note)
-            VALUES (@OrderNo, @ProductId, @BomId, @Quantity, 'DRAFT', @DueDate, @Note)
+            INSERT INTO production_orders (order_no, product_id, bom_id, quantity, status, due_date, note, routing_id)
+            VALUES (@OrderNo, @ProductId, @BomId, @Quantity, 'DRAFT', @DueDate, @Note,
+                    COALESCE(@RoutingId, (SELECT id FROM production_routings WHERE is_default AND is_active LIMIT 1)))
             RETURNING id
             """,
-            new { req.OrderNo, req.ProductId, req.BomId, req.Quantity, req.DueDate, req.Note });
+            new { req.OrderNo, req.ProductId, req.BomId, req.Quantity, req.DueDate, req.Note, req.RoutingId });
 
     public Task<IEnumerable<ReservationDto>> ListReservationsAsync(TenantScope scope, long orderId) =>
         scope.QueryAsync<ReservationDto>(

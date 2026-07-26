@@ -41,31 +41,39 @@
         <Setter Property="Padding" Value="14"/>
     </Style>
 
+    <!-- ============ TIEU DE NHOM SIDEBAR ============ -->
+    <Style Selector="TextBlock.navgroup">
+        <Setter Property="Foreground" Value="#9AA3AF"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Margin" Value="18,10,12,4"/>
+    </Style>
+
     <!-- ============ NUT MENU SIDEBAR ============ -->
     <Style Selector="Button.nav">
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
-        <Setter Property="Padding" Value="12,9"/>
+        <Setter Property="Padding" Value="14,10"/>
         <Setter Property="Margin" Value="8,1"/>
-        <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="FontSize" Value="13.5"/>
         <Setter Property="FontWeight" Value="Medium"/>
     </Style>
     <Style Selector="Button.nav:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="#EEF1F4"/>
         <Setter Property="TextBlock.Foreground" Value="{StaticResource TextBrush}"/>
     </Style>
-    <!-- Trang thai dang chon (class 'active' gan tu binding) -->
+    <!-- Trang thai dang chon: nen xanh nhat + chu dam mau accent (noi bat, chac chan render). -->
     <Style Selector="Button.nav.active">
-        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-        <Setter Property="Foreground" Value="White"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Background" Value="#E7EEFB"/>
+        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
     </Style>
     <Style Selector="Button.nav.active:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-        <Setter Property="TextBlock.Foreground" Value="White"/>
+        <Setter Property="Background" Value="#DEE8FA"/>
+        <Setter Property="TextBlock.Foreground" Value="{StaticResource AccentBrush}"/>
     </Style>
 
     <!-- ============ NUT ACCENT (nut chinh) ============ -->
@@ -174,12 +182,12 @@
         <Setter Property="MinHeight" Value="34"/>
         <Setter Property="CornerRadius" Value="0"/>
     </Style>
-    <!-- O SEARCH co goi y (thay menu chon du lieu): go de loc, danh sach goi y cuon duoc. -->
+    <!-- O CHON du lieu: BAM la xo ca danh sach de cuon chon; go them chu de loc nhanh. -->
     <Style Selector="AutoCompleteBox">
         <Setter Property="MinHeight" Value="34"/>
         <Setter Property="CornerRadius" Value="0"/>
-        <Setter Property="MaxDropDownHeight" Value="320"/>
-        <Setter Property="Watermark" Value="Gõ để tìm..."/>
+        <Setter Property="MaxDropDownHeight" Value="360"/>
+        <Setter Property="Watermark" Value="Bấm để chọn hoặc gõ để tìm..."/>
     </Style>
 
     <!-- ComboBox (field menu option): vuong goc, dong bo chieu cao. -->
@@ -188,6 +196,43 @@
         <Setter Property="CornerRadius" Value="0"/>
         <Setter Property="Padding" Value="10,5"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ============ LISTBOX DANH SACH CHON (cot trai master) ============ -->
+    <!-- Danh sach hien san de bam chon (thay dropdown). Moi dong 2 tang: chinh + phu. -->
+    <Style Selector="ListBox.master">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+    <Style Selector="ListBox.master ListBoxItem">
+        <Setter Property="Padding" Value="10,7"/>
+        <Setter Property="Margin" Value="0,1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="ListBox.master ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#EEF1F4"/>
+    </Style>
+    <Style Selector="ListBox.master ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="#E7EEFB"/>
+    </Style>
+    <!-- Ky hieu DON VI TINH (kg/m/cai...) hien nhat + nho canh gia tri so. -->
+    <Style Selector="TextBlock.uom">
+        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Dong chinh + dong phu trong moi item danh sach -->
+    <Style Selector="TextBlock.itemmain">
+        <Setter Property="FontSize" Value="13.5"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+    <Style Selector="TextBlock.itemsub">
+        <Setter Property="FontSize" Value="11.5"/>
+        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
 
     <!-- ============ DATAGRID kieu so kho: ke o day du, header xam, dong gon ============ -->
@@ -209,7 +254,12 @@
         <Setter Property="Foreground" Value="#374151"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="Padding" Value="8,0"/>
+    </Style>
+    <!-- Tieu de cot KHONG bi cat: cho chu co lai vua o (khong che chu ben trai). -->
+    <Style Selector="DataGridColumnHeader TextBlock">
+        <Setter Property="TextTrimming" Value="None"/>
+        <Setter Property="TextWrapping" Value="NoWrap"/>
     </Style>
     <Style Selector="DataGridCell">
         <Setter Property="FontSize" Value="13"/>

@@ -158,4 +158,39 @@ public sealed partial class ApiClient
         GetListAsync<MonthlyStats>($"{_prefix}/reports/monthly-stats?year={year}", ct);
     public Task<List<OrderMaterialRequirement>> GetOrderRequirementsAsync(long? orderId = null, CancellationToken ct = default) =>
         GetListAsync<OrderMaterialRequirement>($"{_prefix}/reports/order-requirements" + (orderId.HasValue ? $"?orderId={orderId}" : ""), ct);
+
+    // ===== Quy trinh linh hoat: danh muc cong doan + mau quy trinh (V006) =====
+    public Task<List<Stage>> GetStagesAsync(bool activeOnly = true, CancellationToken ct = default) =>
+        GetListAsync<Stage>($"{_prefix}/stages?activeOnly={(activeOnly ? "true" : "false")}", ct);
+    public Task<long> CreateStageAsync(object body, CancellationToken ct = default) =>
+        PostForIdAsync($"{_prefix}/stages", body, ct);
+    public Task UpdateStageAsync(long id, object body, CancellationToken ct = default) =>
+        ActionAsync(HttpMethod.Put, $"{_prefix}/stages/{id}", body, ct);
+
+    public Task<List<Routing>> GetRoutingsAsync(bool activeOnly = true, CancellationToken ct = default) =>
+        GetListAsync<Routing>($"{_prefix}/routings?activeOnly={(activeOnly ? "true" : "false")}", ct);
+    public Task<RoutingDetail?> GetRoutingAsync(long id, CancellationToken ct = default) =>
+        GetOneAsync<RoutingDetail>($"{_prefix}/routings/{id}", ct);
+    public Task<long> CreateRoutingAsync(object body, CancellationToken ct = default) =>
+        PostForIdAsync($"{_prefix}/routings", body, ct);
+    public Task UpdateRoutingAsync(long id, object body, CancellationToken ct = default) =>
+        ActionAsync(HttpMethod.Put, $"{_prefix}/routings/{id}", body, ct);
+    public Task DeleteRoutingAsync(long id, CancellationToken ct = default) =>
+        ActionAsync(HttpMethod.Delete, $"{_prefix}/routings/{id}", null, ct);
+
+    // ----- Sua buoc rieng cho tung don -----
+    /// <summary>Ap 1 mau quy trinh vao don (co the bat dau tu buoc giua).</summary>
+    public Task ApplyRoutingAsync(long orderId, object body, CancellationToken ct = default) =>
+        ActionAsync(HttpMethod.Post, $"{_prefix}/production-steps/apply-routing/{orderId}", body, ct);
+    /// <summary>Them 1 cong doan le vao don (ngoai mau).</summary>
+    public Task<long> AddOrderStepAsync(long orderId, object body, CancellationToken ct = default) =>
+        PostForIdAsync($"{_prefix}/production-steps/order/{orderId}", body, ct);
+    /// <summary>Bat/tat co BO QUA cho 1 buoc (nhay buoc).</summary>
+    public Task SkipStepAsync(long stepId, object body, CancellationToken ct = default) =>
+        ActionAsync(HttpMethod.Put, $"{_prefix}/production-steps/{stepId}/skip", body, ct);
+    public Task DeleteStepAsync(long stepId, CancellationToken ct = default) =>
+        ActionAsync(HttpMethod.Delete, $"{_prefix}/production-steps/{stepId}", null, ct);
+    /// <summary>Doi thu tu cac buoc cua don (gui danh sach id theo thu tu moi).</summary>
+    public Task ReorderStepsAsync(long orderId, object body, CancellationToken ct = default) =>
+        ActionAsync(HttpMethod.Put, $"{_prefix}/production-steps/order/{orderId}/reorder", body, ct);
 }

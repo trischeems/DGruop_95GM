@@ -10,7 +10,9 @@ public sealed record ProductionPlanDto(
     DateTime? PlannedEnd,
     string? LineCode,
     string Status,
-    string? Note);
+    string? Note,
+    string? ProductUomCode,  // Ma DVT thanh pham (join units_of_measure qua production_orders.product_id)
+    string? ProductUomName); // Ten DVT thanh pham (join units_of_measure qua production_orders.product_id)
 
 /// <summary>Yeu cau tao ke hoach san xuat moi.</summary>
 public sealed record CreateProductionPlanRequest(

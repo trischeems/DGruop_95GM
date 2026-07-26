@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using DGroup.Server.Apps.ManagerPerformance.Contracts;
 using DGroup.Server.Apps.ManagerPerformance.Repositories;
 using DGroup.Server.Infrastructure.Data;
@@ -25,20 +26,38 @@ public sealed class ProductService
     public Task<ProductDto?> GetAsync(long id, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, s => _repo.GetByIdAsync(s, id), ct);
 
+    // Quy chuan SKU: bat dau bang chu/so, sau do chu/so/dau . _ - , dai 2..50.
+    // Chan ky tu dac biet (khoang trang, @#$%...) va SKU qua ngan.
+    private static readonly Regex SkuPattern =
+        new(@"^[A-Za-z0-9][A-Za-z0-9._-]{1,49}$", RegexOptions.Compiled);
+
     public Task<long> CreateAsync(CreateProductRequest req, CancellationToken ct)
     {
-        Validate(req);
-        return _db.RunAsync(_tenant.Tenant, s => _repo.InsertAsync(s, req), ct);
+        var normalized = Validate(req);
+        return _db.RunAsync(_tenant.Tenant, async s =>
+        {
+            // Chan trung SKU (khong phan biet hoa thuong) -> loi 400 ro rang thay vi 500.
+            if (await _repo.SkuExistsAsync(s, normalized.Sku))
+                throw new ArgumentException($"SKU '{normalized.Sku}' da ton tai. Vui long dung SKU khac.");
+            return await _repo.InsertAsync(s, normalized);
+        }, ct);
     }
 
     public Task<bool> UpdateAsync(long id, UpdateProductRequest req, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, s => _repo.UpdateAsync(s, id, req), ct);
 
-    private static void Validate(CreateProductRequest req)
+    // Validate + chuan hoa: trim, SKU viet HOA. Tra ve request da chuan hoa de dung nhat quan.
+    private static CreateProductRequest Validate(CreateProductRequest req)
     {
-        if (string.IsNullOrWhiteSpace(req.Sku)) throw new ArgumentException("SKU khong duoc rong.");
-        if (string.IsNullOrWhiteSpace(req.Name)) throw new ArgumentException("Ten ma hang khong duoc rong.");
+        var sku = (req.Sku ?? "").Trim().ToUpperInvariant();
+        var name = (req.Name ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(sku)) throw new ArgumentException("SKU khong duoc rong.");
+        if (!SkuPattern.IsMatch(sku))
+            throw new ArgumentException(
+                "SKU khong hop le. Chi dung chu, so va cac dau . _ - ; bat dau bang chu/so; dai 2-50 ky tu.");
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Ten ma hang khong duoc rong.");
         if (req.UomId <= 0) throw new ArgumentException("uomId khong hop le.");
+        return req with { Sku = sku, Name = name };
     }
 
     /// <summary>Anh huong khi xoa ma hang (phuc vu popup canh bao truoc khi xoa).</summary>

@@ -9,6 +9,8 @@ public sealed record FinishedGoodsReceiptDto(
     long ProductId,
     string? ProductSku,      // SKU ma hang (join products) - hien thi canh ProductId
     string? ProductName,     // Ten ma hang (join products)
+    string? ProductUomCode,  // Ma DVT thanh pham (join units_of_measure qua products.uom_id)
+    string? ProductUomName,  // Ten DVT thanh pham (join units_of_measure qua products.uom_id)
     long WarehouseId,
     string? WarehouseName,   // Ten kho (join warehouses) - hien thi canh WarehouseId
     decimal QtyReceived,

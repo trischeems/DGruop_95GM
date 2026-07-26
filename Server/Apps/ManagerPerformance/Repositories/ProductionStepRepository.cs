@@ -7,10 +7,15 @@ public sealed class ProductionStepRepository : IProductionStepRepository
 {
     public Task<int> InitStepsAsync(TenantScope scope, long orderId) =>
         scope.ExecuteAsync(
-            // Tao du 4 dong cong doan cho don; da co (UNIQUE order+stage) thi bo qua.
+            // Sinh buoc theo MAU QUY TRINH cua don (V006): uu tien routing_id cua don,
+            // chua chon thi lay mau mac dinh. Buoc da co (UNIQUE order+stage) thi bo qua.
             """
-            INSERT INTO production_steps (production_order_id, stage_id, status)
-            SELECT @OrderId, id, 'PENDING' FROM production_stages
+            INSERT INTO production_steps (production_order_id, stage_id, seq, status)
+            SELECT @OrderId, rs.stage_id, rs.seq, 'PENDING'
+            FROM routing_steps rs
+            WHERE rs.routing_id = COALESCE(
+                    (SELECT routing_id FROM production_orders WHERE id = @OrderId),
+                    (SELECT id FROM production_routings WHERE is_default AND is_active LIMIT 1))
             ON CONFLICT (production_order_id, stage_id) DO NOTHING
             """, new { OrderId = orderId });
 
@@ -18,13 +23,18 @@ public sealed class ProductionStepRepository : IProductionStepRepository
         scope.QueryAsync<ProductionStepDto>(
             """
             SELECT ps.id, ps.production_order_id, ps.stage_id,
-                   st.code AS stage_code, st.name AS stage_name, st.seq,
+                   st.code AS stage_code, st.name AS stage_name,
+                   COALESCE(ps.seq, st.seq) AS seq,
                    ps.status, ps.qty_in, ps.qty_out, ps.qty_defect,
-                   ps.started_at, ps.finished_at, ps.note
+                   ps.started_at, ps.finished_at, ps.note, ps.is_skipped,
+                   pu.code AS product_uom_code, pu.name AS product_uom_name
             FROM production_steps ps
             JOIN production_stages st ON st.id = ps.stage_id
+            LEFT JOIN production_orders po ON po.id = ps.production_order_id
+            LEFT JOIN products p ON p.id = po.product_id
+            LEFT JOIN units_of_measure pu ON pu.id = p.uom_id
             WHERE ps.production_order_id = @OrderId
-            ORDER BY st.seq
+            ORDER BY COALESCE(ps.seq, st.seq), st.name
             """, new { OrderId = orderId });
 
     public async Task<(string Status, DateTime? StartedAt)?> LockStepAsync(TenantScope scope, long id)
@@ -35,6 +45,37 @@ public sealed class ProductionStepRepository : IProductionStepRepository
             new { Id = id });
         return row is null ? null : (row.Status, row.StartedAt);
     }
+
+    public Task<StepContextRow?> LockStepContextAsync(TenantScope scope, long id) =>
+        scope.QueryFirstOrDefaultAsync<StepContextRow>(
+            """
+            SELECT ps.production_order_id, st.code AS stage_code,
+                   COALESCE(ps.seq, st.seq) AS seq, ps.status
+            FROM production_steps ps
+            JOIN production_stages st ON st.id = ps.stage_id
+            WHERE ps.id = @Id
+            FOR UPDATE OF ps
+            """, new { Id = id });
+
+    // Day don CONFIRMED -> IN_PROGRESS (khi cong doan bat dau chay). Chi doi khi dang CONFIRMED.
+    public Task<int> MarkOrderInProgressAsync(TenantScope scope, long orderId) =>
+        scope.ExecuteAsync(
+            "UPDATE production_orders SET status = 'IN_PROGRESS', updated_at = now() WHERE id = @orderId AND status = 'CONFIRMED'",
+            new { orderId });
+
+    // Day ke hoach PLANNED/RELEASED -> IN_PROGRESS khi bat dau san xuat.
+    public Task<int> MarkPlansInProgressAsync(TenantScope scope, long orderId) =>
+        scope.ExecuteAsync(
+            """
+            UPDATE production_plans SET status = 'IN_PROGRESS', updated_at = now()
+            WHERE production_order_id = @orderId AND status IN ('PLANNED', 'RELEASED')
+            """, new { orderId });
+
+    // Day ke hoach IN_PROGRESS -> DONE khi cong doan cuoi hoan tat.
+    public Task<int> MarkPlansDoneAsync(TenantScope scope, long orderId) =>
+        scope.ExecuteAsync(
+            "UPDATE production_plans SET status = 'DONE', updated_at = now() WHERE production_order_id = @orderId AND status = 'IN_PROGRESS'",
+            new { orderId });
 
     public Task<int> UpdateStepAsync(TenantScope scope, long id, UpdateStepRequest req) =>
         scope.ExecuteAsync(

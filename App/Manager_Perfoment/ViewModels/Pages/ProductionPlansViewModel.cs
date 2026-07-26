@@ -20,7 +20,28 @@ public sealed partial class ProductionPlansViewModel : PageViewModel
     [ObservableProperty] private bool _isBusy;
 
     public ObservableCollection<ProductionOrder> Orders { get; } = new();
+    // Danh sach don hien o COT TRAI (da loc theo o tim ListFilter). Bam 1 dong = chon don.
+    public ObservableCollection<ProductionOrder> FilteredOrders { get; } = new();
     public ObservableCollection<ProductionPlan> Plans { get; } = new();
+
+    // O tim cot trai: loc Orders theo so don / ten ma hang / SKU (khong phan biet hoa thuong).
+    [ObservableProperty] private string _listFilter = "";
+    partial void OnListFilterChanged(string value) => ApplyOrderFilter();
+
+    /// <summary>Rebuild FilteredOrders tu Orders theo ListFilter. Goi sau khi nap Orders hoac doi o tim.</summary>
+    private void ApplyOrderFilter()
+    {
+        var kw = (ListFilter ?? "").Trim();
+        FilteredOrders.Clear();
+        foreach (var o in Orders)
+        {
+            if (kw.Length == 0
+                || (o.OrderNo?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (o.ProductName?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (o.ProductSku?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false))
+                FilteredOrders.Add(o);
+        }
+    }
 
     public string[] StatusOptions { get; } = new[] { "PLANNED", "RELEASED", "IN_PROGRESS", "DONE", "CANCELLED" };
 
@@ -68,6 +89,7 @@ public sealed partial class ProductionPlansViewModel : PageViewModel
         var os = await _api.GetOrdersAsync(null, ofy, ofm);
         Orders.Clear();
         foreach (var o in os) Orders.Add(o);
+        ApplyOrderFilter();   // cap nhat danh sach cot trai theo o tim
         // Chon lai; chan hook de khoi kich hoat LoadPlans 2 lan.
         _suppressSelectionHook = true;
         SelectedOrder = Orders.FirstOrDefault(o => o.Id == keepOrder);
@@ -99,12 +121,17 @@ public sealed partial class ProductionPlansViewModel : PageViewModel
         Status = $"{Plans.Count} kế hoạch.";
     }
 
+    /// <summary>Mo CUA SO rieng de tao ke hoach. Cho chon don + SL + ma chuyen.</summary>
     [RelayCommand]
     private async Task CreateAsync()
     {
-        if (SelectedOrder is null) { Status = "Chọn đơn."; return; }
-        await RunAsync("Đang tạo kế hoạch...", async () =>
+        NewPlannedQty = 1; NewLineCode = "";
+        var form = new Views.Dialogs.PlanFormView { DataContext = this };
+        await DialogService.ShowFormAsync("Tạo kế hoạch sản xuất", form, async () =>
         {
+            if (SelectedOrder is null) return "Chọn đơn sản xuất.";
+            if (NewPlannedQty <= 0) return "Số lượng kế hoạch phải > 0.";
+
             var id = await _api.CreatePlanAsync(new
             {
                 productionOrderId = SelectedOrder!.Id,
@@ -114,10 +141,10 @@ public sealed partial class ProductionPlansViewModel : PageViewModel
                 lineCode = NewLineCode,
                 note = (string?)null
             });
-            // Nap lai va chon ngay ke hoach vua tao.
             await LoadPlansCoreAsync(id);
             Status = $"Đã tạo kế hoạch id={id}.";
-        });
+            return null;
+        }, saveText: "Tạo kế hoạch", height: 320);
     }
 
     [RelayCommand]

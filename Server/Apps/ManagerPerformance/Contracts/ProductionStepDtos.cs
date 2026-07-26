@@ -14,7 +14,10 @@ public sealed record ProductionStepDto(
     decimal QtyDefect,
     DateTime? StartedAt,
     DateTime? FinishedAt,
-    string? Note);
+    string? Note,
+    bool IsSkipped,          // true = buoc nay duoc BO QUA cho don (nhay buoc, khong phai lam)
+    string? ProductUomCode,  // Ma DVT thanh pham (join units_of_measure qua production_orders.product_id)
+    string? ProductUomName); // Ten DVT thanh pham (join units_of_measure qua production_orders.product_id)
 
 /// <summary>Cap nhat 1 buoc quy trinh: trang thai + so luong vao/ra/loi + ghi chu.</summary>
 public sealed record UpdateStepRequest(

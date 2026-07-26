@@ -10,29 +10,15 @@
     <!-- Form tao don (Auto), danh sach don (*), giu cho + nhu cau (*) -->
     <Grid RowDefinitions="Auto,*,*,Auto">
 
-        <!-- Card: Tao don san xuat -->
+        <!-- Card: Tao don san xuat -> mo CUA SO rieng de nhap. -->
         <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
-            <Grid RowDefinitions="Auto,Auto">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
-                    <TextBlock Classes="h2" Text="Tạo đơn sản xuất" VerticalAlignment="Center"/>
-                    <Button Grid.Column="1" Classes="accent" Content="+ Tạo đơn"
-                            Command="{Binding CreateCommand}" IsEnabled="{Binding !IsBusy}"/>
-                </Grid>
-                <Grid Grid.Row="1" ColumnDefinitions="*,2*,*">
-                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="Số đơn"/>
-                        <TextBox Text="{Binding NewOrderNo}" Watermark="VD: PO-001"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                        <TextBlock Classes="label" Text="Mã hàng"/>
-                        <AutoCompleteBox ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
-                              FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="2">
-                        <TextBlock Classes="label" Text="Số lượng"/>
-                        <NumericUpDown Value="{Binding NewQuantity, TargetNullValue=0}" Minimum="0"/>
-                    </StackPanel>
-                </Grid>
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Classes="h2" Text="Đơn sản xuất"/>
+                    <TextBlock Classes="muted" Text="Tạo đơn mới trong một cửa sổ riêng cho tiện nhập."/>
+                </StackPanel>
+                <Button Grid.Column="1" Classes="accent" Content="+ Tạo đơn" VerticalAlignment="Center"
+                        Command="{Binding CreateCommand}" IsEnabled="{Binding !IsBusy}"/>
             </Grid>
         </Border>
 
@@ -68,12 +54,29 @@
                 <DataGrid Grid.Row="2" ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder}"
                           IsReadOnly="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="72"/>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="86"/>
                         <DataGridTextColumn Header="Số đơn" Binding="{Binding OrderNo}" Width="2*" MinWidth="140"/>
-                        <DataGridTextColumn Header="Mã hàng" Binding="{Binding ProductId}" Width="72"/>
+                        <DataGridTextColumn Header="Mã hàng" Binding="{Binding ProductId}" Width="86"/>
                         <DataGridTextColumn Header="Tên mã hàng" Binding="{Binding ProductName}" Width="2*" MinWidth="180"/>
-                        <DataGridTextColumn Header="SL" Binding="{Binding Quantity, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="90"/>
-                        <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="*" MinWidth="130"/>
+                        <DataGridTemplateColumn Header="SL" Width="*" MinWidth="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Quantity, StringFormat='{}{0:0.####}'}"/>
+                                        <TextBlock Text="{Binding ProductUomCode}" Classes="uom"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Trạng thái" Width="*" MinWidth="130">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontWeight="SemiBold"
+                                               Margin="12,0,0,0"
+                                               Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
@@ -86,10 +89,19 @@
                     <TextBlock Grid.Row="0" Classes="h2" Text="Giữ chỗ NVL" Margin="0,0,0,10"/>
                     <DataGrid Grid.Row="1" ItemsSource="{Binding Reservations}" IsReadOnly="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="NVL" Binding="{Binding MaterialId}" Width="72"/>
+                            <DataGridTextColumn Header="NVL" Binding="{Binding MaterialId}" Width="86"/>
                             <DataGridTextColumn Header="Tên NVL" Binding="{Binding MaterialName}" Width="2*" MinWidth="150"/>
                             <DataGridTextColumn Header="Kho" Binding="{Binding WarehouseName}" Width="*" MinWidth="90"/>
-                            <DataGridTextColumn Header="Giữ chỗ" Binding="{Binding QtyReserved, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="100"/>
+                            <DataGridTemplateColumn Header="Giữ chỗ" Width="*" MinWidth="110">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding QtyReserved, StringFormat='{}{0:0.####}'}"/>
+                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="*" MinWidth="100"/>
                         </DataGrid.Columns>
                     </DataGrid>
@@ -100,12 +112,48 @@
                     <TextBlock Grid.Row="0" Classes="h2" Text="Nhu cầu / thiếu hụt" Margin="0,0,0,10"/>
                     <DataGrid Grid.Row="1" ItemsSource="{Binding Requirements}" IsReadOnly="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="NVL" Binding="{Binding MaterialId}" Width="72"/>
+                            <DataGridTextColumn Header="NVL" Binding="{Binding MaterialId}" Width="86"/>
                             <DataGridTextColumn Header="Tên NVL" Binding="{Binding MaterialName}" Width="2*" MinWidth="150"/>
-                            <DataGridTextColumn Header="Cần" Binding="{Binding RequiredQty, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="85"/>
-                            <DataGridTextColumn Header="Khả dụng" Binding="{Binding TotalAvailable, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="95"/>
-                            <DataGridTextColumn Header="Thiếu" Binding="{Binding ShortageQty, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="85"/>
-                            <DataGridTextColumn Header="Đề xuất mua" Binding="{Binding SuggestedPurchaseQty, StringFormat='{}{0:0.####}'}" Width="*" MinWidth="110"/>
+                            <DataGridTemplateColumn Header="Cần" Width="*" MinWidth="95">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding RequiredQty, StringFormat='{}{0:0.####}'}"/>
+                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Khả dụng" Width="*" MinWidth="105">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding TotalAvailable, StringFormat='{}{0:0.####}'}"/>
+                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Thiếu" Width="*" MinWidth="95">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding ShortageQty, StringFormat='{}{0:0.####}'}"/>
+                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Đề xuất mua" Width="*" MinWidth="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding SuggestedPurchaseQty, StringFormat='{}{0:0.####}'}"/>
+                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

@@ -8,6 +8,8 @@ public interface IProductRepository
 {
     Task<IEnumerable<ProductDto>> ListAsync(TenantScope scope, bool activeOnly, int? year, int? month);
     Task<ProductDto?> GetByIdAsync(TenantScope scope, long id);
+    /// <summary>True neu SKU da ton tai (kiem tra trung truoc khi tao). So sanh khong phan biet hoa thuong.</summary>
+    Task<bool> SkuExistsAsync(TenantScope scope, string sku);
     Task<long> InsertAsync(TenantScope scope, CreateProductRequest req);
     Task<bool> UpdateAsync(TenantScope scope, long id, UpdateProductRequest req);
     /// <summary>Dem cac noi tham chieu ma hang (phuc vu popup canh bao xoa). Null neu khong ton tai.</summary>

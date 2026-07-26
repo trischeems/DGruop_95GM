@@ -9,7 +9,8 @@ public sealed class StockRepository : IStockRepository
     {
         // Loc theo thang/nam TAO NVL (join materials) de tab kho khong phai load het 1 luc.
         var sql = "SELECT vs.material_id, vs.sku, vs.name, vs.reorder_level, vs.reorder_quantity, " +
-                  "vs.total_on_hand, vs.total_reserved, vs.total_available, vs.is_low_stock " +
+                  "vs.total_on_hand, vs.total_reserved, vs.total_available, vs.is_low_stock, " +
+                  "vs.last_unit_cost, vs.avg_unit_cost, vs.stock_value, vs.uom_code, vs.uom_name " +
                   "FROM v_material_stock vs JOIN materials m ON m.id = vs.material_id " +
                   "WHERE (@year IS NULL OR EXTRACT(YEAR FROM m.created_at) = @year) " +
                   "AND (@month IS NULL OR EXTRACT(MONTH FROM m.created_at) = @month)" +

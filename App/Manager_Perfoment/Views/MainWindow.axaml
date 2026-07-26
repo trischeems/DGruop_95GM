@@ -18,7 +18,7 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Grid ColumnDefinitions="220,*">
+    <Grid ColumnDefinitions="248,*">
 
         <!-- ============ SIDEBAR ============ -->
         <Border Grid.Column="0" Background="{StaticResource SidebarBrush}"
@@ -40,16 +40,33 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Menu -->
+                <!-- Menu: gom theo NHOM (tieu de nhom) -> moi muc co ICON + nhan, de tim bang mat. -->
                 <ScrollViewer>
-                    <ItemsControl ItemsSource="{Binding NavItems}" Margin="0,6">
+                    <ItemsControl ItemsSource="{Binding NavGroups}" Margin="0,6,0,10">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:NavItem">
-                                <Button Classes="nav"
-                                        Classes.active="{Binding IsSelected}"
-                                        Command="{Binding $parent[ItemsControl].((vm:MainWindowViewModel)DataContext).SelectCommand}"
-                                        CommandParameter="{Binding}"
-                                        Content="{Binding Label}"/>
+                            <DataTemplate x:DataType="vm:NavGroup">
+                                <StackPanel Margin="0,4,0,2">
+                                    <!-- Tieu de nhom -->
+                                    <TextBlock Text="{Binding Title}" Classes="navgroup"/>
+                                    <!-- Cac muc trong nhom -->
+                                    <ItemsControl ItemsSource="{Binding Items}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:NavItem">
+                                                <Button Classes="nav"
+                                                        Classes.active="{Binding IsSelected}"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <Grid ColumnDefinitions="26,*">
+                                                        <TextBlock Grid.Column="0" Text="{Binding Icon}" FontSize="15"
+                                                                   VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Label}"
+                                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

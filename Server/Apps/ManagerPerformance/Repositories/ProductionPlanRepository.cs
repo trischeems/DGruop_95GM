@@ -8,8 +8,11 @@ public sealed class ProductionPlanRepository : IProductionPlanRepository
     // SELECT khop DTO (Dapper: snake_case <-> PascalCase). JOIN production_orders lay so don.
     private const string PlanSelect =
         "SELECT pp.id, pp.production_order_id, po.order_no, pp.planned_qty, pp.planned_start, " +
-        "pp.planned_end, pp.line_code, pp.status, pp.note " +
-        "FROM production_plans pp LEFT JOIN production_orders po ON po.id = pp.production_order_id";
+        "pp.planned_end, pp.line_code, pp.status, pp.note, " +
+        "pu.code AS product_uom_code, pu.name AS product_uom_name " +
+        "FROM production_plans pp LEFT JOIN production_orders po ON po.id = pp.production_order_id " +
+        "LEFT JOIN products p ON p.id = po.product_id " +
+        "LEFT JOIN units_of_measure pu ON pu.id = p.uom_id";
 
     public Task<IEnumerable<ProductionPlanDto>> ListAsync(TenantScope scope, long? orderId, int? year, int? month)
     {
@@ -55,4 +58,25 @@ public sealed class ProductionPlanRepository : IProductionPlanRepository
         await scope.ExecuteAsync(
             "UPDATE production_plans SET planned_qty = @PlannedQty, line_code = @LineCode, note = COALESCE(@Note, note) WHERE id = @id",
             new { id, req.PlannedQty, req.LineCode, req.Note }) > 0;
+
+    // Khoa dong don (FOR UPDATE) khi kiem tra tong ke hoach, chong race khi 2 user cung them plan.
+    public Task<decimal?> LockOrderQuantityAsync(TenantScope scope, long orderId) =>
+        scope.QueryFirstOrDefaultAsync<decimal?>(
+            "SELECT quantity FROM production_orders WHERE id = @orderId FOR UPDATE", new { orderId });
+
+    // Tong planned_qty hien co cua don (khong tinh CANCELLED), tru 1 plan dang sua neu co.
+    public Task<decimal> SumPlannedQtyAsync(TenantScope scope, long orderId, long? excludePlanId) =>
+        scope.ExecuteScalarAsync<decimal>(
+            """
+            SELECT COALESCE(SUM(planned_qty), 0)
+            FROM production_plans
+            WHERE production_order_id = @orderId
+              AND status <> 'CANCELLED'
+              AND (@excludePlanId IS NULL OR id <> @excludePlanId)
+            """, new { orderId, excludePlanId });
+
+    public Task<PlanLockRow?> LockPlanAsync(TenantScope scope, long id) =>
+        scope.QueryFirstOrDefaultAsync<PlanLockRow>(
+            "SELECT production_order_id, status, planned_qty FROM production_plans WHERE id = @id FOR UPDATE",
+            new { id });
 }
