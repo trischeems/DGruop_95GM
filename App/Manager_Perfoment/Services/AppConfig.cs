@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DGroup.App.ManagerPerformance.Services;
+namespace GM95.App.ManagerPerformance.Services;
 
 /// <summary>
 /// Cau hinh app doc tu config.json (nguon, canh binary). Neu co user-config.json o thu muc
@@ -16,8 +16,8 @@ public sealed class AppConfig
     public sealed class AppInfo
     {
         [JsonPropertyName("name")]   public string Name { get; init; } = "Manager_Perfoment";
-        [JsonPropertyName("title")]  public string Title { get; init; } = "DGroup - Quản lý sản xuất";
-        [JsonPropertyName("vendor")] public string Vendor { get; init; } = "Dgroup";
+        [JsonPropertyName("title")]  public string Title { get; init; } = "GM95 - Quản lý sản xuất";
+        [JsonPropertyName("vendor")] public string Vendor { get; init; } = "GM95";
     }
 
     public sealed class ServerInfo

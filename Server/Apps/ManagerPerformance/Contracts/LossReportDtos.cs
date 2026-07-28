@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>
 /// 1 dong doi chieu cap phat vs dinh muc cho 1 NVL cua 1 don san xuat

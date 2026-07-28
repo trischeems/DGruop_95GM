@@ -2,7 +2,7 @@ using Avalonia.Data.Converters;
 using System;
 using System.Globalization;
 
-namespace DGroup.App.ManagerPerformance.Converters;
+namespace GM95.App.ManagerPerformance.Converters;
 
 /// <summary>
 /// Doi bool -> chu tieng Viet de doc trong luoi (thay vi hien "True/False").

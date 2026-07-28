@@ -1,14 +1,14 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DGroup.App.ManagerPerformance.Models;
-using DGroup.App.ManagerPerformance.Services;
+using GM95.App.ManagerPerformance.Models;
+using GM95.App.ManagerPerformance.Services;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
 
-namespace DGroup.App.ManagerPerformance.ViewModels.Pages;
+namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>1 o tick chon thang trong che do "So sanh cac thang chon".</summary>
 public sealed partial class MonthCheck : ObservableObject

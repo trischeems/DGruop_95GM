@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 REM ============================================================================
-REM  DGroup - run_all_data.bat  (o ROOT du an)  ==> CHAY 1 PHAT CO DATA
+REM  GM95 - run_all_data.bat  (o ROOT du an)  ==> CHAY 1 PHAT CO DATA
 REM  Quy trinh tu dong:
 REM    1. Bat PostgreSQL portable (start_pg.bat)
 REM    2. Bat SERVER o CUA SO RIENG (server tu chay migration -> tao bang)
@@ -21,7 +21,7 @@ set "CONFIG_FILE=%SERVER_DIR%\config.json"
 
 echo(
 echo ==========================================================
-echo   DGroup - CHAY TAT CA (CO DATA)
+echo   GM95 - CHAY TAT CA (CO DATA)
 echo   PG -^> Server -^> Seed du lieu -^> App
 echo ==========================================================
 echo(
@@ -58,7 +58,7 @@ echo(
 
 echo [2/5] Bat SERVER o cua so rieng (giu cua so do de server chay)...
 REM Mo run_server.bat trong 1 cua so CMD moi -> server chay nen, script nay chay tiep.
-start "DGroup Server" cmd /k ""%ROOT_DIR%\run_server.bat""
+start "GM95 Server" cmd /k ""%ROOT_DIR%\run_server.bat""
 echo(
 
 echo [3/5] Cho server san sang tai %HEALTH_URL% ...
@@ -78,7 +78,7 @@ for /L %%i in (1,1,60) do (
 )
 echo(
 if not defined READY (
-    echo [LOI] Server khong san sang sau 60 giay. Xem cua so "DGroup Server" de biet loi.
+    echo [LOI] Server khong san sang sau 60 giay. Xem cua so "GM95 Server" de biet loi.
     goto :fail
 )
 
@@ -96,7 +96,7 @@ call "%ROOT_DIR%\run_app_quanly.bat"
 
 echo(
 echo ==========================================================
-echo   XONG. Server dang chay o cua so "DGroup Server".
+echo   XONG. Server dang chay o cua so "GM95 Server".
 echo   Dong cua so do (Ctrl+C) khi muon tat server.
 echo ==========================================================
 endlocal

@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>1 dong NVL trong phieu nhap kho (so luong nhap + don gia).</summary>
 public sealed record StockReceiptItemInput(

@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DGroup.App.ManagerPerformance.Models;
-using DGroup.App.ManagerPerformance.Services;
+using GM95.App.ManagerPerformance.Models;
+using GM95.App.ManagerPerformance.Services;
 
-namespace DGroup.App.ManagerPerformance.ViewModels.Pages;
+namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Dinh muc BOM: chon ma hang -> phien ban BOM -> dinh muc NVL + phe duyet. Dung API that.</summary>
 public sealed partial class BomViewModel : PageViewModel

@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DGroup.App.ManagerPerformance.Services;
-using DGroup.App.ManagerPerformance.ViewModels.Pages;
+using GM95.App.ManagerPerformance.Services;
+using GM95.App.ManagerPerformance.ViewModels.Pages;
 
-namespace DGroup.App.ManagerPerformance.ViewModels;
+namespace GM95.App.ManagerPerformance.ViewModels;
 
 /// <summary>
 /// Shell cua app: sidebar (menu theo quy trinh nghiep vu) + vung content (trang dang chon).
@@ -49,7 +49,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     public ObservableCollection<NavGroup> NavGroups { get; }
 
     [ObservableProperty] private PageViewModel? _currentPage;
-    [ObservableProperty] private string _appTitle = "DGroup";
+    [ObservableProperty] private string _appTitle = "GM95";
     [ObservableProperty] private string _appSubtitle = "Quản lý sản xuất";
 
     // QUAN TRONG: lenh chon tab la DONG BO (void), khong await.

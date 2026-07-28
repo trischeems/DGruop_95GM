@@ -1,7 +1,7 @@
 using Dapper;
 using Npgsql;
 
-namespace DGroup.Server.Infrastructure.Data;
+namespace GM95.Server.Infrastructure.Data;
 
 /// <summary>
 /// Boc connection + transaction dang mo DUNG schema cua mot tenant.

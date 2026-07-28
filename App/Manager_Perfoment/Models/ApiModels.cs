@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Text.Json.Serialization;
 
-namespace DGroup.App.ManagerPerformance.Models;
+namespace GM95.App.ManagerPerformance.Models;
 
 /// <summary>Bao response chuan tu server: { ok, data, error }.</summary>
 public sealed class ApiResult<T>

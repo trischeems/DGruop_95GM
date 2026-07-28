@@ -1,4 +1,4 @@
-namespace DGroup.Server.Infrastructure.Tenancy;
+namespace GM95.Server.Infrastructure.Tenancy;
 
 /// <summary>
 /// Tenant hien tai cua request (scoped). Middleware gan gia tri; controller/service doc.

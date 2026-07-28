@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 REM ============================================================================
-REM  DGroup - run_all_trong.bat  (o ROOT du an)  ==> CHAY 1 PHAT, DATABASE TRONG
+REM  GM95 - run_all_trong.bat  (o ROOT du an)  ==> CHAY 1 PHAT, DATABASE TRONG
 REM  Quy trinh tu dong:
 REM    1. Bat PostgreSQL portable (start_pg.bat)
 REM    2. Bat SERVER o CUA SO RIENG (server tu chay migration -> tao bang)
@@ -27,7 +27,7 @@ if "%TENANT%"=="" set "TENANT=public"
 
 echo(
 echo ==========================================================
-echo   DGroup - CHAY TAT CA (DATABASE TRONG)
+echo   GM95 - CHAY TAT CA (DATABASE TRONG)
 echo   PG -^> Server -^> Xoa sach DB -^> App
 echo ==========================================================
 echo   Tenant : %TENANT%
@@ -57,7 +57,7 @@ set "PG_PASS="
 set "PG_DBNAME="
 set "PG_HOST="
 for /f "usebackq delims=" %%L in (`powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$c = Get-Content -Raw -LiteralPath '%CONFIG_FILE%' | ConvertFrom-Json; $p = $c.dgroup_postgress; Write-Output ('SRV_PORT=' + $c.server.port); Write-Output ('SRV_HTTPS=' + ([string]$c.https).ToLower()); Write-Output ('PG_PORT=' + $p.port); Write-Output ('PG_USER=' + $p.user); Write-Output ('PG_PASS=' + $p.pass); Write-Output ('PG_DBNAME=' + $p.dbname); Write-Output ('PG_HOST=' + $p.host)"`) do (
+  "$c = Get-Content -Raw -LiteralPath '%CONFIG_FILE%' | ConvertFrom-Json; $p = $c.gm95_postgress; Write-Output ('SRV_PORT=' + $c.server.port); Write-Output ('SRV_HTTPS=' + ([string]$c.https).ToLower()); Write-Output ('PG_PORT=' + $p.port); Write-Output ('PG_USER=' + $p.user); Write-Output ('PG_PASS=' + $p.pass); Write-Output ('PG_DBNAME=' + $p.dbname); Write-Output ('PG_HOST=' + $p.host)"`) do (
     set "%%L"
 )
 if not defined SRV_PORT (
@@ -73,7 +73,7 @@ call "%SERVER_DIR%\start_pg.bat"
 echo(
 
 echo [2/5] Bat SERVER o cua so rieng (giu cua so do de server chay)...
-start "DGroup Server" cmd /k ""%ROOT_DIR%\run_server.bat""
+start "GM95 Server" cmd /k ""%ROOT_DIR%\run_server.bat""
 echo(
 
 echo [3/5] Cho server san sang tai %HEALTH_URL% ...
@@ -93,7 +93,7 @@ for /L %%i in (1,1,60) do (
 )
 echo(
 if not defined READY (
-    echo [LOI] Server khong san sang sau 60 giay. Xem cua so "DGroup Server" de biet loi.
+    echo [LOI] Server khong san sang sau 60 giay. Xem cua so "GM95 Server" de biet loi.
     goto :fail
 )
 
@@ -114,7 +114,7 @@ call "%ROOT_DIR%\run_app_quanly.bat"
 
 echo(
 echo ==========================================================
-echo   XONG. Database TRONG. Server dang chay o cua so "DGroup Server".
+echo   XONG. Database TRONG. Server dang chay o cua so "GM95 Server".
 echo   Dong cua so do (Ctrl+C) khi muon tat server.
 echo ==========================================================
 endlocal

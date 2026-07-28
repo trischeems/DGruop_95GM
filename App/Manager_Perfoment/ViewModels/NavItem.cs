@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace DGroup.App.ManagerPerformance.ViewModels;
+namespace GM95.App.ManagerPerformance.ViewModels;
 
 /// <summary>Mot muc menu ben sidebar: icon + nhan + trang tuong ung.</summary>
 public sealed partial class NavItem : ViewModelBase

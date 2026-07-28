@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 // =====================================================================================
 // QUY TRINH SAN XUAT LINH HOAT (V006)

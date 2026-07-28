@@ -1,8 +1,8 @@
 {
   "app": {
     "name": "Manager_Perfoment",
-    "title": "DGroup - Quản lý sản xuất",
-    "vendor": "Dgroup"
+    "title": "GM95 - Quản lý sản xuất",
+    "vendor": "GM95"
   },
   "server": {
     "base_url": "http://localhost:8765",

@@ -1,12 +1,12 @@
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
-using DGroup.App.ManagerPerformance.Models;
+using GM95.App.ManagerPerformance.Models;
 
-namespace DGroup.App.ManagerPerformance.Services;
+namespace GM95.App.ManagerPerformance.Services;
 
 /// <summary>
-/// Goi API server DGroup (/dgrpi/manager-performance/...). Tu gan header tenant (X-Tenant).
+/// Goi API server GM95 (/dgrpi/manager-performance/...). Tu gan header tenant (X-Tenant).
 /// Tra ve ApiResult&lt;T&gt; da bung .Data; nem ApiException neu server bao loi hoac ket noi fail.
 /// </summary>
 public sealed partial class ApiClient

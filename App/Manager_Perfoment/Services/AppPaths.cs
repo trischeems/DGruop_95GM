@@ -1,18 +1,18 @@
-namespace DGroup.App.ManagerPerformance.Services;
+namespace GM95.App.ManagerPerformance.Services;
 
 /// <summary>
 /// Duong dan cua app, TU CHUYEN HOA theo he dieu hanh (Windows/macOS/Linux).
 /// KHONG hard-code path, KHONG hard-code username.
 ///
 /// Du lieu runtime (cache, log, cau hinh nguoi dung) tach khoi file nguon (chi doc):
-///   Windows: %LOCALAPPDATA%\Dgroup\App\Manager_performent
-///   macOS  : ~/Library/Application Support/Dgroup/App/Manager_performent
-///   Linux  : ~/.local/share/Dgroup/App/Manager_performent
+///   Windows: %LOCALAPPDATA%\GM95\App\Manager_performent
+///   macOS  : ~/Library/Application Support/GM95/App/Manager_performent
+///   Linux  : ~/.local/share/GM95/App/Manager_performent
 /// (.NET SpecialFolder.LocalApplicationData tu tra dung thu muc moi HDH.)
 /// </summary>
 public static class AppPaths
 {
-    private const string Vendor = "Dgroup";
+    private const string Vendor = "GM95";
     private const string AppSegment = "App";
     private const string AppName = "Manager_performent";
 

@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 REM ============================================================================
-REM  DGroup - run_server.bat  (o ROOT du an)
+REM  GM95 - run_server.bat  (o ROOT du an)
 REM  Build & chay server .NET 8 (ASP.NET Core, kieu Controller).
 REM  - Doc server.port + https tu Server\config.json bang PowerShell
 REM  - Bao dam PostgreSQL portable dang chay (goi Server\start_pg.bat neu can)
@@ -18,7 +18,7 @@ set "CONFIG_FILE=%SERVER_DIR%\config.json"
 
 echo(
 echo ==========================================================
-echo   DGroup - Run Server (.NET 8)
+echo   GM95 - Run Server (.NET 8)
 echo ==========================================================
 echo   Root   : %ROOT_DIR%
 echo   Server : %SERVER_DIR%

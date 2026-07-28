@@ -2,9 +2,9 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using DGroup.App.ManagerPerformance.ViewModels;
+using GM95.App.ManagerPerformance.ViewModels;
 
-namespace DGroup.App.ManagerPerformance;
+namespace GM95.App.ManagerPerformance;
 
 /// <summary>
 /// Given a view model, returns the corresponding view if possible.
@@ -27,7 +27,7 @@ public class ViewLocator : IDataTemplate
             return (Control)Activator.CreateInstance(type)!;
         }
         
-        return new TextBlock { Text = "Not Found: " + name };
+        return new TextBlock { Text = "Không tìm thấy giao diện: " + name };
     }
 
     public bool Match(object? data)

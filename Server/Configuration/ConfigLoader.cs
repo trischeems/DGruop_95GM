@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace DGroup.Server.Configuration;
+namespace GM95.Server.Configuration;
 
 /// <summary>
 /// Nap Server/config.json thanh AppConfig. Fail-fast neu thieu file hoac thieu khoi Postgres.
@@ -39,10 +39,10 @@ public static class ConfigLoader
             throw new InvalidOperationException($"{FileName} rong hoac khong parse duoc.");
 
         // Bat buoc phai co cau hinh Postgres de server hoat dong.
-        if (string.IsNullOrWhiteSpace(cfg.DgroupPostgres.DbName) ||
-            string.IsNullOrWhiteSpace(cfg.DgroupPostgres.User))
+        if (string.IsNullOrWhiteSpace(cfg.Gm95Postgres.DbName) ||
+            string.IsNullOrWhiteSpace(cfg.Gm95Postgres.User))
             throw new InvalidOperationException(
-                $"{FileName} thieu khoi 'dgroup_postgress' (dbname/user).");
+                $"{FileName} thieu khoi 'gm95_postgress' (dbname/user).");
 
         return cfg;
     }

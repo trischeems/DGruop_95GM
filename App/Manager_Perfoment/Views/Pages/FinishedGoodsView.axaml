@@ -1,15 +1,16 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
-             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:GM95.App.ManagerPerformance.Models"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
-             x:Class="DGroup.App.ManagerPerformance.Views.Pages.FinishedGoodsView"
+             x:Class="GM95.App.ManagerPerformance.Views.Pages.FinishedGoodsView"
              x:DataType="vm:FinishedGoodsViewModel">
 
     <!-- 2 COT: trai = danh sach DON; phai = nhap TP + phieu + hao hut cua don. -->
-    <Grid ColumnDefinitions="288,*">
+    <!-- Cot giua = thanh KEO: tu chinh do rong cot trai. -->
+    <Grid ColumnDefinitions="288,Auto,*">
 
         <!-- ===== COT TRAI: danh sach don ===== -->
         <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
@@ -34,7 +35,7 @@
                                     <TextBlock Classes="itemsub" Text="{Binding ProductName}"/>
                                     <TextBlock FontSize="11" FontWeight="SemiBold"
                                                Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"
-                                               Text="{Binding Status}"/>
+                                               Text="{Binding Status, Converter={StaticResource CodeVi}}"/>
                                 </StackPanel>
                             </StackPanel>
                         </DataTemplate>
@@ -44,7 +45,9 @@
         </Border>
 
         <!-- ===== COT PHAI: nhap TP + phieu + hao hut cua don dang chon ===== -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,*,*,Auto">
+        <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+
+        <Grid Grid.Column="2" RowDefinitions="Auto,*,*,Auto">
 
             <!-- Card: Nhap kho thanh pham (1 hang field + nut) -->
             <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
@@ -94,7 +97,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding QtyReceived, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding ProductUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding ProductUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -121,7 +124,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding QtyIssued, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -131,7 +134,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding QtyStandard, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -141,7 +144,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding QtyVariance, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -151,7 +154,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding FinishedQty, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding ProductUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding ProductUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>

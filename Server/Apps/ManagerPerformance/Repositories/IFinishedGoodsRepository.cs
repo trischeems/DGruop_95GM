@@ -1,7 +1,7 @@
-using DGroup.Server.Apps.ManagerPerformance.Contracts;
-using DGroup.Server.Infrastructure.Data;
+using GM95.Server.Apps.ManagerPerformance.Contracts;
+using GM95.Server.Infrastructure.Data;
 
-namespace DGroup.Server.Apps.ManagerPerformance.Repositories;
+namespace GM95.Server.Apps.ManagerPerformance.Repositories;
 
 /// <summary>
 /// Thong tin don phuc vu kiem tra khi nhap kho thanh pham (da khoa dong don FOR UPDATE):

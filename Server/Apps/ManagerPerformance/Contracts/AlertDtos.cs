@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>Canh bao ton thap / don thieu NVL (khop bang alerts).</summary>
 public sealed record AlertDto(

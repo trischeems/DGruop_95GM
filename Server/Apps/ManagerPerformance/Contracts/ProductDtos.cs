@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>Ban ghi ma hang thanh pham tra ve client (khop cot products + ten DVT join san).</summary>
 public sealed record ProductDto(

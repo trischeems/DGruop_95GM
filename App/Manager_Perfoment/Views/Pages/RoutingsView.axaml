@@ -1,14 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
-             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:GM95.App.ManagerPerformance.Models"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
-             x:Class="DGroup.App.ManagerPerformance.Views.Pages.RoutingsView"
+             x:Class="GM95.App.ManagerPerformance.Views.Pages.RoutingsView"
              x:DataType="vm:RoutingsViewModel">
     <!-- Trai = danh sach mau quy trinh; phai = chi tiet mau dang chon + danh muc cong doan. -->
-    <Grid ColumnDefinitions="288,*">
+    <!-- Cot giua = thanh KEO: tu chinh do rong cot trai. -->
+    <Grid ColumnDefinitions="288,Auto,*">
 
         <!-- ===== COT TRAI: danh sach mau quy trinh ===== -->
         <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
@@ -44,7 +45,9 @@
         </Border>
 
         <!-- ===== COT PHAI ===== -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+        <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+
+        <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto">
 
             <!-- Thao tac tren mau dang chon -->
             <Border Classes="card" Grid.Row="0" Margin="0,0,0,10">
@@ -63,7 +66,7 @@
             </Border>
 
             <!-- Trai: cac buoc cua mau | Phai: danh muc cong doan -->
-            <Grid Grid.Row="1" ColumnDefinitions="2*,*">
+            <Grid Grid.Row="1" ColumnDefinitions="2*,Auto,*">
 
                 <Border Classes="card" Grid.Column="0" Margin="0,0,6,0">
                     <Grid RowDefinitions="Auto,*">
@@ -87,7 +90,8 @@
                     </Grid>
                 </Border>
 
-                <Border Classes="card" Grid.Column="1" Margin="6,0,0,0">
+                <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+                <Border Classes="card" Grid.Column="2" Margin="6,0,0,0">
                     <Grid RowDefinitions="Auto,*,Auto">
                         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
                             <TextBlock Grid.Column="0" Classes="h2" Text="Danh mục công đoạn"/>

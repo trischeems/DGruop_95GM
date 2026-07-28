@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  DGroup - start_pg.sh  (tuong duong start_pg.bat cho Linux/Ubuntu)
+#  GM95 - start_pg.sh  (tuong duong start_pg.bat cho Linux/Ubuntu)
 #  PostgreSQL 16 cho may Ubuntu (DEV/PROD).
-#  - Doc port/user/pass/dbname tu Server/config.json (khoi dgroup_postgress)
+#  - Doc port/user/pass/dbname tu Server/config.json (khoi gm95_postgress)
 #  - Dung binaries PG16: uu tien Server/pgsql/bin (portable neu co),
 #    roi den ban cai apt PGDG (/usr/lib/postgresql/16/bin), roi pg_config.
 #    Neu chua cai -> in huong dan cai apt PGDG (khong Docker).
@@ -31,7 +31,7 @@ fail() {
 
 echo
 echo "=========================================================="
-echo "  DGroup - PostgreSQL 16 (Linux)"
+echo "  GM95 - PostgreSQL 16 (Linux)"
 echo "=========================================================="
 echo "  Script dir : $SCRIPT_DIR"
 echo "  Config     : $CONFIG_FILE"
@@ -72,7 +72,7 @@ fi
 # ---------------------------------------------------------------------------
 #  DOC CONFIG (jq neu co, fallback python3)
 # ---------------------------------------------------------------------------
-json_get() { # json_get <file> <duong.dan.khoa>  vd: json_get "$CONFIG_FILE" dgroup_postgress.port
+json_get() { # json_get <file> <duong.dan.khoa>  vd: json_get "$CONFIG_FILE" gm95_postgress.port
     local file="$1" path="$2" val=""
     if command -v jq >/dev/null 2>&1; then
         val="$(jq -r ".$path" "$file" 2>/dev/null)"
@@ -95,14 +95,14 @@ PY
     printf '%s' "$val"
 }
 
-PG_PORT="$(json_get "$CONFIG_FILE" dgroup_postgress.port)"
-PG_USER="$(json_get "$CONFIG_FILE" dgroup_postgress.user)"
-PG_PASS="$(json_get "$CONFIG_FILE" dgroup_postgress.pass)"
-PG_DBNAME="$(json_get "$CONFIG_FILE" dgroup_postgress.dbname)"
-PG_HOST="$(json_get "$CONFIG_FILE" dgroup_postgress.host)"
+PG_PORT="$(json_get "$CONFIG_FILE" gm95_postgress.port)"
+PG_USER="$(json_get "$CONFIG_FILE" gm95_postgress.user)"
+PG_PASS="$(json_get "$CONFIG_FILE" gm95_postgress.pass)"
+PG_DBNAME="$(json_get "$CONFIG_FILE" gm95_postgress.dbname)"
+PG_HOST="$(json_get "$CONFIG_FILE" gm95_postgress.host)"
 
 if [[ -z "$PG_PORT" ]]; then
-    echo "[LOI] Khong doc duoc cau hinh tu config.json (khoi dgroup_postgress)."
+    echo "[LOI] Khong doc duoc cau hinh tu config.json (khoi gm95_postgress)."
     echo "      Kiem tra jq/python3 co san va config.json dung dinh dang JSON."
     fail
 fi

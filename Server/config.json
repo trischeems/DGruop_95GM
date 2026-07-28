@@ -2,7 +2,7 @@
     "server": {
         "port": "8765",
         "favicon": "",
-        "title": "DGroup Manager"
+        "title": "GM95 Manager"
     },
     "r2_backup": {
         "account_id": "",
@@ -12,11 +12,11 @@
         "endpoint": "",
         "region": ""
     },
-    "dgroup_postgress": {
+    "gm95_postgress": {
         "port": "5678",
-        "dbname": "dgroup_db",
-        "pass": "dgroup123456",
-        "user": "dgroup",
+        "dbname": "gm95_db",
+        "pass": "gm95123456",
+        "user": "gm95",
         "host": "localhost"
     },
     "https": true

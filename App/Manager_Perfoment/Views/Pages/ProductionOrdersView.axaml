@@ -1,10 +1,10 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels.Pages"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
-             x:Class="DGroup.App.ManagerPerformance.Views.Pages.ProductionOrdersView"
+             x:Class="GM95.App.ManagerPerformance.Views.Pages.ProductionOrdersView"
              x:DataType="vm:ProductionOrdersViewModel">
 
     <!-- Form tao don (Auto), danh sach don (*), giu cho + nhu cau (*) -->
@@ -63,7 +63,7 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Quantity, StringFormat='{}{0:0.####}'}"/>
-                                        <TextBlock Text="{Binding ProductUomCode}" Classes="uom"/>
+                                        <TextBlock Text="{Binding ProductUomName}" Classes="uom"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -71,7 +71,7 @@
                         <DataGridTemplateColumn Header="Trạng thái" Width="*" MinWidth="130">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontWeight="SemiBold"
+                                    <TextBlock Text="{Binding Status, Converter={StaticResource CodeVi}}" VerticalAlignment="Center" FontWeight="SemiBold"
                                                Margin="12,0,0,0"
                                                Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
                                 </DataTemplate>
@@ -83,7 +83,7 @@
         </Border>
 
         <!-- Chi tiet don dang chon: giu cho + nhu cau -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,12,0,0">
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,*" Margin="0,12,0,0">
             <Border Grid.Column="0" Classes="card" Margin="0,0,6,0">
                 <Grid RowDefinitions="Auto,*">
                     <TextBlock Grid.Row="0" Classes="h2" Text="Giữ chỗ NVL" Margin="0,0,0,10"/>
@@ -97,17 +97,18 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding QtyReserved, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="*" MinWidth="100"/>
+                            <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status, Converter={StaticResource CodeVi}}" Width="*" MinWidth="100"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
             </Border>
-            <Border Grid.Column="1" Classes="card" Margin="6,0,0,0">
+            <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+            <Border Grid.Column="2" Classes="card" Margin="6,0,0,0">
                 <Grid RowDefinitions="Auto,*">
                     <TextBlock Grid.Row="0" Classes="h2" Text="Nhu cầu / thiếu hụt" Margin="0,0,0,10"/>
                     <DataGrid Grid.Row="1" ItemsSource="{Binding Requirements}" IsReadOnly="True">
@@ -119,7 +120,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding RequiredQty, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -129,7 +130,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding TotalAvailable, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -139,7 +140,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding ShortageQty, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -149,7 +150,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding SuggestedPurchaseQty, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  DGroup - run_server.sh  (o ROOT du an — tuong duong run_server.bat)
+#  GM95 - run_server.sh  (o ROOT du an — tuong duong run_server.bat)
 #  Build & chay server .NET 8 (ASP.NET Core, kieu Controller) tren Linux.
 #  - Doc server.port + https tu Server/config.json (jq, fallback python3)
 #  - Bao dam PostgreSQL dang chay (goi Server/start_pg.sh neu can)
@@ -23,7 +23,7 @@ fail() {
 
 echo
 echo "=========================================================="
-echo "  DGroup - Run Server (.NET 8)"
+echo "  GM95 - Run Server (.NET 8)"
 echo "=========================================================="
 echo "  Root   : $ROOT_DIR"
 echo "  Server : $SERVER_DIR"

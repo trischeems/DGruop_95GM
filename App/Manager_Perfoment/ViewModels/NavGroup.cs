@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 
-namespace DGroup.App.ManagerPerformance.ViewModels;
+namespace GM95.App.ManagerPerformance.ViewModels;
 
 /// <summary>1 nhom muc menu tren sidebar: tieu de nhom + cac muc con.</summary>
 public sealed class NavGroup

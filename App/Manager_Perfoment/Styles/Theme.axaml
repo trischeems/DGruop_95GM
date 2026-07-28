@@ -248,6 +248,8 @@
         <Setter Property="ColumnHeaderHeight" Value="36"/>
         <Setter Property="CanUserResizeColumns" Value="True"/>
         <Setter Property="FontSize" Value="13"/>
+        <!-- Khung hep hon bang -> CUON NGANG, khong cat chu (vd cot ngay gio). -->
+        <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
     </Style>
     <Style Selector="DataGridColumnHeader">
         <Setter Property="Background" Value="{StaticResource HeaderBgBrush}"/>
@@ -271,6 +273,27 @@
     </Style>
     <Style Selector="DataGridRow:selected DataGridCell TextBlock">
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+    <!-- ===== Thanh KEO chia cot: nguoi dung tu chinh do rong cac khung ===== -->
+    <!-- Rong 6px cho de tro chuot vao; ke 1 vach mo o giua de nhin ra la keo duoc. -->
+    <Style Selector="GridSplitter">
+        <Setter Property="Width" Value="6"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Cursor" Value="SizeWestEast"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="Transparent">
+                    <Rectangle Width="1" Fill="{StaticResource BorderBrush}"
+                               HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <!-- Ro thanh keo khi tro chuot vao / dang keo. -->
+    <Style Selector="GridSplitter:pointerover /template/ Rectangle">
+        <Setter Property="Width" Value="3"/>
+        <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
     </Style>
 
 </Styles>

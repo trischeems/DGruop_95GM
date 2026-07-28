@@ -1,4 +1,4 @@
-namespace DGroup.Server.Infrastructure.Data;
+namespace GM95.Server.Infrastructure.Data;
 
 /// <summary>
 /// CACH DUY NHAT de truy cap DB theo tenant.

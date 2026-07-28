@@ -1,12 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using DGroup.Server.Configuration;
-using DGroup.Server.Infrastructure.Data;
-using DGroup.Server.Infrastructure.Web;
+using GM95.Server.Configuration;
+using GM95.Server.Infrastructure.Data;
+using GM95.Server.Infrastructure.Web;
 using Npgsql;
 
-namespace DGroup.Server.Infrastructure.Migrations;
+namespace GM95.Server.Infrastructure.Migrations;
 
 /// <summary>
 /// Chay migration SQL thuan theo tung schema tenant.

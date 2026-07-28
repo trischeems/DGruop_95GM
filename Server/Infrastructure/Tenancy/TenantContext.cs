@@ -1,4 +1,4 @@
-namespace DGroup.Server.Infrastructure.Tenancy;
+namespace GM95.Server.Infrastructure.Tenancy;
 
 /// <summary>Trien khai scoped cua ITenantContext (mot instance / request).</summary>
 public sealed class TenantContext : ITenantContext

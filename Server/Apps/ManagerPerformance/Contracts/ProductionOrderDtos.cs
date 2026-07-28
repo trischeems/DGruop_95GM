@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>Don hang san xuat tra ve client (khop cot bang production_orders + ten product join san).</summary>
 public sealed record ProductionOrderDto(

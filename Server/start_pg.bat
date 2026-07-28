@@ -1,9 +1,9 @@
 @echo off
 setlocal EnableDelayedExpansion
 REM ============================================================================
-REM  DGroup - start_pg.bat
+REM  GM95 - start_pg.bat
 REM  Portable PostgreSQL 16 cho Windows (may DEV).
-REM  - Doc port/user/pass/dbname tu Server\config.json (khoi dgroup_postgress)
+REM  - Doc port/user/pass/dbname tu Server\config.json (khoi gm95_postgress)
 REM  - Neu chua co PG16 portable trong Server\pgsql -> tai zip binaries + giai nen
 REM  - Neu chua co data dir Server\pgdata -> initdb (encoding UTF8)
 REM  - Start bang pg_ctl theo port trong config
@@ -30,7 +30,7 @@ set "PG_ZIP=%DL_DIR%\postgresql-16-win-x64-binaries.zip"
 
 echo(
 echo ==========================================================
-echo   DGroup - Portable PostgreSQL 16 (Windows DEV)
+echo   GM95 - Portable PostgreSQL 16 (Windows DEV)
 echo ==========================================================
 echo   Script dir : %SCRIPT_DIR%
 echo   Config     : %CONFIG_FILE%
@@ -52,12 +52,12 @@ set "PG_DBNAME="
 set "PG_HOST="
 
 for /f "usebackq delims=" %%L in (`powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$c = Get-Content -Raw -LiteralPath '%CONFIG_FILE%' | ConvertFrom-Json; $p = $c.dgroup_postgress; Write-Output ('PG_PORT=' + $p.port); Write-Output ('PG_USER=' + $p.user); Write-Output ('PG_PASS=' + $p.pass); Write-Output ('PG_DBNAME=' + $p.dbname); Write-Output ('PG_HOST=' + $p.host)"`) do (
+  "$c = Get-Content -Raw -LiteralPath '%CONFIG_FILE%' | ConvertFrom-Json; $p = $c.gm95_postgress; Write-Output ('PG_PORT=' + $p.port); Write-Output ('PG_USER=' + $p.user); Write-Output ('PG_PASS=' + $p.pass); Write-Output ('PG_DBNAME=' + $p.dbname); Write-Output ('PG_HOST=' + $p.host)"`) do (
     set "%%L"
 )
 
 if not defined PG_PORT (
-    echo [LOI] Khong doc duoc cau hinh tu config.json ^(khoi dgroup_postgress^).
+    echo [LOI] Khong doc duoc cau hinh tu config.json ^(khoi gm95_postgress^).
     echo       Kiem tra PowerShell co san va config.json dung dinh dang JSON.
     goto :fail
 )
@@ -122,7 +122,7 @@ echo [2/4] Chua co data dir -^> initdb ^(UTF8^)...
 if not exist "%PG_DATA%" mkdir "%PG_DATA%"
 
 REM Luu superuser password ra file tam de initdb doc (tranh nhap tay).
-set "PWFILE=%TEMP%\dgroup_pgpw_%RANDOM%.txt"
+set "PWFILE=%TEMP%\gm95_pgpw_%RANDOM%.txt"
 > "%PWFILE%" echo(%PG_PASS%
 
 REM Superuser = user trong config (de dong nhat chuoi ket noi).

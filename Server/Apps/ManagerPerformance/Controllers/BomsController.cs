@@ -1,9 +1,9 @@
-using DGroup.Server.Apps.ManagerPerformance.Contracts;
-using DGroup.Server.Apps.ManagerPerformance.Services;
-using DGroup.Server.Infrastructure.Web;
+using GM95.Server.Apps.ManagerPerformance.Contracts;
+using GM95.Server.Apps.ManagerPerformance.Services;
+using GM95.Server.Infrastructure.Web;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DGroup.Server.Apps.ManagerPerformance.Controllers;
+namespace GM95.Server.Apps.ManagerPerformance.Controllers;
 
 /// <summary>Dinh muc nguyen vat lieu (BOM): tao ban nhap, sua dong NVL, trinh/duyet/tu choi.</summary>
 [ApiController]

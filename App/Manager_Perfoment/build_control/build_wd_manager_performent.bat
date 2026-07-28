@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 REM ============================================================================
-REM  DGroup - build_wd_manager_performent.bat  (o App\Manager_Perfoment\build_control)
+REM  GM95 - build_wd_manager_performent.bat  (o App\Manager_Perfoment\build_control)
 REM  Build app client Manager_Perfoment cho WINDOWS + dong goi installer Inno Setup.
 REM  Chay tren may Windows da cai: .NET 8 SDK + Inno Setup 6 (ISCC.exe).
 REM
@@ -18,7 +18,7 @@ set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 for %%I in ("%SCRIPT_DIR%\..") do set "APP_DIR=%%~fI"
 
-set "CSPROJ=%APP_DIR%\DGroup.App.ManagerPerformance.csproj"
+set "CSPROJ=%APP_DIR%\GM95.App.ManagerPerformance.csproj"
 set "ISS_FILE=%SCRIPT_DIR%\manager_performent.iss"
 set "OUT_DIR=%SCRIPT_DIR%\out"
 set "PUBLISH_DIR=%OUT_DIR%\win-x64\publish"
@@ -29,7 +29,7 @@ if not defined VERSION set "VERSION=1.0.0"
 
 echo(
 echo ==========================================================
-echo   DGroup - Build Windows (Manager_Perfoment) v%VERSION%
+echo   GM95 - Build Windows (Manager_Perfoment) v%VERSION%
 echo ==========================================================
 echo   App     : %APP_DIR%
 echo   Publish : %PUBLISH_DIR%

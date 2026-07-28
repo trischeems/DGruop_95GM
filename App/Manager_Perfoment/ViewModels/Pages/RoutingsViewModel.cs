@@ -1,13 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DGroup.App.ManagerPerformance.Models;
-using DGroup.App.ManagerPerformance.Services;
+using GM95.App.ManagerPerformance.Models;
+using GM95.App.ManagerPerformance.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace DGroup.App.ManagerPerformance.ViewModels.Pages;
+namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>
 /// Trang MAU QUY TRINH: quan ly danh muc cong doan + cac mau quy trinh san xuat.
@@ -150,6 +150,23 @@ public sealed partial class RoutingsViewModel : PageViewModel
                 FilteredRoutings.Add(r);
     }
 
+    /// <summary>
+    /// Nap lai RIENG danh muc cong doan (khong dung toi mau dang soan).
+    /// Dung khi tao cong doan moi tu BEN TRONG dialog soan mau — goi LoadCoreAsync o day
+    /// se xoa sach cac buoc dang them do.
+    /// </summary>
+    /// <param name="selectStageId">Cong doan chon san sau khi nap (thuong la cai vua tao).</param>
+    private async Task ReloadStagesCoreAsync(long? selectStageId = null)
+    {
+        var keep = selectStageId ?? SelectedStage?.Id;
+        var stages = await _api.GetStagesAsync(activeOnly: false);
+        Stages.Clear();
+        foreach (var s in stages) Stages.Add(s);
+        StageListFilter = "";
+        ApplyStageFilter();
+        SelectedStage = Stages.FirstOrDefault(s => s.Id == keep);
+    }
+
     private void ApplyStageFilter()
     {
         var kw = (StageListFilter ?? "").Trim();
@@ -252,7 +269,7 @@ public sealed partial class RoutingsViewModel : PageViewModel
             await LoadDetailCoreAsync();
             Status = $"Đã tạo mẫu quy trình {RoutingCode} ({Lines.Count} bước).";
             return null;
-        }, saveText: "Tạo mẫu", width: 940, height: 600, scrollable: false);
+        }, saveText: "Tạo mẫu", width: 1080, height: 640, scrollable: false);
     }
 
     /// <summary>Sua mau dang chon (mo form trong 1 cua so rieng).</summary>
@@ -280,7 +297,7 @@ public sealed partial class RoutingsViewModel : PageViewModel
             await LoadCoreAsync();
             Status = $"Đã cập nhật mẫu quy trình {RoutingCode}.";
             return null;
-        }, saveText: "Lưu mẫu", width: 940, height: 600, scrollable: false);
+        }, saveText: "Lưu mẫu", width: 1080, height: 640, scrollable: false);
     }
 
     [RelayCommand]
@@ -342,13 +359,16 @@ public sealed partial class RoutingsViewModel : PageViewModel
             if (string.IsNullOrWhiteSpace(StageCode)) return "Nhập mã công đoạn (vd PRINTING).";
             if (string.IsNullOrWhiteSpace(StageName)) return "Nhập tên công đoạn.";
 
-            await _api.CreateStageAsync(new
+            var newId = await _api.CreateStageAsync(new
             {
                 code = StageCode.Trim().ToUpperInvariant(),
                 name = StageName.Trim(),
                 seq = StageSeq > 0 ? StageSeq : (int?)null
             });
-            await LoadCoreAsync();
+
+            // CHI nap lai danh muc cong doan — khong goi LoadCoreAsync vi no reset ca mau
+            // dang soan dang do (mat cac buoc vua them) khi ham nay duoc goi TU dialog soan mau.
+            await ReloadStagesCoreAsync(newId);
             Status = $"Đã thêm công đoạn {StageName}.";
             return null;
         }, saveText: "Thêm công đoạn", width: 520, height: 360);

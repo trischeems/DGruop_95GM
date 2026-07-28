@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DGroup.Server.Configuration;
+namespace GM95.Server.Configuration;
 
 /// <summary>
 /// Khoi "tenancy" (tuy chon) trong config.json. Neu vang mat -> dung mac dinh an toan.

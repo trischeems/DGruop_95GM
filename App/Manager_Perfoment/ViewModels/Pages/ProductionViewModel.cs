@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DGroup.App.ManagerPerformance.Models;
-using DGroup.App.ManagerPerformance.Services;
+using GM95.App.ManagerPerformance.Models;
+using GM95.App.ManagerPerformance.Services;
 
-namespace DGroup.App.ManagerPerformance.ViewModels.Pages;
+namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Trang San xuat: theo doi cong doan Cat/May/QC va xuat kho NVL cho san xuat.</summary>
 public sealed partial class ProductionViewModel : PageViewModel
@@ -72,6 +72,12 @@ public sealed partial class ProductionViewModel : PageViewModel
     [ObservableProperty] private int _applyStartSeq = 1;
     /// <summary>true = xoa cac buoc chua lam roi sinh lai theo mau.</summary>
     [ObservableProperty] private bool _applyReplace = true;
+
+    // Form tao cong doan moi ngay trong dialog quy trinh (khong phai thoat ra trang danh muc).
+    [ObservableProperty] private string _stageCode = "";
+    [ObservableProperty] private string _stageName = "";
+    [ObservableProperty] private int _stageSeq;
+    [ObservableProperty] private bool _stageActive = true;
 
     // O tim cot trai: loc Orders theo so don / ten ma hang / SKU.
     [ObservableProperty] private string _listFilter = "";
@@ -264,7 +270,44 @@ public sealed partial class ProductionViewModel : PageViewModel
             await LoadCoreAsync();
             Status = $"Đã áp quy trình {SelectedRouting.Name} cho đơn {orderNo} (bắt đầu từ bước {ApplyStartSeq}).";
             return null;
-        }, saveText: "Áp quy trình", width: 900, height: 560, scrollable: false);
+        }, saveText: "Áp quy trình", width: 1040, height: 620, scrollable: false);
+    }
+
+    /// <summary>
+    /// Tao CONG DOAN MOI ngay trong dialog quy trinh (In, Theu, Say, Dong goi...).
+    /// Tao xong nap lai danh muc va chon san cong doan vua tao de bam "+ Them buoc le" duoc luon.
+    /// </summary>
+    [RelayCommand]
+    private async Task NewStageAsync()
+    {
+        StageCode = StageName = "";
+        StageSeq = Stages.Count + 1;
+        StageActive = true;
+
+        var form = new Views.Dialogs.StageFormView { DataContext = this };
+        await DialogService.ShowFormAsync("Thêm công đoạn", form, async () =>
+        {
+            if (string.IsNullOrWhiteSpace(StageCode)) return "Nhập mã công đoạn (vd PRINTING).";
+            if (string.IsNullOrWhiteSpace(StageName)) return "Nhập tên công đoạn.";
+
+            var newId = await _api.CreateStageAsync(new
+            {
+                code = StageCode.Trim().ToUpperInvariant(),
+                name = StageName.Trim(),
+                seq = StageSeq > 0 ? StageSeq : (int?)null
+            });
+
+            // Nap lai danh muc de cong doan moi hien ngay o cot trai.
+            var sts = await _api.GetStagesAsync(activeOnly: true);
+            Stages.Clear();
+            foreach (var st in sts) Stages.Add(st);
+            StageListFilter = "";
+            ApplyStageFilter();
+            SelectedStage = Stages.FirstOrDefault(st => st.Id == newId);
+
+            Status = $"Đã thêm công đoạn {StageName}.";
+            return null;
+        }, saveText: "Thêm công đoạn", width: 520, height: 360);
     }
 
     /// <summary>Them 1 cong doan le vao don (ngoai mau) — dung ngay trong dialog quy trinh.</summary>

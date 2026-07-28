@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>San luong toi da moi ma hang + NVL nut that (view v_max_output_by_product + ten join san).</summary>
 public sealed record MaxOutputByProductDto(

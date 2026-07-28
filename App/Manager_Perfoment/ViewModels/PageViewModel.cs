@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace DGroup.App.ManagerPerformance.ViewModels;
+namespace GM95.App.ManagerPerformance.ViewModels;
 
 /// <summary>Lop co so cho moi trang (man hinh) hien trong vung content ben phai.</summary>
 public abstract partial class PageViewModel : ViewModelBase

@@ -1,16 +1,16 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels"
+        xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
-        x:Class="DGroup.App.ManagerPerformance.Views.MainWindow"
+        x:Class="GM95.App.ManagerPerformance.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         WindowState="Maximized"
         Width="1280" Height="800"
         MinWidth="1024" MinHeight="600"
         Background="{StaticResource AppBackgroundBrush}"
-        Title="DGroup - Quản lý sản xuất">
+        Title="GM95 - Quản lý sản xuất">
     <!-- WindowState=Maximized: luon mo full man hinh; Width/Height chi la kich thuoc
          khi nguoi dung bam restore. -->
 
@@ -30,7 +30,7 @@
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <Border Width="36" Height="36" CornerRadius="4"
                                 Background="{StaticResource AccentBrush}">
-                            <TextBlock Text="DG" Foreground="White" FontWeight="Bold" FontSize="14"
+                            <TextBlock Text="95" Foreground="White" FontWeight="Bold" FontSize="14"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">

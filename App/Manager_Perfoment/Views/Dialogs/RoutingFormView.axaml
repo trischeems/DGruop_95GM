@@ -1,21 +1,26 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
-             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:GM95.App.ManagerPerformance.Models"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="520"
-             x:Class="DGroup.App.ManagerPerformance.Views.Dialogs.RoutingFormView"
+             x:Class="GM95.App.ManagerPerformance.Views.Dialogs.RoutingFormView"
              x:DataType="vm:RoutingsViewModel">
     <!-- Soan 1 mau quy trinh: trai = danh muc cong doan (tim + chon); phai = thong tin mau + chuoi buoc. -->
-    <Grid ColumnDefinitions="260,*">
+    <!-- Cot giua = thanh KEO: tu chinh do rong danh sach ben trai. -->
+    <Grid ColumnDefinitions="260,Auto,*">
 
         <!-- ===== COT TRAI: danh muc cong doan ===== -->
         <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
-            <Grid RowDefinitions="Auto,Auto,*,Auto">
+            <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
                 <TextBlock Grid.Row="0" Classes="h2" Text="Công đoạn có sẵn" Margin="0,0,0,8"/>
-                <TextBox Grid.Row="1" Text="{Binding StageListFilter}" Watermark="Tìm tên / mã..." Margin="0,0,0,8"/>
-                <ListBox Grid.Row="2" Classes="master" ItemsSource="{Binding FilteredStages}"
+                <Button Grid.Row="1" Classes="ghost" Content="+ Tạo công đoạn mới" Margin="0,0,0,8"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                        Command="{Binding NewStageCommand}"
+                        ToolTip.Tip="Thiếu công đoạn? Tạo ngay tại đây (In, Thêu, Sấy, Đóng gói...)"/>
+                <TextBox Grid.Row="2" Text="{Binding StageListFilter}" Watermark="Tìm tên / mã..." Margin="0,0,0,8"/>
+                <ListBox Grid.Row="3" Classes="master" ItemsSource="{Binding FilteredStages}"
                          SelectedItem="{Binding SelectedStage, Mode=TwoWay}">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="models:Stage">
@@ -26,14 +31,16 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                <Button Grid.Row="3" Classes="accent" Content="+ Thêm bước" Margin="0,8,0,0"
+                <Button Grid.Row="4" Classes="accent" Content="+ Thêm bước" Margin="0,8,0,0"
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                         Command="{Binding AddLineCommand}"/>
             </Grid>
         </Border>
 
         <!-- ===== COT PHAI: thong tin mau + chuoi buoc ===== -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto">
+        <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+
+        <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*,Auto">
 
             <!-- Thong tin mau -->
             <Grid Grid.Row="0" ColumnDefinitions="*,2*" Margin="0,0,0,8">

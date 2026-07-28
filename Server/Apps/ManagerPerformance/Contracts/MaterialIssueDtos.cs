@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>1 dong NVL trong phieu xuat (so luong xuat + don gia).</summary>
 public sealed record MaterialIssueItemInput(

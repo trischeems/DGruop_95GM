@@ -3,7 +3,7 @@ using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 
-namespace DGroup.App.ManagerPerformance.Converters;
+namespace GM95.App.ManagerPerformance.Converters;
 
 /// <summary>
 /// Doi ma trang thai (chuoi) sang mau chu de de phan biet trong DataGrid.

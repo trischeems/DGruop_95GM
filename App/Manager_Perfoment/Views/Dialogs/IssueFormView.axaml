@@ -1,14 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
-             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:GM95.App.ManagerPerformance.Models"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="460"
-             x:Class="DGroup.App.ManagerPerformance.Views.Dialogs.IssueFormView"
+             x:Class="GM95.App.ManagerPerformance.Views.Dialogs.IssueFormView"
              x:DataType="vm:ProductionViewModel">
     <!-- Phieu XUAT NVL nhieu dong: trai = danh sach NVL (tim+chon); phai = kho + nhap dong + luoi. -->
-    <Grid ColumnDefinitions="260,*">
+    <!-- Cot giua = thanh KEO: tu chinh do rong danh sach ben trai. -->
+    <Grid ColumnDefinitions="260,Auto,*">
 
         <!-- ===== COT TRAI: danh sach NVL ===== -->
         <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
@@ -23,7 +24,7 @@
                                 <TextBlock Classes="itemmain" Text="{Binding Name}"/>
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <TextBlock Classes="itemsub" Text="{Binding Sku}"/>
-                                    <TextBlock Classes="itemsub" Text="{Binding UomCode}"/>
+                                    <TextBlock Classes="itemsub" Text="{Binding UomName}"/>
                                 </StackPanel>
                             </StackPanel>
                         </DataTemplate>
@@ -33,7 +34,9 @@
         </Border>
 
         <!-- ===== COT PHAI: kho + nhap dong + luoi ===== -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto,*">
+        <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+
+        <Grid Grid.Column="2" RowDefinitions="Auto,Auto,Auto,*">
             <StackPanel Grid.Row="0" Margin="0,0,0,8">
                 <TextBlock Classes="label" Text="Kho xuất (áp dụng cho cả phiếu)"/>
                 <AutoCompleteBox ItemsSource="{Binding Warehouses}" SelectedItem="{Binding SelectedWarehouse, Mode=TwoWay}"
@@ -64,7 +67,7 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding QtyIssued, StringFormat='{}{0:0.####}'}"/>
-                                        <TextBlock Text="{Binding Material.UomCode}" Classes="uom"/>
+                                        <TextBlock Text="{Binding Material.UomName}" Classes="uom"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>

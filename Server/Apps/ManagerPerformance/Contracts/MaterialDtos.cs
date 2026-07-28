@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>Ban ghi NVL tra ve client (khop cot bang materials + ma/ten DVT join san).</summary>
 public sealed record MaterialDto(

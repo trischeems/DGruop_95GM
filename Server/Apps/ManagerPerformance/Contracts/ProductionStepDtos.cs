@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>1 buoc quy trinh san xuat (Cat/May/QC/Nhap TP) cua 1 don, kem thong tin cong doan.</summary>
 public sealed record ProductionStepDto(

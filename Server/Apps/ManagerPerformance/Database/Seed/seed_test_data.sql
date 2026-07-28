@@ -73,7 +73,7 @@ SELECT
         || ' ' ||
     (ARRAY['An','Bình','Cường','Dũng','Em','Phúc','Giang','Hà','Khôi','Linh',
            'Mai','Nam','Oanh','Phong','Quân','Sơn','Tú','Uyên','Vân','Yến'])[1 + (g % 20)],
-    'user' || lpad(g::text, 3, '0') || '@dgroup.local',
+    'user' || lpad(g::text, 3, '0') || '@gm95.local',
     (g % 20 <> 0)                       -- ~5% inactive
 FROM generate_series(1, 30) AS g;
 

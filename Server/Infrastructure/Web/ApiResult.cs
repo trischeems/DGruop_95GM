@@ -1,4 +1,4 @@
-namespace DGroup.Server.Infrastructure.Web;
+namespace GM95.Server.Infrastructure.Web;
 
 /// <summary>Bao response chuan: { ok, data, error }. Dong nhat cho moi API.</summary>
 public sealed class ApiResult<T>

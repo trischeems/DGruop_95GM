@@ -1,9 +1,9 @@
 @echo off
 setlocal EnableDelayedExpansion
 REM ============================================================================
-REM  DGroup - seed_test_data.bat
+REM  GM95 - seed_test_data.bat
 REM  Nap DU LIEU TEST (vai tram dong moi loai) vao schema tenant de test app.
-REM  - Doc cau hinh DB tu Server\config.json (khoi dgroup_postgress) - NGUON SU THAT
+REM  - Doc cau hinh DB tu Server\config.json (khoi gm95_postgress) - NGUON SU THAT
 REM  - Dung psql portable trong Server\pgsql
 REM  - GIU nguyen reference (warehouses/units/categories/stages), chi lam moi
 REM    du lieu giao dich (materials, stock, bom, don SX, xuat/nhap, canh bao...).
@@ -29,7 +29,7 @@ if "%TENANT%"=="" set "TENANT=public"
 
 echo(
 echo ==========================================================
-echo   DGroup - Seed du lieu TEST
+echo   GM95 - Seed du lieu TEST
 echo ==========================================================
 echo   Tenant     : %TENANT%
 echo   Seed SQL   : %SEED_SQL%
@@ -55,7 +55,7 @@ set "PG_PASS="
 set "PG_DBNAME="
 set "PG_HOST="
 for /f "usebackq delims=" %%L in (`powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$c = Get-Content -Raw -LiteralPath '%CONFIG_FILE%' | ConvertFrom-Json; $p = $c.dgroup_postgress; Write-Output ('PG_PORT=' + $p.port); Write-Output ('PG_USER=' + $p.user); Write-Output ('PG_PASS=' + $p.pass); Write-Output ('PG_DBNAME=' + $p.dbname); Write-Output ('PG_HOST=' + $p.host)"`) do (
+  "$c = Get-Content -Raw -LiteralPath '%CONFIG_FILE%' | ConvertFrom-Json; $p = $c.gm95_postgress; Write-Output ('PG_PORT=' + $p.port); Write-Output ('PG_USER=' + $p.user); Write-Output ('PG_PASS=' + $p.pass); Write-Output ('PG_DBNAME=' + $p.dbname); Write-Output ('PG_HOST=' + $p.host)"`) do (
     set "%%L"
 )
 

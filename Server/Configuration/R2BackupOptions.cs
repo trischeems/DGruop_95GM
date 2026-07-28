@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DGroup.Server.Configuration;
+namespace GM95.Server.Configuration;
 
 /// <summary>
 /// Khoi "r2_backup" trong config.json. Cac bien dat san cho backup Cloudflare R2 (lam sau).

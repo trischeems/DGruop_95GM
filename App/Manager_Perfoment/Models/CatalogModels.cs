@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace DGroup.App.ManagerPerformance.Models;
+namespace GM95.App.ManagerPerformance.Models;
 
 // =====================================================================================
 //  Model client cho cac module server bo sung (khop DTO server, JSON camelCase).

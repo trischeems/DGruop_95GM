@@ -6,7 +6,7 @@
 
 ---
 
-# DGroup Server — Yêu cầu & Kiến trúc
+# GM95 Server — Yêu cầu & Kiến trúc
 
 ## Mục tiêu (yêu cầu đặt ra)
 
@@ -21,7 +21,7 @@
 ## Công nghệ & quyết định kiến trúc (đã chốt)
 
 - **.NET 8 SDK, ASP.NET Core, kiểu Controller (MVC).**
-- **Modular monolith:** 1 process `DGroup.Server`; mỗi app = 1 folder module trong `Server/Apps/`.
+- **Modular monolith:** 1 process `GM95.Server`; mỗi app = 1 folder module trong `Server/Apps/`.
   Thêm app = tạo folder + class `IAppModule` + 1 dòng trong `ModuleRegistry`.
 - **Multi-tenant: schema-per-tenant.** Mỗi tenant (bộ phận / công ty con) = 1 PostgreSQL schema
   riêng trong DB của app. Cách ly dữ liệu tốt, backup/restore từng tenant, query nhanh vì mỗi
@@ -58,8 +58,8 @@ mà chưa có dev-cert, chạy `dotnet dev-certs https --trust` một lần ho�
 1. Cài **.NET 8 SDK** + **postgresql-16** (apt PGDG chính thức). Không dùng portable trên prod.
 2. Tạo DB + user theo `config.json` (đặt **mật khẩu mạnh** khác dev). `pg_hba.conf` dùng `scram-sha-256`.
    PG chỉ `listen_addresses='localhost'` (không mở port ra ngoài).
-3. `dotnet publish Server -c Release -o /opt/dgroup/server`. Đặt `config.json` prod cạnh binary.
-4. Chạy bằng **systemd service** (`dgroup-server.service`), `ASPNETCORE_URLS=http://127.0.0.1:8765`.
+3. `dotnet publish Server -c Release -o /opt/gm95/server`. Đặt `config.json` prod cạnh binary.
+4. Chạy bằng **systemd service** (`gm95-server.service`), `ASPNETCORE_URLS=http://127.0.0.1:8765`.
 5. **Cloudflared tunnel** trỏ hostname công khai → `127.0.0.1:8765` (TLS terminate ở Cloudflare).
 6. Backup: cron `pg_dump` → upload Cloudflare R2 (khối `r2_backup` trong config, làm sau).
 

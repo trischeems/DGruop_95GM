@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 REM ============================================================================
-REM  DGroup - run_app_quanly.bat  (o ROOT du an)
+REM  GM95 - run_app_quanly.bat  (o ROOT du an)
 REM  Mo app client Manager_Perfoment (Avalonia UI, .NET 8).
 REM  - Doc server.base_url tu App\Manager_Perfoment\config.json bang PowerShell
 REM  - Kiem tra server co chay khong (goi /dgrpi/health); neu chua -> nhac bat run_server.bat
@@ -17,7 +17,7 @@ set "APP_CONFIG=%APP_DIR%\config.json"
 
 echo(
 echo ==========================================================
-echo   DGroup - Run App (Manager_Perfoment)
+echo   GM95 - Run App (Manager_Perfoment)
 echo ==========================================================
 echo   App : %APP_DIR%
 echo(

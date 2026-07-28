@@ -1,7 +1,7 @@
-using DGroup.Server.Configuration;
+using GM95.Server.Configuration;
 using Npgsql;
 
-namespace DGroup.Server.Infrastructure.Data;
+namespace GM95.Server.Infrastructure.Data;
 
 /// <summary>
 /// Trien khai ITenantConnection. Diem mau chot: dung SET LOCAL search_path trong transaction.

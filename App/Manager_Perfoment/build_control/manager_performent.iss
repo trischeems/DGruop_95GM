@@ -1,12 +1,12 @@
 ; ============================================================================
-;  DGroup - manager_performent.iss
+;  GM95 - manager_performent.iss
 ;  Script Inno Setup 6 cho app client Manager_Perfoment (installer Windows).
 ;  Thuong duoc bien dich boi build_wd_manager_performent.bat (truyen AppVersion,
 ;  PublishDir qua /D...). Van mo truc tiep duoc bang Inno Setup IDE: cac gia tri
 ;  trong #ifndef ben duoi la mac dinh.
 ;
-;  Cai vao : C:\Program Files\Dgroup\App\Manager_performent   (theo CLAUDE.md)
-;  Du lieu runtime cua nguoi dung: %LOCALAPPDATA%\Dgroup\App\Manager_performent
+;  Cai vao : C:\Program Files\GM95\App\Manager_performent   (theo CLAUDE.md)
+;  Du lieu runtime cua nguoi dung: %LOCALAPPDATA%\GM95\App\Manager_performent
 ;  -- installer/uninstaller KHONG dung toi (giu user-config, cache, logs).
 ; ============================================================================
 
@@ -18,9 +18,9 @@
 #endif
 
 #define AppName  "Manager_Perfoment"
-#define AppTitle "DGroup - Quan ly san xuat"
-#define Vendor   "Dgroup"
-#define ExeName  "DGroup.App.ManagerPerformance.exe"
+#define AppTitle "GM95 - Quan ly san xuat"
+#define Vendor   "GM95"
+#define ExeName  "GM95.App.ManagerPerformance.exe"
 #define IconFile "..\Assets\avalonia-logo.ico"
 
 [Setup]

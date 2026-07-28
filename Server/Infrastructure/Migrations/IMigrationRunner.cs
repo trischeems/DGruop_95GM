@@ -1,4 +1,4 @@
-namespace DGroup.Server.Infrastructure.Migrations;
+namespace GM95.Server.Infrastructure.Migrations;
 
 /// <summary>
 /// Chay migration SQL thuan (khong EF) theo tung schema tenant.

@@ -1,8 +1,8 @@
 using System.Net.Http;
 using System.Text.Json;
-using DGroup.App.ManagerPerformance.Models;
+using GM95.App.ManagerPerformance.Models;
 
-namespace DGroup.App.ManagerPerformance.Services;
+namespace GM95.App.ManagerPerformance.Services;
 
 /// <summary>
 /// Phan mo rong ApiClient: goi API cac module catalog + van hanh (Lookups, Products, BOM,

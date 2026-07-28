@@ -3,11 +3,11 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
-using DGroup.App.ManagerPerformance.Services;
-using DGroup.App.ManagerPerformance.ViewModels;
-using DGroup.App.ManagerPerformance.Views;
+using GM95.App.ManagerPerformance.Services;
+using GM95.App.ManagerPerformance.ViewModels;
+using GM95.App.ManagerPerformance.Views;
 
-namespace DGroup.App.ManagerPerformance;
+namespace GM95.App.ManagerPerformance;
 
 public partial class App : Application
 {

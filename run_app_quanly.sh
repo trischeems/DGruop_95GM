@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  DGroup - run_app_quanly.sh  (o ROOT du an — tuong duong run_app_quanly.bat)
+#  GM95 - run_app_quanly.sh  (o ROOT du an — tuong duong run_app_quanly.bat)
 #  Mo app client Manager_Perfoment (Avalonia UI, .NET 8) tren Linux.
 #  - Doc server.base_url tu App/Manager_Perfoment/config.json (jq, fallback python3)
 #  - Kiem tra server co chay khong (goi /dgrpi/health); neu chua -> nhac bat run_server.sh
@@ -22,7 +22,7 @@ fail() {
 
 echo
 echo "=========================================================="
-echo "  DGroup - Run App (Manager_Perfoment)"
+echo "  GM95 - Run App (Manager_Perfoment)"
 echo "=========================================================="
 echo "  App : $APP_DIR"
 echo

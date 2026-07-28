@@ -53,7 +53,7 @@ INSERT INTO production_stages (code, name, seq) VALUES
 -- 2. USERS (200) + hàm chọn user ngẫu nhiên (id thật, không hard-code).
 -- -------------------------------------------------------------------------------------
 INSERT INTO users (username, full_name, email)
-SELECT 'pt_user' || g, 'Nhân viên ' || g, 'pt_user' || g || '@dgroup.test'
+SELECT 'pt_user' || g, 'Nhân viên ' || g, 'pt_user' || g || '@gm95.test'
 FROM generate_series(1, 200) g;
 
 SELECT set_config('pt.user_min', (SELECT min(id)::text FROM users), false);

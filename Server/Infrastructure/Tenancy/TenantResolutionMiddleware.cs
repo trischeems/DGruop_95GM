@@ -1,7 +1,7 @@
-using DGroup.Server.Configuration;
-using DGroup.Server.Infrastructure.Data;
+using GM95.Server.Configuration;
+using GM95.Server.Infrastructure.Data;
 
-namespace DGroup.Server.Infrastructure.Tenancy;
+namespace GM95.Server.Infrastructure.Tenancy;
 
 /// <summary>
 /// Xac dinh tenant cho moi request tu header (mac dinh "X-Tenant").

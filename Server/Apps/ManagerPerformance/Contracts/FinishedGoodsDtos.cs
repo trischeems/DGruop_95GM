@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>Phieu nhap kho thanh pham (khop finished_goods_receipts + ten product/kho/don join san).</summary>
 public sealed record FinishedGoodsReceiptDto(

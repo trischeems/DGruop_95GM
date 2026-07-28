@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace DGroup.Server.Infrastructure.Data;
+namespace GM95.Server.Infrastructure.Data;
 
 /// <summary>
 /// Kiem tra ten tenant (= ten PostgreSQL schema) truoc khi ghep vao SQL.

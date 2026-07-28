@@ -2,7 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
-namespace DGroup.App.ManagerPerformance.Views;
+namespace GM95.App.ManagerPerformance.Views;
 
 /// <summary>
 /// Cau hinh chung cho moi o search-goi-y (AutoCompleteBox) trong 1 view:

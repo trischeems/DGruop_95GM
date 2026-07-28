@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace DGroup.App.ManagerPerformance.Views;
+namespace GM95.App.ManagerPerformance.Views;
 
 public partial class MainWindow : Window
 {

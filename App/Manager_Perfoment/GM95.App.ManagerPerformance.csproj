@@ -8,8 +8,8 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <RootNamespace>DGroup.App.ManagerPerformance</RootNamespace>
-    <AssemblyName>DGroup.App.ManagerPerformance</AssemblyName>
+    <RootNamespace>GM95.App.ManagerPerformance</RootNamespace>
+    <AssemblyName>GM95.App.ManagerPerformance</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

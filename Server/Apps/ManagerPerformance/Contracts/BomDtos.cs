@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>Header dinh muc (BOM) tra ve client (khop cot bang bom).</summary>
 public sealed record BomDto(

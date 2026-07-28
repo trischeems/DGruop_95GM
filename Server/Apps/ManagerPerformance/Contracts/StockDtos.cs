@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>Ton kha dung gop moi kho theo NVL + gia + DVT (khop view v_material_stock sau V005).</summary>
 public sealed record MaterialStockDto(

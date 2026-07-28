@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DGroup.App.ManagerPerformance.Models;
-using DGroup.App.ManagerPerformance.Services;
+using GM95.App.ManagerPerformance.Models;
+using GM95.App.ManagerPerformance.Services;
 
-namespace DGroup.App.ManagerPerformance.ViewModels.Pages;
+namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Man hinh Nhap kho thanh pham + doi chieu hao hut so voi dinh muc.</summary>
 public sealed partial class FinishedGoodsViewModel : PageViewModel

@@ -1,4 +1,4 @@
-# CLAUDE.md — DGroup Monorepo (Manager_95GM)
+# CLAUDE.md — GM95 Monorepo (Manager_95GM)
 
 Tài liệu định hướng cho Claude khi làm việc trên repo này. Đọc trước khi sửa code.
 
@@ -23,9 +23,9 @@ Có hai loại "app", đừng nhầm:
 ## Kiến trúc server (đã chốt)
 
 - **.NET 8 SDK, ASP.NET Core, kiểu Controller (MVC).** Cross-platform (Windows dev / Ubuntu prod / macOS).
-- **Modular monolith:** 1 process duy nhất (`DGroup.Server`), mỗi app = 1 folder module trong `Server/Apps/`.
+- **Modular monolith:** 1 process duy nhất (`GM95.Server`), mỗi app = 1 folder module trong `Server/Apps/`.
   Thêm app mới = tạo folder + class `IAppModule` + thêm 1 dòng vào `ModuleRegistry.BuildModules()`.
-- **Mỗi app 1 database Postgres riêng** (không lẫn). App đầu tiên dùng khối `dgroup_postgress` trong config.
+- **Mỗi app 1 database Postgres riêng** (không lẫn). App đầu tiên dùng khối `gm95_postgress` trong config.
 - **Multi-tenant: schema-per-tenant.** Mỗi tenant (bộ phận/công ty con) = 1 PostgreSQL schema riêng
   trong DB của app. Row-Level Security ready.
 - **Data access: Dapper only (raw SQL).** KHÔNG EF Core. Tự viết migration `.sql` versioned.
@@ -50,7 +50,7 @@ Quy tắc bắt buộc:
 
 Mọi port, mật khẩu, tên DB… nằm trong `Server/config.json`. Sửa ở đó, không hard-code.
 - `server.port` (string) → Kestrel bind. `https` (bool).
-- `dgroup_postgress` (giữ nguyên typo): host/port/dbname/user/pass của app đầu tiên.
+- `gm95_postgress` (giữ nguyên typo): host/port/dbname/user/pass của app đầu tiên.
 - `r2_backup`: biến đặt sẵn cho backup Cloudflare R2 (làm sau).
 - `tenancy` (tuỳ chọn, có default): `default_tenant`, `allowed_tenants`, `auto_create_schema`, `tenant_header`.
 
@@ -92,17 +92,17 @@ App/
 
 ## App client Manager_Perfoment (Avalonia UI, .NET 8) — đã có khung + lát cắt chạy được
 
-App client ở `App/Manager_Perfoment/` (project `DGroup.App.ManagerPerformance`). **Avalonia UI 11.2**,
+App client ở `App/Manager_Perfoment/` (project `GM95.App.ManagerPerformance`). **Avalonia UI 11.2**,
 MVVM (CommunityToolkit.Mvvm). App KHÔNG chứa database — chỉ gọi API server `/dgrpi/` qua `HttpClient`.
 
 - **`config.json` của app** (mỗi app có config riêng): `app` (name/title/vendor), `server`
   (base_url/api_prefix/timeout), `tenant` (current/header). Người dùng ghi đè bằng `user-config.json`
   ở thư mục dữ liệu runtime. Đọc bởi `Services/AppConfig.cs`.
 - **Cross-platform, một logic path duy nhất, tự chuyển hoá theo HĐH** (`Services/AppPaths.cs`, không hard-code):
-  - Nguồn app (chỉ đọc): Windows `C:\Program Files\Dgroup\App\Manager_performent`;
-    macOS `/Applications/Dgroup/…`; Linux `/opt/dgroup/…`. Installer Windows dùng Inno Setup (ISS).
+  - Nguồn app (chỉ đọc): Windows `C:\Program Files\GM95\App\Manager_performent`;
+    macOS `/Applications/GM95/…`; Linux `/opt/gm95/…`. Installer Windows dùng Inno Setup (ISS).
   - Dữ liệu runtime (cache/logs/user-config): `Environment.SpecialFolder.LocalApplicationData` +
-    `Dgroup/App/Manager_performent` → Windows `%LOCALAPPDATA%\…`, macOS `~/Library/Application Support/…`,
+    `GM95/App/Manager_performent` → Windows `%LOCALAPPDATA%\…`, macOS `~/Library/Application Support/…`,
     Linux `~/.local/share/…`.
 - **Lát cắt hiện có:** 3 tab — Nguyên vật liệu · Nhập kho · Cảnh báo tồn thấp (khớp 3 nhóm API server đã chạy).
   Đã build + chạy thử: app khởi động, kết nối server, hiển thị dữ liệu. Nghiệp vụ còn lại bổ sung sau.

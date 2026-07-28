@@ -1,6 +1,6 @@
-using DGroup.Server.Configuration;
+using GM95.Server.Configuration;
 
-namespace DGroup.Server.Infrastructure.Web;
+namespace GM95.Server.Infrastructure.Web;
 
 /// <summary>
 /// Danh sach cac app module da dang ky. Them app moi = them 1 dong o day.

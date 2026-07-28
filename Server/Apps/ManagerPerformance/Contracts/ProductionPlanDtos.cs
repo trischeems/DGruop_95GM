@@ -1,4 +1,4 @@
-namespace DGroup.Server.Apps.ManagerPerformance.Contracts;
+namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
 /// <summary>Ban ghi ke hoach san xuat tra ve client (khop cot production_plans + so don join san).</summary>
 public sealed record ProductionPlanDto(

@@ -1,6 +1,6 @@
 using Npgsql;
 
-namespace DGroup.Server.Infrastructure.Data;
+namespace GM95.Server.Infrastructure.Data;
 
 /// <summary>
 /// Xay dung NpgsqlDataSource 1 lan (singleton) tu connection string.

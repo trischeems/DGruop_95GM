@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace DGroup.App.ManagerPerformance.Views.Pages;
+namespace GM95.App.ManagerPerformance.Views.Pages;
 
 public partial class FinishedGoodsView : UserControl
 {

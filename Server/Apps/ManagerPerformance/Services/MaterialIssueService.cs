@@ -1,9 +1,9 @@
-using DGroup.Server.Apps.ManagerPerformance.Contracts;
-using DGroup.Server.Apps.ManagerPerformance.Repositories;
-using DGroup.Server.Infrastructure.Data;
-using DGroup.Server.Infrastructure.Tenancy;
+using GM95.Server.Apps.ManagerPerformance.Contracts;
+using GM95.Server.Apps.ManagerPerformance.Repositories;
+using GM95.Server.Infrastructure.Data;
+using GM95.Server.Infrastructure.Tenancy;
 
-namespace DGroup.Server.Apps.ManagerPerformance.Services;
+namespace GM95.Server.Apps.ManagerPerformance.Services;
 
 /// <summary>
 /// Nghiep vu xuat kho NVL cho san xuat (tru ton). Tao & POST phieu trong 1 transaction:

@@ -1,15 +1,16 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
-             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:GM95.App.ManagerPerformance.Models"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
-             x:Class="DGroup.App.ManagerPerformance.Views.Pages.ProductionPlansView"
+             x:Class="GM95.App.ManagerPerformance.Views.Pages.ProductionPlansView"
              x:DataType="vm:ProductionPlansViewModel">
 
     <!-- 2 COT: trai = danh sach DON (o tim + list bam chon); phai = chi tiet ke hoach cua don. -->
-    <Grid ColumnDefinitions="288,*">
+    <!-- Cot giua = thanh KEO: tu chinh do rong cot trai. -->
+    <Grid ColumnDefinitions="288,Auto,*">
 
         <!-- ===== COT TRAI: danh sach don ===== -->
         <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
@@ -30,7 +31,7 @@
                                     <TextBlock Classes="itemsub" Text="{Binding ProductName}"/>
                                     <TextBlock FontSize="11" FontWeight="SemiBold"
                                                Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"
-                                               Text="{Binding Status}"/>
+                                               Text="{Binding Status, Converter={StaticResource CodeVi}}"/>
                                 </StackPanel>
                             </StackPanel>
                         </DataTemplate>
@@ -40,7 +41,9 @@
         </Border>
 
         <!-- ===== COT PHAI: chi tiet ke hoach cua don dang chon ===== -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+        <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+
+        <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto">
 
             <!-- Card: Tao ke hoach (nut -> cua so rieng) + o SUA ke hoach dang chon (inline). -->
             <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
@@ -76,7 +79,13 @@
                         <ComboBox Grid.Column="2" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" Width="100" Margin="0,0,6,0"/>
                         <ComboBox Grid.Column="3" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" Width="90" Margin="0,0,8,0"/>
                         <ComboBox Grid.Column="4" ItemsSource="{Binding StatusOptions}"
-                                  SelectedItem="{Binding SelectedStatus}" Width="160" Margin="0,0,8,0"/>
+                                  SelectedItem="{Binding SelectedStatus}" Width="160" Margin="0,0,8,0">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <TextBlock Text="{Binding Converter={StaticResource CodeVi}}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         <Button Grid.Column="5" Classes="ghost" Content="Đổi trạng thái" Margin="0,0,8,0"
                                 Command="{Binding UpdateStatusCommand}"/>
                         <Button Grid.Column="6" Classes="accent" Content="Lưu" Margin="0,0,8,0"
@@ -95,7 +104,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding PlannedQty, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding ProductUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding ProductUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -104,7 +113,7 @@
                             <DataGridTemplateColumn Header="Trạng thái" Width="*" MinWidth="130">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontWeight="SemiBold"
+                                        <TextBlock Text="{Binding Status, Converter={StaticResource CodeVi}}" VerticalAlignment="Center" FontWeight="SemiBold"
                                                    Margin="12,0,0,0"
                                                    Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
                                     </DataTemplate>

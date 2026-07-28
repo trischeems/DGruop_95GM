@@ -1,8 +1,8 @@
-using DGroup.Server.Configuration;
-using DGroup.Server.Infrastructure.Data;
-using DGroup.Server.Infrastructure.Migrations;
-using DGroup.Server.Infrastructure.Tenancy;
-using DGroup.Server.Infrastructure.Web;
+using GM95.Server.Configuration;
+using GM95.Server.Infrastructure.Data;
+using GM95.Server.Infrastructure.Migrations;
+using GM95.Server.Infrastructure.Tenancy;
+using GM95.Server.Infrastructure.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 var config = ConfigLoader.Load(builder.Environment.ContentRootPath);
 builder.Services.AddSingleton(config);
 builder.Services.AddSingleton(config.Server);
-builder.Services.AddSingleton(config.DgroupPostgres);
+builder.Services.AddSingleton(config.Gm95Postgres);
 builder.Services.AddSingleton(config.R2Backup);
 builder.Services.AddSingleton(config.Tenancy);
 
@@ -26,7 +26,7 @@ builder.WebHost.ConfigureKestrel(k => k.ListenLocalhost(config.Server.PortNumber
 // ---------------------------------------------------------------------------
 DapperConfig.Configure();
 builder.Services.AddSingleton<IDbConnectionFactory>(
-    _ => new NpgsqlConnectionFactory(config.DgroupPostgres.ConnectionString));
+    _ => new NpgsqlConnectionFactory(config.Gm95Postgres.ConnectionString));
 builder.Services.AddScoped<ITenantConnection, TenantConnection>();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 
@@ -78,7 +78,7 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseMiddleware<TenantResolutionMiddleware>();
 app.MapControllers();
 
-app.Logger.LogInformation("DGroup Server '{Title}' | port {Port} | DB {Db}",
-    config.Server.Title, config.Server.PortNumber, config.DgroupPostgres.SafeConnectionString);
+app.Logger.LogInformation("GM95 Server '{Title}' | port {Port} | DB {Db}",
+    config.Server.Title, config.Server.PortNumber, config.Gm95Postgres.SafeConnectionString);
 
 app.Run();

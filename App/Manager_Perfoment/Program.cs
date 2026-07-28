@@ -3,7 +3,7 @@ using System;
 using System.Globalization;
 using System.Threading;
 
-namespace DGroup.App.ManagerPerformance;
+namespace GM95.App.ManagerPerformance;
 
 sealed class Program
 {

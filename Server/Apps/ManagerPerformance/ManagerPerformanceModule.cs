@@ -1,13 +1,13 @@
-using DGroup.Server.Apps.ManagerPerformance.Repositories;
-using DGroup.Server.Apps.ManagerPerformance.Services;
-using DGroup.Server.Configuration;
-using DGroup.Server.Infrastructure.Web;
+using GM95.Server.Apps.ManagerPerformance.Repositories;
+using GM95.Server.Apps.ManagerPerformance.Services;
+using GM95.Server.Configuration;
+using GM95.Server.Infrastructure.Web;
 
-namespace DGroup.Server.Apps.ManagerPerformance;
+namespace GM95.Server.Apps.ManagerPerformance;
 
 /// <summary>
 /// Module SERVER cho app Manager_Perfoment (quan ly san xuat may mac).
-/// Route prefix: "dgrpi". DB: dung khoi dgroup_postgress (app dau tien).
+/// Route prefix: "dgrpi". DB: dung khoi gm95_postgress (app dau tien).
 /// LUU Y: day la phan server-side; app client (.NET UI) nam o thu muc App/ tach biet.
 /// </summary>
 public sealed class ManagerPerformanceModule : IAppModule

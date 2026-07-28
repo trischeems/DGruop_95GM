@@ -3,8 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Layout;
 using Avalonia.Media;
+using System.Linq;
 
-namespace DGroup.App.ManagerPerformance.Services;
+namespace GM95.App.ManagerPerformance.Services;
 
 /// <summary>
 /// Popup xac nhan dung chung cho SUA/XOA du lieu (theo mau: canh bao van de + [Tiep tuc]/[Huy]).
@@ -97,7 +98,10 @@ public static class DialogService
         confirmBtn.Click += (_, _) => dialog.Close(true);
         cancelBtn.Click += (_, _) => dialog.Close(false);
 
-        var result = await dialog.ShowDialog<bool?>(desktop.MainWindow);
+        // Owner = cua so dang active (khong phai luon MainWindow) — de dialog LONG trong dialog
+        // (vd "Thêm công đoạn" mo tu trong "Tạo mẫu quy trình") nam DE LEN cha, khong chui ra sau.
+        var owner = desktop.Windows.FirstOrDefault(w => w.IsActive) ?? desktop.MainWindow;
+        var result = await dialog.ShowDialog<bool?>(owner);
         return result == true;
     }
 
@@ -221,7 +225,10 @@ public static class DialogService
             finally { saveBtn.IsEnabled = true; cancelBtn.IsEnabled = true; }
         };
 
-        var result = await dialog.ShowDialog<bool?>(desktop.MainWindow);
+        // Owner = cua so dang active (khong phai luon MainWindow) — de dialog LONG trong dialog
+        // (vd "Thêm công đoạn" mo tu trong "Tạo mẫu quy trình") nam DE LEN cha, khong chui ra sau.
+        var owner = desktop.Windows.FirstOrDefault(w => w.IsActive) ?? desktop.MainWindow;
+        var result = await dialog.ShowDialog<bool?>(owner);
         return result == true;
     }
 }

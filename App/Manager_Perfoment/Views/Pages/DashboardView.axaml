@@ -1,10 +1,10 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels.Pages"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
-             x:Class="DGroup.App.ManagerPerformance.Views.Pages.DashboardView"
+             x:Class="GM95.App.ManagerPerformance.Views.Pages.DashboardView"
              x:DataType="vm:DashboardViewModel">
 
     <!-- Hang KPI (Auto) + bang Sap het hang chiem toan bo phan con lai (*) -->
@@ -56,7 +56,7 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding TotalAvailable, StringFormat='{}{0:0.####}'}"/>
-                                        <TextBlock Text="{Binding UomCode}" Classes="uom"/>
+                                        <TextBlock Text="{Binding UomName}" Classes="uom"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -66,7 +66,7 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding ReorderLevel, StringFormat='{}{0:0.####}'}"/>
-                                        <TextBlock Text="{Binding UomCode}" Classes="uom"/>
+                                        <TextBlock Text="{Binding UomName}" Classes="uom"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -76,7 +76,7 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding ReorderQuantity, StringFormat='{}{0:0.####}'}"/>
-                                        <TextBlock Text="{Binding UomCode}" Classes="uom"/>
+                                        <TextBlock Text="{Binding UomName}" Classes="uom"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>

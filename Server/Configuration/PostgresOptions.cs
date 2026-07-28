@@ -1,9 +1,9 @@
 using System.Text.Json.Serialization;
 
-namespace DGroup.Server.Configuration;
+namespace GM95.Server.Configuration;
 
 /// <summary>
-/// Khoi "dgroup_postgress" trong config.json (giu nguyen typo lam nguon su that).
+/// Khoi "gm95_postgress" trong config.json (giu nguyen typo lam nguon su that).
 /// Moi app se co the co khoi Postgres rieng (DB rieng) sau nay; app dau tien dung khoi nay.
 /// </summary>
 public sealed class PostgresOptions
@@ -15,10 +15,10 @@ public sealed class PostgresOptions
     public string Port { get; init; } = "5678";
 
     [JsonPropertyName("dbname")]
-    public string DbName { get; init; } = "dgroup_db";
+    public string DbName { get; init; } = "gm95_db";
 
     [JsonPropertyName("user")]
-    public string User { get; init; } = "dgroup";
+    public string User { get; init; } = "gm95";
 
     [JsonPropertyName("pass")]
     public string Pass { get; init; } = "";

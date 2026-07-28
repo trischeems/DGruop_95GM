@@ -1,8 +1,8 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="DGroup.App.ManagerPerformance.App"
-             xmlns:local="using:DGroup.App.ManagerPerformance"
-             xmlns:conv="using:DGroup.App.ManagerPerformance.Converters"
+             x:Class="GM95.App.ManagerPerformance.App"
+             xmlns:local="using:GM95.App.ManagerPerformance"
+             xmlns:conv="using:GM95.App.ManagerPerformance.Converters"
              RequestedThemeVariant="Light">
              <!-- Light mode theo yeu cau. -->
 
@@ -18,6 +18,8 @@
         <!-- bool -> chu tieng Viet trong luoi (thay "True/False"). -->
         <conv:BoolToTextConverter x:Key="BoolToOptional" TrueText="Có thể bỏ" FalseText="Bắt buộc"/>
         <conv:BoolToTextConverter x:Key="BoolToSkipped"  TrueText="Đã bỏ qua" FalseText=""/>
+        <!-- Ma ky thuat (PENDING, RECEIPT...) -> chu tieng Viet khi hien tren man hinh. -->
+        <conv:CodeToVietnameseConverter x:Key="CodeVi"/>
         <Color x:Key="SystemAccentColor">#2563EB</Color>
         <Color x:Key="SystemAccentColorDark1">#1D4ED8</Color>
         <Color x:Key="SystemAccentColorDark2">#1E40AF</Color>

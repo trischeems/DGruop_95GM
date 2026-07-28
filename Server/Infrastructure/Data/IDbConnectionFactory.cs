@@ -1,10 +1,10 @@
 using Npgsql;
 
-namespace DGroup.Server.Infrastructure.Data;
+namespace GM95.Server.Infrastructure.Data;
 
 /// <summary>
 /// Cung cap connection toi DB cua mot app. Moi app 1 DataSource (1 pool) rieng.
-/// Hien tai app dau tien (ManagerPerformance) dung DB "dgroup_postgress".
+/// Hien tai app dau tien (ManagerPerformance) dung DB "gm95_postgress".
 /// Dung 1 DataSource dung chung (KHONG tao pool moi cho tung tenant) — chon schema o muc transaction.
 /// </summary>
 public interface IDbConnectionFactory

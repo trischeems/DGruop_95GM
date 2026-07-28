@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 
-namespace DGroup.App.ManagerPerformance.Views.Pages;
+namespace GM95.App.ManagerPerformance.Views.Pages;
 
 public partial class MonthCompareView : UserControl
 {

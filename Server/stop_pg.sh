@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  DGroup - stop_pg.sh  (tuong duong stop_pg.bat cho Linux/Ubuntu)
+#  GM95 - stop_pg.sh  (tuong duong stop_pg.bat cho Linux/Ubuntu)
 #  Dung PostgreSQL 16 dang chay tren may nay.
 #  Dung pg_ctl stop -m fast (dong cac ket noi dang chay, rollback tx do dang,
 #  roi tat sach se). Doc data dir = Server/pgdata.
@@ -21,7 +21,7 @@ fail() {
 
 echo
 echo "=========================================================="
-echo "  DGroup - Stop PostgreSQL 16 (Linux)"
+echo "  GM95 - Stop PostgreSQL 16 (Linux)"
 echo "=========================================================="
 echo "  Data : $PG_DATA"
 echo

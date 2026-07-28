@@ -1,6 +1,6 @@
 using Dapper;
 
-namespace DGroup.Server.Infrastructure.Data;
+namespace GM95.Server.Infrastructure.Data;
 
 /// <summary>
 /// Cau hinh Dapper toan cuc (goi 1 lan luc khoi dong).

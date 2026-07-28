@@ -54,7 +54,7 @@ App chỉ gọi API tới **server** (`/dgrpi/...`); database nằm ở server (
 
 ```
 App client (Avalonia UI)  ──HTTP /dgrpi/──►  Server (.NET 8)  ──►  PostgreSQL
-   [App/Manager_Perfoment/]                   [Server/]              [dgroup_db]
+   [App/Manager_Perfoment/]                   [Server/]              [gm95_db]
 ```
 
 ## Công nghệ
@@ -75,8 +75,8 @@ Người dùng có thể ghi đè cấu hình runtime bằng file `user-config.j
 
 | | Windows | macOS | Linux |
 |---|---|---|---|
-| **Nguồn app** (installer ghi, chỉ đọc) | `C:\Program Files\Dgroup\App\Manager_performent` | `/Applications/Dgroup/…` | `/opt/dgroup/…` |
-| **Dữ liệu runtime** (cache/logs/user-config) | `%LOCALAPPDATA%\Dgroup\App\Manager_performent` | `~/Library/Application Support/Dgroup/App/Manager_performent` | `~/.local/share/Dgroup/App/Manager_performent` |
+| **Nguồn app** (installer ghi, chỉ đọc) | `C:\Program Files\GM95\App\Manager_performent` | `/Applications/GM95/…` | `/opt/gm95/…` |
+| **Dữ liệu runtime** (cache/logs/user-config) | `%LOCALAPPDATA%\GM95\App\Manager_performent` | `~/Library/Application Support/GM95/App/Manager_performent` | `~/.local/share/GM95/App/Manager_performent` |
 
 Code dùng `Environment.SpecialFolder.LocalApplicationData` (xem `Services/AppPaths.cs`) → .NET tự
 trả đúng thư mục mỗi HĐH. Installer Windows dùng **Inno Setup (ISS)**.

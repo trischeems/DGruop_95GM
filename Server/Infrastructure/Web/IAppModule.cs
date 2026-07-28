@@ -1,6 +1,6 @@
-using DGroup.Server.Configuration;
+using GM95.Server.Configuration;
 
-namespace DGroup.Server.Infrastructure.Web;
+namespace GM95.Server.Infrastructure.Web;
 
 /// <summary>
 /// Hop dong cho mot "app" (module) chay tren server dung chung.

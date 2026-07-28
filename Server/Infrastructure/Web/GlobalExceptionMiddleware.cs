@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Npgsql;
 
-namespace DGroup.Server.Infrastructure.Web;
+namespace GM95.Server.Infrastructure.Web;
 
 /// <summary>
 /// Bat exception chua xu ly -> tra JSON chuan { ok:false, error }.

@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 REM ============================================================================
-REM  DGroup - stop_pg.bat
+REM  GM95 - stop_pg.bat
 REM  Dung PostgreSQL 16 portable dang chay tren may DEV.
 REM  Dung pg_ctl stop -m fast (dong cac ket noi dang chay, rollback tx do dang,
 REM  roi tat sach se). Doc data dir = Server\pgdata.
@@ -16,7 +16,7 @@ set "PG_DATA=%SCRIPT_DIR%\pgdata"
 
 echo(
 echo ==========================================================
-echo   DGroup - Stop PostgreSQL 16 (Windows DEV)
+echo   GM95 - Stop PostgreSQL 16 (Windows DEV)
 echo ==========================================================
 echo   Data : %PG_DATA%
 echo(

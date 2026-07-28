@@ -1,11 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
-             xmlns:models="using:DGroup.App.ManagerPerformance.Models"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:GM95.App.ManagerPerformance.Models"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
-             x:Class="DGroup.App.ManagerPerformance.Views.Pages.MaterialsView"
+             x:Class="GM95.App.ManagerPerformance.Views.Pages.MaterialsView"
              x:DataType="vm:MaterialsViewModel">
 
     <!-- Form gon phia tren (Auto), 2 bang chia deu phan con lai (*,*) -->
@@ -88,7 +88,7 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding ReorderLevel, StringFormat='{}{0:0.####}'}"/>
-                                        <TextBlock Text="{Binding UomCode}" Classes="uom"/>
+                                        <TextBlock Text="{Binding UomName}" Classes="uom"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -98,7 +98,7 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding ReorderQuantity, StringFormat='{}{0:0.####}'}"/>
-                                        <TextBlock Text="{Binding UomCode}" Classes="uom"/>
+                                        <TextBlock Text="{Binding UomName}" Classes="uom"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -111,7 +111,7 @@
         </Border>
 
         <!-- Row 2: trai = bang ton kho (co cot gia); phai = lich su giao dich cua NVL dang chon -->
-        <Grid Grid.Row="2" ColumnDefinitions="3*,2*" Margin="0,12,0,0">
+        <Grid Grid.Row="2" ColumnDefinitions="3*,Auto,2*" Margin="0,12,0,0">
             <Border Classes="card" Grid.Column="0" Margin="0,0,6,0">
                 <Grid RowDefinitions="Auto,*">
                     <TextBlock Grid.Row="0" Classes="h2" Text="Tồn kho khả dụng (bấm 1 dòng để xem lịch sử giá)" Margin="0,0,0,10"/>
@@ -125,7 +125,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding TotalOnHand, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding UomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding UomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -135,7 +135,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding TotalAvailable, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding UomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding UomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -146,7 +146,8 @@
                     </DataGrid>
                 </Grid>
             </Border>
-            <Border Classes="card" Grid.Column="1" Margin="6,0,0,0">
+            <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+            <Border Classes="card" Grid.Column="2" Margin="6,0,0,0">
                 <Grid RowDefinitions="Auto,*">
                     <TextBlock Grid.Row="0" Classes="h2" Text="Lịch sử nhập / xuất (đơn giá từng lần)" Margin="0,0,0,10"/>
                     <DataGrid Grid.Row="1" ItemsSource="{Binding History}" IsReadOnly="True">
@@ -154,7 +155,7 @@
                             <DataGridTemplateColumn Header="Loại" Width="Auto" MinWidth="90">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding TxnType}" VerticalAlignment="Center" FontWeight="SemiBold" Margin="12,0,0,0"
+                                        <TextBlock Text="{Binding TxnType, Converter={StaticResource CodeVi}}" VerticalAlignment="Center" FontWeight="SemiBold" Margin="12,0,0,0"
                                                    Foreground="{Binding TxnType, Converter={StaticResource StatusToBrush}}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -164,7 +165,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Quantity, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -175,7 +176,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding BalanceAfter, StringFormat='{}{0:0.####}'}"/>
-                                            <TextBlock Text="{Binding MaterialUomCode}" Classes="uom"/>
+                                            <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>

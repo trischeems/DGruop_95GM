@@ -1,8 +1,8 @@
-using DGroup.Server.Configuration;
-using DGroup.Server.Infrastructure.Data;
+using GM95.Server.Configuration;
+using GM95.Server.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DGroup.Server.Controllers;
+namespace GM95.Server.Controllers;
 
 /// <summary>Endpoint he thong (khong gan tenant). Kiem tra server & ket noi DB.</summary>
 [ApiController]

@@ -1,7 +1,7 @@
-using DGroup.Server.Apps.ManagerPerformance.Contracts;
-using DGroup.Server.Infrastructure.Data;
+using GM95.Server.Apps.ManagerPerformance.Contracts;
+using GM95.Server.Infrastructure.Data;
 
-namespace DGroup.Server.Apps.ManagerPerformance.Repositories;
+namespace GM95.Server.Apps.ManagerPerformance.Repositories;
 
 /// <summary>1 dong plan da khoa (FOR UPDATE) phuc vu kiem tra chuyen trang thai.</summary>
 public sealed record PlanLockRow(long ProductionOrderId, string Status, decimal PlannedQty);

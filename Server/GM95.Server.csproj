@@ -6,8 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <RootNamespace>DGroup.Server</RootNamespace>
-    <AssemblyName>DGroup.Server</AssemblyName>
+    <RootNamespace>GM95.Server</RootNamespace>
+    <AssemblyName>GM95.Server</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

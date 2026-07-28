@@ -1,7 +1,7 @@
-using DGroup.Server.Apps.ManagerPerformance.Contracts;
-using DGroup.Server.Infrastructure.Data;
+using GM95.Server.Apps.ManagerPerformance.Contracts;
+using GM95.Server.Infrastructure.Data;
 
-namespace DGroup.Server.Apps.ManagerPerformance.Repositories;
+namespace GM95.Server.Apps.ManagerPerformance.Repositories;
 
 /// <summary>Truy van/ghi dinh muc (BOM). Cac buoc ghi lam trong 1 transaction cua scope.</summary>
 public interface IBomRepository

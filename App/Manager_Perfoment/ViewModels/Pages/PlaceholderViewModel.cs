@@ -1,4 +1,4 @@
-namespace DGroup.App.ManagerPerformance.ViewModels.Pages;
+namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>
 /// Trang "Sap co" cho cac buoc quy trinh chua co API server (BOM, Don SX, Ke hoach,

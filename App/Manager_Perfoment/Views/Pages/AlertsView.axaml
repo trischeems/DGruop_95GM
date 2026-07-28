@@ -1,10 +1,10 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:DGroup.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels.Pages"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
-             x:Class="DGroup.App.ManagerPerformance.Views.Pages.AlertsView"
+             x:Class="GM95.App.ManagerPerformance.Views.Pages.AlertsView"
              x:DataType="vm:AlertsViewModel">
 
     <!-- 1 card duy nhat: bang canh bao chiem toan bo trang -->
@@ -29,11 +29,11 @@
             <DataGrid Grid.Row="1" ItemsSource="{Binding Alerts}" SelectedItem="{Binding SelectedAlert}"
                       IsReadOnly="True">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Loại" Binding="{Binding AlertType}" Width="*" MinWidth="140"/>
-                    <DataGridTextColumn Header="Mức" Binding="{Binding Severity}" Width="0.5*" MinWidth="80"/>
-                    <DataGridTextColumn Header="Đối tượng" Binding="{Binding EntityType}" Width="*" MinWidth="130"/>
+                    <DataGridTextColumn Header="Loại" Binding="{Binding AlertType, Converter={StaticResource CodeVi}}" Width="*" MinWidth="140"/>
+                    <DataGridTextColumn Header="Mức" Binding="{Binding Severity, Converter={StaticResource CodeVi}}" Width="0.5*" MinWidth="80"/>
+                    <DataGridTextColumn Header="Đối tượng" Binding="{Binding EntityType, Converter={StaticResource CodeVi}}" Width="*" MinWidth="130"/>
                     <DataGridTextColumn Header="Nội dung" Binding="{Binding Message}" Width="3*" MinWidth="260"/>
-                    <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="*" MinWidth="110"/>
+                    <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status, Converter={StaticResource CodeVi}}" Width="*" MinWidth="110"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>
