@@ -57,6 +57,10 @@ public sealed partial class ApiClient
     public Task<long> CreateMaterialAsync(object request, CancellationToken ct = default) =>
         PostForIdAsync($"{_prefix}/materials", request, ct);
 
+    /// <summary>Tim NVL gan giong theo SKU/ten (goi y chong trung khi tao moi).</summary>
+    public Task<List<Material>> SearchMaterialsAsync(string query, int limit = 10, CancellationToken ct = default) =>
+        GetListAsync<Material>($"{_prefix}/materials/search?q={Uri.EscapeDataString(query)}&limit={limit}", ct);
+
     // ----- Ton kho -----
     public Task<List<MaterialStock>> GetStockAsync(bool lowStockOnly = false, int? year = null, int? month = null, CancellationToken ct = default) =>
         GetListAsync<MaterialStock>($"{_prefix}/stock?lowStockOnly={lowStockOnly.ToString().ToLowerInvariant()}{Period(year, month)}", ct);
@@ -72,9 +76,16 @@ public sealed partial class ApiClient
     public Task<List<StockReceipt>> GetReceiptsAsync(long? warehouseId = null, CancellationToken ct = default) =>
         GetListAsync<StockReceipt>($"{_prefix}/stock/receipts" + (warehouseId.HasValue ? $"?warehouseId={warehouseId}" : ""), ct);
 
-    /// <summary>Lich su giao dich kho (don gia tung lan), loc theo NVL neu co.</summary>
-    public Task<List<StockTransaction>> GetStockTransactionsAsync(long? materialId = null, int limit = 200, CancellationToken ct = default) =>
-        GetListAsync<StockTransaction>($"{_prefix}/stock/transactions?limit={limit}" + (materialId.HasValue ? $"&materialId={materialId}" : ""), ct);
+    /// <summary>Ghep query string tu ngay/den ngay (bo qua khi null; server hieu theo ngay dia phuong).</summary>
+    private static string Range(DateTime? from, DateTime? to) =>
+        (from is null ? "" : $"&from={from:yyyy-MM-dd}") + (to is null ? "" : $"&to={to:yyyy-MM-dd}");
+
+    /// <summary>Lich su giao dich kho (don gia tung lan), loc theo NVL + tu/den ngay neu co.</summary>
+    public Task<List<StockTransaction>> GetStockTransactionsAsync(
+        long? materialId = null, int limit = 200, DateTime? from = null, DateTime? to = null, CancellationToken ct = default) =>
+        GetListAsync<StockTransaction>(
+            $"{_prefix}/stock/transactions?limit={limit}"
+            + (materialId.HasValue ? $"&materialId={materialId}" : "") + Range(from, to), ct);
 
     // ----- Bao cao -----
     public Task<List<MaterialStock>> GetLowStockAsync(int? year = null, int? month = null, CancellationToken ct = default) =>

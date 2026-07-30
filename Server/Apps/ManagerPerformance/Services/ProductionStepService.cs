@@ -51,27 +51,37 @@ public sealed class ProductionStepService
         if (!AllowedStatus.Contains(req.Status)) throw new ArgumentException("Trang thai khong hop le.");
         if (req.QtyIn < 0 || req.QtyOut < 0 || req.QtyDefect < 0)
             throw new ArgumentException("So luong khong duoc am.");
-        // Khop CHECK qty_out+qty_defect<=qty_in (tru khi qty_in=0).
-        if (req.QtyIn > 0 && req.QtyOut + req.QtyDefect > req.QtyIn)
-            throw new ArgumentException("qty_out + qty_defect khong duoc vuot qua qty_in.");
-        // ROT: khi DONE thi ra + loi PHAI bang vao (khong that thoat san luong khong ro).
-        //      Dang lam do (chua DONE) van cho phep ra + loi < vao.
-        if (req.Status == "DONE" && req.QtyIn > 0 && req.QtyOut + req.QtyDefect != req.QtyIn)
+        // CONG THUC: SL ra + SL loi khong bao gio vuot SL vao (ke ca khi vao = 0 —
+        // truoc day vao=0 la lo hong cho ra/loi tuy y).
+        if (req.QtyOut + req.QtyDefect > req.QtyIn)
             throw new ArgumentException(
-                $"Cong doan DONE: SL ra ({req.QtyOut:0.####}) + SL loi ({req.QtyDefect:0.####}) phai bang SL vao ({req.QtyIn:0.####}).");
+                $"SL ra ({req.QtyOut:0.####}) + SL loi ({req.QtyDefect:0.####}) khong duoc vuot SL vao ({req.QtyIn:0.####}).");
 
         return _db.RunAsync(_tenant.Tenant, async scope =>
         {
+            // THU TU KHOA TOAN CUC: don -> ke hoach -> cong doan (khop ProductionPlanService)
+            // de 2 nguoi cung thao tac plan + step tren 1 don khong deadlock cheo nhau.
+            var orderId = await _repo.GetStepOrderIdAsync(scope, id);
+            if (orderId is null) return false;
+            await _repo.LockOrderAsync(scope, orderId.Value);
+
             // Khoa dong buoc + lay ngu canh (don, ma cong doan); khong ton tai -> NOT_FOUND.
             var ctx = await _repo.LockStepContextAsync(scope, id);
             if (ctx is null) return false;
 
-            // CHAN sua khi cong doan da KET THUC (DONE/CANCELLED) -> khong sua so lieu nguoc.
-            if (ctx.Status is "DONE" or "CANCELLED")
-                throw new ArgumentException(
-                    $"Cong doan da o trang thai {ctx.Status}, khong sua duoc so lieu. " +
-                    "Neu can dieu chinh, hay mo lai cong doan truoc.");
+            // QC la can cu nhap kho TP: khong cho ha SL ra xuong duoi tong TP DA nhap kho
+            // (giu bat bien SUM(nhap TP) <= SL ra QC ma module Kho TP dua vao).
+            if (ctx.StageCode == "QC")
+            {
+                var received = await _repo.SumFinishedGoodsAsync(scope, ctx.ProductionOrderId);
+                if (req.QtyOut < received)
+                    throw new ArgumentException(
+                        $"SL ra QC moi ({req.QtyOut:0.####}) thap hon tong TP da nhap kho ({received:0.####}). " +
+                        "Xoa/dieu chinh phieu nhap TP truoc khi giam SL ra cua QC.");
+            }
 
+            // Cong doan DONE/CANCELLED van sua duoc (mo lai / dieu chinh so lieu) —
+            // truoc day bi khoa cung khien "bam Luu khong doi duoc trang thai".
             await _repo.UpdateStepAsync(scope, id, req);
 
             // ----- LIEN KET TRANG THAI MODULE (cung transaction) -----

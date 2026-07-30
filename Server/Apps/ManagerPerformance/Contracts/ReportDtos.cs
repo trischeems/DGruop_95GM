@@ -27,6 +27,39 @@ public sealed record OrderMaterialRequirementDto(
     decimal ShortageQty,
     decimal SuggestedPurchaseQty);
 
+/// <summary>
+/// So NVL theo tung ma trong 1 khoang thoi gian: ton dau ky, tong nhap, tong xuat, ton cuoi ky
+/// (tinh tu so cai stock_transactions) + ton thuc te hien tai (v_material_stock).
+/// </summary>
+public sealed record MaterialLedgerDto(
+    long MaterialId,
+    string Sku,
+    string Name,
+    string? UomCode,          // ma DVT - hien canh so luong
+    string? UomName,          // ten DVT
+    bool IsActive,
+    decimal OpeningQty,       // ton dau ky (tong so cai truoc 'from')
+    decimal InQty,            // tong nhap trong ky (quantity > 0)
+    decimal InValue,          // gia tri nhap trong ky (VND)
+    decimal OutQty,           // tong xuat trong ky (quantity < 0, doi dau)
+    decimal OutValue,         // gia tri xuat trong ky (VND)
+    decimal ClosingQty,       // ton cuoi ky = dau ky + nhap - xuat
+    decimal CurrentOnHand,    // ton thuc te hien tai (moi kho gop)
+    decimal CurrentAvailable);// kha dung hien tai = on_hand - reserved
+
+/// <summary>Thong ke san xuat theo ma hang trong 1 khoang thoi gian.</summary>
+public sealed record ProductionSummaryDto(
+    long ProductId,
+    string Sku,
+    string Name,
+    string? UomCode,          // DVT cua ma hang
+    string? UomName,
+    long OrderCount,          // so don tao trong ky
+    decimal OrderQty,         // tong SL dat cua cac don tao trong ky
+    decimal DefectQty,        // tong SL loi (cong doan) cua cac don tao trong ky
+    decimal FgQty,            // thanh pham nhap kho trong ky
+    decimal IssueValue);      // gia tri NVL xuat cho cac don cua ma hang trong ky (VND)
+
 /// <summary>So lieu tong hop 1 thang (phuc vu tab So sanh thang o app).</summary>
 public sealed record MonthlyStatsDto(
     int Month,

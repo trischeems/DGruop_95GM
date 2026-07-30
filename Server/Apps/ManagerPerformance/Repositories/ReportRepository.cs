@@ -98,4 +98,95 @@ public sealed class ReportRepository : IReportRepository
                        GROUP BY 1) al ON al.m = months.m
             ORDER BY months.m
             """, new { year });
+
+    /// <summary>
+    /// So NVL theo tung ma trong [fromUtc, toExclusiveUtc): ton dau ky (tong so cai truoc from),
+    /// tong nhap/xuat trong ky (moi loai giao dich: RECEIPT/ISSUE/ADJUST/RETURN, chia theo dau),
+    /// ton cuoi ky, kem ton thuc te hien tai. Liet ke MOI NVL (ke ca chua co giao dich / ngung hoat dong).
+    /// </summary>
+    public Task<IEnumerable<MaterialLedgerDto>> MaterialLedgerAsync(TenantScope scope, DateTime fromUtc, DateTime toExclusiveUtc) =>
+        scope.QueryAsync<MaterialLedgerDto>(
+            """
+            WITH txn AS (
+                SELECT material_id,
+                       SUM(quantity) FILTER (WHERE created_at < @fromUtc)                          AS opening_qty,
+                       SUM(quantity) FILTER (WHERE created_at >= @fromUtc AND quantity > 0)        AS in_qty,
+                       SUM(quantity * COALESCE(unit_cost, 0))
+                           FILTER (WHERE created_at >= @fromUtc AND quantity > 0)                  AS in_value,
+                       SUM(-quantity) FILTER (WHERE created_at >= @fromUtc AND quantity < 0)       AS out_qty,
+                       SUM(-quantity * COALESCE(unit_cost, 0))
+                           FILTER (WHERE created_at >= @fromUtc AND quantity < 0)                  AS out_value
+                FROM stock_transactions
+                WHERE created_at < @toExclusiveUtc
+                GROUP BY material_id
+            )
+            SELECT m.id AS material_id, m.sku, m.name,
+                   u.code AS uom_code, u.name AS uom_name, m.is_active,
+                   COALESCE(t.opening_qty, 0) AS opening_qty,
+                   COALESCE(t.in_qty, 0)      AS in_qty,
+                   COALESCE(t.in_value, 0)    AS in_value,
+                   COALESCE(t.out_qty, 0)     AS out_qty,
+                   COALESCE(t.out_value, 0)   AS out_value,
+                   COALESCE(t.opening_qty, 0) + COALESCE(t.in_qty, 0) - COALESCE(t.out_qty, 0) AS closing_qty,
+                   COALESCE(vs.total_on_hand, 0)   AS current_on_hand,
+                   COALESCE(vs.total_available, 0) AS current_available
+            FROM materials m
+            LEFT JOIN txn t ON t.material_id = m.id
+            -- Gop truc tiep tu bang stock (KHONG dung v_material_stock vi view do loc m.is_active
+            -- -> NVL ngung hoat dong nhung con ton se hien 0, mau thuan voi ton cuoi ky).
+            LEFT JOIN (
+                SELECT material_id,
+                       SUM(qty_on_hand)                AS total_on_hand,
+                       SUM(qty_on_hand - qty_reserved) AS total_available
+                FROM stock
+                GROUP BY material_id
+            ) vs ON vs.material_id = m.id
+            LEFT JOIN units_of_measure u ON u.id = m.uom_id
+            ORDER BY m.sku
+            """, new { fromUtc, toExclusiveUtc });
+
+    /// <summary>
+    /// Thong ke san xuat theo ma hang trong [fromUtc, toExclusiveUtc): don tao trong ky (so don, SL dat,
+    /// SL loi cong doan), TP nhap kho trong ky, gia tri NVL xuat cho don cua ma hang trong ky.
+    /// Chi tra ma hang co phat sinh trong ky.
+    /// </summary>
+    public Task<IEnumerable<ProductionSummaryDto>> ProductionSummaryAsync(TenantScope scope, DateTime fromUtc, DateTime toExclusiveUtc) =>
+        scope.QueryAsync<ProductionSummaryDto>(
+            """
+            SELECT p.id AS product_id, p.sku, p.name,
+                   u.code AS uom_code, u.name AS uom_name,
+                   COALESCE(o.order_count, 0) AS order_count,
+                   COALESCE(o.order_qty, 0)   AS order_qty,
+                   COALESCE(o.defect_qty, 0)  AS defect_qty,
+                   COALESCE(f.fg_qty, 0)      AS fg_qty,
+                   COALESCE(i.issue_value, 0) AS issue_value
+            FROM products p
+            LEFT JOIN (
+                SELECT po.product_id, count(*) AS order_count, SUM(po.quantity) AS order_qty,
+                       COALESCE(SUM(ps.defect_qty), 0) AS defect_qty
+                FROM production_orders po
+                LEFT JOIN (SELECT production_order_id, SUM(qty_defect) AS defect_qty
+                           FROM production_steps GROUP BY production_order_id) ps
+                       ON ps.production_order_id = po.id
+                WHERE po.created_at >= @fromUtc AND po.created_at < @toExclusiveUtc
+                GROUP BY po.product_id
+            ) o ON o.product_id = p.id
+            LEFT JOIN (
+                SELECT product_id, SUM(qty_received) AS fg_qty
+                FROM finished_goods_receipts
+                WHERE received_at >= @fromUtc AND received_at < @toExclusiveUtc
+                GROUP BY product_id
+            ) f ON f.product_id = p.id
+            LEFT JOIN (
+                SELECT po.product_id, SUM(ii.qty_issued * COALESCE(ii.unit_cost, 0)) AS issue_value
+                FROM material_issue_items ii
+                JOIN material_issues mi ON mi.id = ii.material_issue_id
+                JOIN production_orders po ON po.id = mi.production_order_id
+                WHERE mi.issued_at >= @fromUtc AND mi.issued_at < @toExclusiveUtc
+                GROUP BY po.product_id
+            ) i ON i.product_id = p.id
+            LEFT JOIN units_of_measure u ON u.id = p.uom_id
+            WHERE o.product_id IS NOT NULL OR f.product_id IS NOT NULL OR i.product_id IS NOT NULL
+            ORDER BY p.sku
+            """, new { fromUtc, toExclusiveUtc });
 }

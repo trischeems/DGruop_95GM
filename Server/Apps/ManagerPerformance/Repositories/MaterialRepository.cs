@@ -32,6 +32,21 @@ public sealed class MaterialRepository : IMaterialRepository
         scope.ExecuteScalarAsync<bool>(
             "SELECT EXISTS(SELECT 1 FROM materials WHERE lower(sku) = lower(@sku))", new { sku });
 
+    // Goi y NVL gan giong: khop 1 phan SKU hoac ten (ILIKE), uu tien trung dau SKU roi trung nguyen SKU.
+    public Task<IEnumerable<MaterialDto>> SearchAsync(TenantScope scope, string query, int limit)
+    {
+        // Escape ky tu dac biet cua LIKE de nguoi dung go % _ \ khong pha pattern.
+        var escaped = query.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_");
+        var sql = $"""
+            {MaterialSelect}
+            WHERE m.sku ILIKE @contains ESCAPE '\' OR m.name ILIKE @contains ESCAPE '\'
+            ORDER BY (m.sku ILIKE @prefix ESCAPE '\') DESC, (m.sku ILIKE @contains ESCAPE '\') DESC, m.sku
+            LIMIT @limit
+            """;
+        return scope.QueryAsync<MaterialDto>(sql,
+            new { contains = $"%{escaped}%", prefix = $"{escaped}%", limit });
+    }
+
     public Task<long> InsertAsync(TenantScope scope, CreateMaterialRequest req) =>
         scope.QuerySingleAsync<long>(
             """

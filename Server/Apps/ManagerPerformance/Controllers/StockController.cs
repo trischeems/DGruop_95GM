@@ -44,9 +44,11 @@ public sealed class StockController : ControllerBase
         [FromQuery] long? warehouseId = null, CancellationToken ct = default) =>
         Ok(ApiResult<IEnumerable<StockReceiptDto>>.Success(await _receipts.ListAsync(warehouseId, ct)));
 
-    /// <summary>Lich su giao dich kho (don gia tung lan nhap/xuat), loc theo NVL neu co.</summary>
+    /// <summary>Lich su giao dich kho (don gia tung lan nhap/xuat), loc theo NVL + tu/den ngay neu co.</summary>
     [HttpGet("transactions")]
     public async Task<ActionResult<ApiResult<IEnumerable<StockTransactionDto>>>> GetTransactions(
-        [FromQuery] long? materialId = null, [FromQuery] int limit = 200, CancellationToken ct = default) =>
-        Ok(ApiResult<IEnumerable<StockTransactionDto>>.Success(await _receipts.ListTransactionsAsync(materialId, limit, ct)));
+        [FromQuery] long? materialId = null, [FromQuery] int limit = 200,
+        [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null, CancellationToken ct = default) =>
+        Ok(ApiResult<IEnumerable<StockTransactionDto>>.Success(
+            await _receipts.ListTransactionsAsync(materialId, limit, from, to, ct)));
 }

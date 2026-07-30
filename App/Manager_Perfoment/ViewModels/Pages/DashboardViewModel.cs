@@ -7,8 +7,20 @@ using GM95.App.ManagerPerformance.Services;
 namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Tong quan: cac the KPI + bang "Sap het hang" (NVL ton thap). Dung API that.</summary>
-public sealed partial class DashboardViewModel : PageViewModel
+public sealed partial class DashboardViewModel : PageViewModel, IExportProvider
 {
+    /// <summary>Cac bang cua trang nay cho nut "Xuất Excel" chung (xuat dung du lieu dang hien thi).</summary>
+    public IReadOnlyList<ExportTable> GetExportTables() => new[]
+    {
+        ExportTable.Create<MaterialStock>("Sắp hết hàng", () => LowStock, rowDate: null,
+            ("Mã", s => s.Sku),
+            ("Tên NVL", s => s.Name),
+            ("ĐVT", s => s.UomName),
+            ("Khả dụng", s => s.TotalAvailable),
+            ("Ngưỡng", s => s.ReorderLevel),
+            ("Cỡ lô mua", s => s.ReorderQuantity)),
+    };
+
     private readonly ApiClient _api;
 
     public DashboardViewModel(ApiClient api) => _api = api;

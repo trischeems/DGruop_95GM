@@ -7,8 +7,33 @@ using GM95.App.ManagerPerformance.Services;
 namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Dinh muc BOM: chon ma hang -> phien ban BOM -> dinh muc NVL + phe duyet. Dung API that.</summary>
-public sealed partial class BomViewModel : PageViewModel
+public sealed partial class BomViewModel : PageViewModel, IExportProvider
 {
+    /// <summary>Cac bang cua trang nay cho nut "Xuất Excel" chung (xuat dung du lieu dang hien thi).</summary>
+    public IReadOnlyList<ExportTable> GetExportTables() => new[]
+    {
+        ExportTable.Create<Product>("Mã hàng", () => FilteredProducts, rowDate: null,
+            ("ID", p => p.Id),
+            ("SKU", p => p.Sku),
+            ("Tên mã hàng", p => p.Name),
+            ("ĐVT", p => p.UomName),
+            ("Hoạt động", p => p.IsActive)),
+        ExportTable.Create<Bom>("Các phiên bản BOM", () => Boms, rowDate: b => b.EffectiveFrom,
+            ("ID", b => b.Id),
+            ("Phiên bản", b => b.Version),
+            ("Trạng thái", b => Converters.CodeToVietnameseConverter.Translate(b.Status)),
+            ("Hiệu lực từ", b => b.EffectiveFrom),
+            ("Ghi chú", b => b.Note)),
+        ExportTable.Create<BomItem>("Định mức của BOM đang chọn", () => Items, rowDate: null,
+            ("NVL", i => i.MaterialId),
+            ("SKU NVL", i => i.MaterialSku),
+            ("Tên NVL", i => i.MaterialName),
+            ("ĐM/đơn vị", i => i.QtyPerUnit),
+            ("ĐVT", i => i.MaterialUomName),
+            ("Hao hụt %", i => i.WastePct),
+            ("Ghi chú", i => i.Note)),
+    };
+
     private readonly ApiClient _api;
 
     public BomViewModel(ApiClient api) => _api = api;

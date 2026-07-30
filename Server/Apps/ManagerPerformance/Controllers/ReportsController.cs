@@ -53,4 +53,16 @@ public sealed class ReportsController : ControllerBase
     public async Task<ActionResult<ApiResult<IEnumerable<MonthlyStatsDto>>>> MonthlyStats(
         [FromQuery] int year, CancellationToken ct) =>
         Ok(ApiResult<IEnumerable<MonthlyStatsDto>>.Success(await _service.MonthlyStatsAsync(year, ct)));
+
+    /// <summary>So NVL theo tung ma: ton dau ky, tong nhap, tong xuat, ton cuoi ky + ton hien tai.</summary>
+    [HttpGet("material-ledger")]
+    public async Task<ActionResult<ApiResult<IEnumerable<MaterialLedgerDto>>>> MaterialLedger(
+        [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null, CancellationToken ct = default) =>
+        Ok(ApiResult<IEnumerable<MaterialLedgerDto>>.Success(await _service.MaterialLedgerAsync(from, to, ct)));
+
+    /// <summary>Thong ke san xuat theo ma hang trong khoang tu/den ngay.</summary>
+    [HttpGet("production-summary")]
+    public async Task<ActionResult<ApiResult<IEnumerable<ProductionSummaryDto>>>> ProductionSummary(
+        [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null, CancellationToken ct = default) =>
+        Ok(ApiResult<IEnumerable<ProductionSummaryDto>>.Success(await _service.ProductionSummaryAsync(from, to, ct)));
 }

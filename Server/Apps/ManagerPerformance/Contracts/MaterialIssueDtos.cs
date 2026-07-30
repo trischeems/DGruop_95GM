@@ -27,3 +27,21 @@ public sealed record MaterialIssueDto(
     long WarehouseId,
     string Status,
     DateTime IssuedAt);
+
+/// <summary>1 dong NVL cua phieu xuat + thong tin phieu/NVL join san (hien thi bang co ma + ten NVL).</summary>
+public sealed record MaterialIssueItemDto(
+    long Id,
+    long MaterialIssueId,
+    string IssueNo,
+    long ProductionOrderId,
+    long MaterialId,
+    string? MaterialSku,     // ma NVL (join materials)
+    string? MaterialName,    // ten NVL (join materials)
+    string? MaterialUomCode, // ma DVT - hien canh so luong
+    string? MaterialUomName, // ten DVT
+    decimal QtyIssued,
+    decimal UnitCost,
+    long WarehouseId,
+    string? WarehouseName,   // ten kho (join warehouses)
+    string Status,
+    DateTime IssuedAt);

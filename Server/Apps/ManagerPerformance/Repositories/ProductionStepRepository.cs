@@ -46,6 +46,23 @@ public sealed class ProductionStepRepository : IProductionStepRepository
         return row is null ? null : (row.Status, row.StartedAt);
     }
 
+    // Doc order id cua buoc KHONG khoa (de khoa dong don TRUOC roi moi khoa buoc — chong deadlock).
+    public Task<long?> GetStepOrderIdAsync(TenantScope scope, long id) =>
+        scope.QueryFirstOrDefaultAsync<long?>(
+            "SELECT production_order_id FROM production_steps WHERE id = @Id", new { Id = id });
+
+    // Khoa dong DON (FOR UPDATE) — moi giao dich ghi lien quan don PHAI khoa dong nay TRUOC
+    // (thu tu khoa toan cuc: don -> ke hoach -> cong doan) de 2 chieu plan<->step khong deadlock.
+    public Task<int> LockOrderAsync(TenantScope scope, long orderId) =>
+        scope.ExecuteAsync(
+            "SELECT id FROM production_orders WHERE id = @orderId FOR UPDATE", new { orderId });
+
+    // Tong TP da nhap kho cua don — chan ha SL ra cua QC xuong duoi so TP da nhap.
+    public Task<decimal> SumFinishedGoodsAsync(TenantScope scope, long orderId) =>
+        scope.ExecuteScalarAsync<decimal>(
+            "SELECT COALESCE(SUM(qty_received), 0) FROM finished_goods_receipts WHERE production_order_id = @orderId",
+            new { orderId });
+
     public Task<StepContextRow?> LockStepContextAsync(TenantScope scope, long id) =>
         scope.QueryFirstOrDefaultAsync<StepContextRow>(
             """
@@ -85,17 +102,50 @@ public sealed class ProductionStepRepository : IProductionStepRepository
                 qty_in = @QtyIn,
                 qty_out = @QtyOut,
                 qty_defect = @QtyDefect,
-                note = @Note,
+                note = COALESCE(@Note, note),
                 started_at = CASE
                     WHEN @Status = 'IN_PROGRESS' AND started_at IS NULL THEN now()
                     ELSE started_at END,
                 finished_at = CASE
-                    WHEN @Status = 'DONE' THEN now()
+                    WHEN @Status = 'DONE' THEN COALESCE(finished_at, now())
+                    WHEN @Status IN ('PENDING', 'IN_PROGRESS', 'ON_HOLD') THEN NULL
                     ELSE finished_at END,
                 updated_at = now()
             WHERE id = @Id
             """,
             new { Id = id, req.Status, req.QtyIn, req.QtyOut, req.QtyDefect, req.Note });
+
+    // Ke hoach DONE -> keo tien do moi cong doan len TONG SL cac ke hoach da DONE (khong nhap tay nua).
+    // Dung GREATEST (khong cong don): chay lai khong phong so, tron voi so lieu nhap tay khong dem trung.
+    // qty_out chua tinh phan loi da ghi (out' = doneQty - defect) nen CHECK (out + defect <= in) van thoa.
+    // Cong doan da DONE thu cong khong bi ha xuong IN_PROGRESS.
+    public Task<int> AutoProgressStepsAsync(TenantScope scope, long orderId, decimal doneQty, decimal orderQty) =>
+        scope.ExecuteAsync(
+            """
+            UPDATE production_steps SET
+                -- qty_in phai phu ca (qty_out + qty_defect) cu: dong cu tao qua lo hong vao=0
+                -- co the co out/loi > 0 — khong phu thi CHECK ck_step_out_le_in no giua transaction.
+                qty_in  = GREATEST(qty_in,  @DoneQty, qty_out + qty_defect),
+                qty_out = GREATEST(qty_out, @DoneQty - qty_defect),
+                status = CASE
+                    WHEN GREATEST(qty_in, @DoneQty) >= @OrderQty THEN 'DONE'
+                    WHEN status = 'DONE' THEN 'DONE'
+                    ELSE 'IN_PROGRESS' END,
+                started_at = COALESCE(started_at, now()),
+                finished_at = CASE
+                    WHEN GREATEST(qty_in, @DoneQty) >= @OrderQty OR status = 'DONE' THEN COALESCE(finished_at, now())
+                    ELSE NULL END,
+                updated_at = now()
+            WHERE production_order_id = @OrderId
+              AND status <> 'CANCELLED'
+              AND NOT is_skipped
+            """, new { OrderId = orderId, DoneQty = doneQty, OrderQty = orderQty });
+
+    // Tong SL cac ke hoach da DONE cua don (thuoc do tien do tu dong).
+    public Task<decimal> SumDonePlannedQtyAsync(TenantScope scope, long orderId) =>
+        scope.ExecuteScalarAsync<decimal>(
+            "SELECT COALESCE(SUM(planned_qty), 0) FROM production_plans WHERE production_order_id = @orderId AND status = 'DONE'",
+            new { orderId });
 
     /// <summary>Dong tam de doc khi khoa buoc (FOR UPDATE).</summary>
     private sealed record StepLockRow(string Status, DateTime? StartedAt);

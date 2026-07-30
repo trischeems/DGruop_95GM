@@ -184,6 +184,26 @@ public sealed class MaterialIssue
     [JsonPropertyName("issuedAt")]          public DateTime IssuedAt { get; set; }
 }
 
+/// <summary>1 dong NVL cua phieu xuat + thong tin phieu/NVL join san (khop MaterialIssueItemDto server).</summary>
+public sealed class MaterialIssueItem
+{
+    [JsonPropertyName("id")]                public long Id { get; set; }
+    [JsonPropertyName("materialIssueId")]   public long MaterialIssueId { get; set; }
+    [JsonPropertyName("issueNo")]           public string IssueNo { get; set; } = "";
+    [JsonPropertyName("productionOrderId")] public long ProductionOrderId { get; set; }
+    [JsonPropertyName("materialId")]        public long MaterialId { get; set; }
+    [JsonPropertyName("materialSku")]       public string? MaterialSku { get; set; }   // ma NVL (join server)
+    [JsonPropertyName("materialName")]      public string? MaterialName { get; set; }  // ten NVL (join server)
+    [JsonPropertyName("materialUomCode")]   public string? MaterialUomCode { get; set; }
+    [JsonPropertyName("materialUomName")]   public string? MaterialUomName { get; set; }
+    [JsonPropertyName("qtyIssued")]         public decimal QtyIssued { get; set; }
+    [JsonPropertyName("unitCost")]          public decimal UnitCost { get; set; }
+    [JsonPropertyName("warehouseId")]       public long WarehouseId { get; set; }
+    [JsonPropertyName("warehouseName")]     public string? WarehouseName { get; set; }
+    [JsonPropertyName("status")]            public string Status { get; set; } = "";
+    [JsonPropertyName("issuedAt")]          public DateTime IssuedAt { get; set; }
+}
+
 /// <summary>Nhap kho thanh pham (finished_goods_receipts).</summary>
 public sealed class FinishedGoodsReceipt
 {
@@ -336,6 +356,40 @@ public sealed class MonthlyStats
     [JsonPropertyName("fgQty")]          public decimal FgQty { get; set; }
     [JsonPropertyName("lossVariance")]   public decimal LossVariance { get; set; }
     [JsonPropertyName("alertCount")]     public long AlertCount { get; set; }
+}
+
+/// <summary>So NVL theo tung ma trong 1 khoang thoi gian (GET /reports/material-ledger).</summary>
+public sealed class MaterialLedgerRow
+{
+    [JsonPropertyName("materialId")]       public long MaterialId { get; set; }
+    [JsonPropertyName("sku")]              public string Sku { get; set; } = "";
+    [JsonPropertyName("name")]             public string Name { get; set; } = "";
+    [JsonPropertyName("uomCode")]          public string? UomCode { get; set; }
+    [JsonPropertyName("uomName")]          public string? UomName { get; set; }
+    [JsonPropertyName("isActive")]         public bool IsActive { get; set; }
+    [JsonPropertyName("openingQty")]       public decimal OpeningQty { get; set; }       // ton dau ky
+    [JsonPropertyName("inQty")]            public decimal InQty { get; set; }            // tong nhap trong ky
+    [JsonPropertyName("inValue")]          public decimal InValue { get; set; }          // gia tri nhap (VND)
+    [JsonPropertyName("outQty")]           public decimal OutQty { get; set; }           // tong xuat trong ky
+    [JsonPropertyName("outValue")]         public decimal OutValue { get; set; }         // gia tri xuat (VND)
+    [JsonPropertyName("closingQty")]       public decimal ClosingQty { get; set; }       // ton cuoi ky
+    [JsonPropertyName("currentOnHand")]    public decimal CurrentOnHand { get; set; }    // ton thuc te hien tai
+    [JsonPropertyName("currentAvailable")] public decimal CurrentAvailable { get; set; } // kha dung hien tai
+}
+
+/// <summary>Thong ke san xuat theo ma hang trong 1 khoang thoi gian (GET /reports/production-summary).</summary>
+public sealed class ProductionSummaryRow
+{
+    [JsonPropertyName("productId")]  public long ProductId { get; set; }
+    [JsonPropertyName("sku")]        public string Sku { get; set; } = "";
+    [JsonPropertyName("name")]       public string Name { get; set; } = "";
+    [JsonPropertyName("uomCode")]    public string? UomCode { get; set; }
+    [JsonPropertyName("uomName")]    public string? UomName { get; set; }
+    [JsonPropertyName("orderCount")] public long OrderCount { get; set; }    // so don tao trong ky
+    [JsonPropertyName("orderQty")]   public decimal OrderQty { get; set; }   // tong SL dat
+    [JsonPropertyName("defectQty")]  public decimal DefectQty { get; set; }  // tong SL loi cong doan
+    [JsonPropertyName("fgQty")]      public decimal FgQty { get; set; }      // TP nhap kho trong ky
+    [JsonPropertyName("issueValue")] public decimal IssueValue { get; set; } // gia tri NVL xuat (VND)
 }
 
 // =====================================================================================

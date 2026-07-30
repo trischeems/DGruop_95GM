@@ -21,6 +21,12 @@ public sealed class MaterialsController : ControllerBase
         CancellationToken ct = default) =>
         Ok(ApiResult<IEnumerable<MaterialDto>>.Success(await _service.ListAsync(activeOnly, year, month, ct)));
 
+    /// <summary>Tim NVL gan giong theo SKU/ten (goi y chong trung khi tao moi).</summary>
+    [HttpGet("search")]
+    public async Task<ActionResult<ApiResult<IEnumerable<MaterialDto>>>> Search(
+        [FromQuery] string? q = null, [FromQuery] int limit = 10, CancellationToken ct = default) =>
+        Ok(ApiResult<IEnumerable<MaterialDto>>.Success(await _service.SearchAsync(q, limit, ct)));
+
     /// <summary>Chi tiet 1 NVL.</summary>
     [HttpGet("{id:long}")]
     public async Task<ActionResult<ApiResult<MaterialDto>>> GetById(long id, CancellationToken ct)

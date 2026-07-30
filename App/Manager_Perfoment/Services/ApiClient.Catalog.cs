@@ -122,6 +122,9 @@ public sealed partial class ApiClient
     // ===== Material Issues (xuat kho NVL) =====
     public Task<List<MaterialIssue>> GetIssuesAsync(long? orderId = null, CancellationToken ct = default) =>
         GetListAsync<MaterialIssue>($"{_prefix}/material-issues" + (orderId.HasValue ? $"?orderId={orderId}" : ""), ct);
+    /// <summary>Danh sach DONG NVL cua cac phieu xuat (kem ma + ten NVL, ten kho).</summary>
+    public Task<List<MaterialIssueItem>> GetIssueItemsAsync(long? orderId = null, int limit = 200, CancellationToken ct = default) =>
+        GetListAsync<MaterialIssueItem>($"{_prefix}/material-issues/items?limit={limit}" + (orderId.HasValue ? $"&orderId={orderId}" : ""), ct);
     public Task<MaterialIssueResult> CreateIssueAsync(object body, CancellationToken ct = default) =>
         PostAsync<MaterialIssueResult>($"{_prefix}/material-issues", body, ct);
 
@@ -158,6 +161,12 @@ public sealed partial class ApiClient
         GetListAsync<MonthlyStats>($"{_prefix}/reports/monthly-stats?year={year}", ct);
     public Task<List<OrderMaterialRequirement>> GetOrderRequirementsAsync(long? orderId = null, CancellationToken ct = default) =>
         GetListAsync<OrderMaterialRequirement>($"{_prefix}/reports/order-requirements" + (orderId.HasValue ? $"?orderId={orderId}" : ""), ct);
+    /// <summary>So NVL theo tung ma: ton dau ky / tong nhap / tong xuat / ton cuoi ky (khoang tu-den ngay).</summary>
+    public Task<List<MaterialLedgerRow>> GetMaterialLedgerAsync(DateTime? from = null, DateTime? to = null, CancellationToken ct = default) =>
+        GetListAsync<MaterialLedgerRow>($"{_prefix}/reports/material-ledger?x=1{Range(from, to)}", ct);
+    /// <summary>Thong ke san xuat theo ma hang trong khoang tu-den ngay.</summary>
+    public Task<List<ProductionSummaryRow>> GetProductionSummaryAsync(DateTime? from = null, DateTime? to = null, CancellationToken ct = default) =>
+        GetListAsync<ProductionSummaryRow>($"{_prefix}/reports/production-summary?x=1{Range(from, to)}", ct);
 
     // ===== Quy trinh linh hoat: danh muc cong doan + mau quy trinh (V006) =====
     public Task<List<Stage>> GetStagesAsync(bool activeOnly = true, CancellationToken ct = default) =>

@@ -7,8 +7,33 @@ using GM95.App.ManagerPerformance.Services;
 namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Ke hoach san xuat: chon don, tao ke hoach, doi trang thai, xoa. Dung API that.</summary>
-public sealed partial class ProductionPlansViewModel : PageViewModel
+public sealed partial class ProductionPlansViewModel : PageViewModel, IExportProvider
 {
+    /// <summary>Cac bang cua trang nay cho nut "Xuất Excel" chung (xuat dung du lieu dang hien thi).</summary>
+    public IReadOnlyList<ExportTable> GetExportTables() => new[]
+    {
+        ExportTable.Create<ProductionOrder>("Đơn sản xuất", () => FilteredOrders, rowDate: o => o.DueDate,
+            ("ID", o => o.Id),
+            ("Số đơn", o => o.OrderNo),
+            ("SKU", o => o.ProductSku),
+            ("Mã hàng", o => o.ProductName),
+            ("SL đơn", o => o.Quantity),
+            ("ĐVT", o => o.ProductUomName),
+            ("Trạng thái", o => Converters.CodeToVietnameseConverter.Translate(o.Status)),
+            ("Hạn giao", o => o.DueDate)),
+        ExportTable.Create<ProductionPlan>("Danh sách kế hoạch", () => Plans, rowDate: p => p.PlannedStart,
+            ("ID", p => p.Id),
+            ("Đơn", p => p.ProductionOrderId),
+            ("Số đơn", p => p.OrderNo),
+            ("SL kế hoạch", p => p.PlannedQty),
+            ("ĐVT", p => p.ProductUomName),
+            ("Chuyền", p => p.LineCode),
+            ("Trạng thái", p => Converters.CodeToVietnameseConverter.Translate(p.Status)),
+            ("Bắt đầu", p => p.PlannedStart),
+            ("Kết thúc", p => p.PlannedEnd),
+            ("Ghi chú", p => p.Note)),
+    };
+
     private readonly ApiClient _api;
 
     public ProductionPlansViewModel(ApiClient api) => _api = api;
@@ -147,36 +172,69 @@ public sealed partial class ProductionPlansViewModel : PageViewModel
         }, saveText: "Tạo kế hoạch", height: 320);
     }
 
+    // Loi thao tac ke hoach — hien do ngay tren bang (Status cuoi trang mo, de bi bo sot).
+    [ObservableProperty] private string _planError = "";
+
     [RelayCommand]
     private async Task UpdateStatusAsync()
     {
-        if (SelectedPlan is null) { Status = "Chọn kế hoạch."; return; }
+        PlanError = "";
+        if (SelectedPlan is null) { PlanError = "Chọn một kế hoạch trong bảng trước."; return; }
         await RunAsync("Đang cập nhật...", async () =>
         {
             var planId = SelectedPlan!.Id;
-            await _api.UpdatePlanStatusAsync(planId, new { status = SelectedStatus });
+            try
+            {
+                await _api.UpdatePlanStatusAsync(planId, new { status = SelectedStatus });
+            }
+            catch (ApiException ex) { PlanError = ex.Message; throw; }
             await LoadPlansCoreAsync(planId);
             Status = $"Đã đổi trạng thái -> {SelectedStatus}.";
         });
     }
 
-    /// <summary>Luu SL ke hoach + ma chuyen cho ke hoach dang chon.</summary>
+    /// <summary>
+    /// Luu ke hoach dang chon: SL + ma chuyen, VA ap luon trang thai dang chon tren ComboBox
+    /// (truoc day nut Luu bo quen truong trang thai -> nguoi dung doi DONE bam Luu khong an thua).
+    /// </summary>
     [RelayCommand]
     private async Task SavePlanAsync()
     {
-        if (SelectedPlan is null) { Status = "Chọn một kế hoạch trong bảng để sửa."; return; }
-        if (NewPlannedQty <= 0) { Status = "SL kế hoạch phải > 0."; return; }
+        PlanError = "";
+        if (SelectedPlan is null) { PlanError = "Chọn một kế hoạch trong bảng để sửa."; return; }
+        if (NewPlannedQty <= 0) { PlanError = "SL kế hoạch phải > 0."; return; }
         await RunAsync("Đang lưu kế hoạch...", async () =>
         {
             var planId = SelectedPlan!.Id;
-            await _api.UpdatePlanAsync(planId, new
+            var curStatus = SelectedPlan!.Status;
+            var wantStatus = SelectedStatus;
+            var fieldsSaved = false;
+            try
             {
-                plannedQty = NewPlannedQty,
-                lineCode = string.IsNullOrWhiteSpace(NewLineCode) ? null : NewLineCode.Trim(),
-                note = (string?)null,
-            });
+                await _api.UpdatePlanAsync(planId, new
+                {
+                    plannedQty = NewPlannedQty,
+                    lineCode = string.IsNullOrWhiteSpace(NewLineCode) ? null : NewLineCode.Trim(),
+                    note = (string?)null,
+                });
+                fieldsSaved = true;
+                if (!string.IsNullOrEmpty(wantStatus) && wantStatus != curStatus)
+                    await _api.UpdatePlanStatusAsync(planId, new { status = wantStatus });
+            }
+            catch (ApiException ex)
+            {
+                // 2 buoc luu tach roi: neu SL/chuyen da luu ma doi trang thai bi tu choi,
+                // van phai nap lai de bang khop voi server, va noi ro phan nao da vao.
+                PlanError = fieldsSaved
+                    ? $"Đã lưu SL/chuyền, nhưng đổi trạng thái bị từ chối: {ex.Message}"
+                    : ex.Message;
+                await LoadPlansCoreAsync(planId);
+                throw;
+            }
             await LoadPlansCoreAsync(planId);
-            Status = $"Đã lưu kế hoạch id={planId}.";
+            Status = wantStatus != curStatus
+                ? $"Đã lưu kế hoạch id={planId} và chuyển trạng thái -> {wantStatus}."
+                : $"Đã lưu kế hoạch id={planId}.";
         });
     }
 

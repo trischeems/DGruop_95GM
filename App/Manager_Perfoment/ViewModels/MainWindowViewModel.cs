@@ -32,6 +32,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             new("✂️", "Sản xuất (Cắt/May/QC)", new ProductionViewModel(api),       "SẢN XUẤT"),
             new("🏭", "Nhập kho thành phẩm",   new FinishedGoodsViewModel(api),    "SẢN XUẤT"),
             new("🔔", "Cảnh báo",              new AlertsViewModel(api),           "BÁO CÁO"),
+            new("📒", "Sổ & thống kê",         new StatsViewModel(api),            "BÁO CÁO"),
             new("📈", "So sánh tháng",         new MonthCompareViewModel(api),     "BÁO CÁO"),
         };
 
@@ -51,6 +52,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private PageViewModel? _currentPage;
     [ObservableProperty] private string _appTitle = "GM95";
     [ObservableProperty] private string _appSubtitle = "Quản lý sản xuất";
+
+    /// <summary>Xuat Excel cac bang cua trang dang mo (hop thoai chon bang / pham vi / che do sheet).</summary>
+    [RelayCommand]
+    private Task ExportExcel() => ExportService.ExportAsync(CurrentPage);
 
     // QUAN TRONG: lenh chon tab la DONG BO (void), khong await.
     // Neu de async + await OnActivatedAsync, CommunityToolkit tu disable SelectCommand

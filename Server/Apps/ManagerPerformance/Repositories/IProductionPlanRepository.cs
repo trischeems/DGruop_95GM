@@ -22,4 +22,6 @@ public interface IProductionPlanRepository
     Task<decimal> SumPlannedQtyAsync(TenantScope scope, long orderId, long? excludePlanId);
     /// <summary>Doc (production_order_id, status, planned_qty) cua 1 plan, khoa dong FOR UPDATE. Null neu khong co.</summary>
     Task<PlanLockRow?> LockPlanAsync(TenantScope scope, long id);
+    /// <summary>Doc order id cua plan KHONG khoa (phuc vu khoa don truoc — thu tu khoa toan cuc).</summary>
+    Task<long?> GetPlanOrderIdAsync(TenantScope scope, long id);
 }

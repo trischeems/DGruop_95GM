@@ -13,8 +13,33 @@ namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 /// Trang MAU QUY TRINH: quan ly danh muc cong doan + cac mau quy trinh san xuat.
 /// Moi mau = 1 chuoi cong doan; don sản xuat chon 1 mau de sinh buoc.
 /// </summary>
-public sealed partial class RoutingsViewModel : PageViewModel
+public sealed partial class RoutingsViewModel : PageViewModel, IExportProvider
 {
+    /// <summary>Cac bang cua trang nay cho nut "Xuất Excel" chung (xuat dung du lieu dang hien thi).</summary>
+    public IReadOnlyList<ExportTable> GetExportTables() => new[]
+    {
+        ExportTable.Create<Routing>("Mẫu quy trình", () => FilteredRoutings, rowDate: r => r.CreatedAt,
+            ("ID", r => r.Id),
+            ("Mã", r => r.Code),
+            ("Tên quy trình", r => r.Name),
+            ("Số bước", r => r.StepCount),
+            ("Mặc định", r => r.IsDefault),
+            ("Hoạt động", r => r.IsActive),
+            ("Ghi chú", r => r.Note),
+            ("Ngày tạo", r => r.CreatedAt)),
+        ExportTable.Create<RoutingLine>("Các bước của mẫu đang chọn", () => Lines, rowDate: null,
+            ("TT", l => l.Seq),
+            ("Mã công đoạn", l => l.Stage?.Code),
+            ("Tên công đoạn", l => l.Stage?.Name),
+            ("Có thể bỏ", l => l.IsOptional),
+            ("Ghi chú", l => l.Note)),
+        ExportTable.Create<Stage>("Danh mục công đoạn", () => Stages, rowDate: null,
+            ("TT", s => s.Seq),
+            ("Mã", s => s.Code),
+            ("Tên công đoạn", s => s.Name),
+            ("Hoạt động", s => s.IsActive)),
+    };
+
     private readonly ApiClient _api;
     private bool _suppressSelectionHook;
 
@@ -217,9 +242,12 @@ public sealed partial class RoutingsViewModel : PageViewModel
         if (SelectedLine is null) { Status = "Chọn bước cần đổi thứ tự."; return; }
         var i = Lines.IndexOf(SelectedLine);
         var j = i + delta;
-        if (j < 0 || j >= Lines.Count) return;
+        if (i < 0 || j < 0 || j >= Lines.Count) return;
         var line = SelectedLine;
-        Lines.Move(i, j);
+        // KHONG dung Lines.Move(i, j): DataGridCollectionView cua Avalonia bo qua su kien Move
+        // -> hang khong doi cho tren man hinh (chi so TT trao nhau). Remove + Insert thi grid cap nhat dung.
+        Lines.RemoveAt(i);
+        Lines.Insert(j, line);
         Renumber();
         SelectedLine = line;
     }

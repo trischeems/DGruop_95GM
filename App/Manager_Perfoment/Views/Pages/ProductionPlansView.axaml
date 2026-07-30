@@ -43,7 +43,7 @@
         <!-- ===== COT PHAI: chi tiet ke hoach cua don dang chon ===== -->
         <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
 
-        <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto">
+        <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*,Auto">
 
             <!-- Card: Tao ke hoach (nut -> cua so rieng) + o SUA ke hoach dang chon (inline). -->
             <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
@@ -70,8 +70,13 @@
                 </Grid>
             </Border>
 
+            <!-- Loi thao tac (doi trang thai / luu): hien do ro rang, khong chi o dong mo cuoi trang -->
+            <TextBlock Grid.Row="1" FontWeight="SemiBold" Foreground="#DC2626" TextWrapping="Wrap"
+                       Margin="4,0,4,10" Text="{Binding PlanError}"
+                       IsVisible="{Binding PlanError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
             <!-- Card: Danh sach ke hoach + hanh dong tren ke hoach dang chon -->
-            <Border Classes="card" Grid.Row="1">
+            <Border Classes="card" Grid.Row="2">
                 <Grid RowDefinitions="Auto,*">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto" Margin="0,0,0,10">
                         <TextBlock Grid.Column="0" Classes="h2" Text="Danh sách kế hoạch" VerticalAlignment="Center"/>
@@ -124,7 +129,7 @@
                 </Grid>
             </Border>
 
-            <TextBlock Grid.Row="2" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
+            <TextBlock Grid.Row="3" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
         </Grid>
     </Grid>
 </UserControl>

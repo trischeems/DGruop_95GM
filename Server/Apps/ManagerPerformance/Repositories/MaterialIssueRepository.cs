@@ -14,6 +14,29 @@ public sealed class MaterialIssueRepository : IMaterialIssueRepository
         return scope.QueryAsync<MaterialIssueDto>(sql, new { orderId });
     }
 
+    public Task<IEnumerable<MaterialIssueItemDto>> ListItemsAsync(TenantScope scope, long? orderId, int limit)
+    {
+        // Dong phieu xuat + join phieu/NVL/DVT/kho de bang hien thi du ma + ten NVL.
+        var sql =
+            "SELECT ii.id, ii.material_issue_id, mi.issue_no, mi.production_order_id, " +
+            "ii.material_id, m.sku AS material_sku, m.name AS material_name, " +
+            "u.code AS material_uom_code, u.name AS material_uom_name, " +
+            "ii.qty_issued, ii.unit_cost, mi.warehouse_id, w.name AS warehouse_name, " +
+            "mi.status, mi.issued_at " +
+            "FROM material_issue_items ii " +
+            "JOIN material_issues mi ON mi.id = ii.material_issue_id " +
+            "LEFT JOIN materials m ON m.id = ii.material_id " +
+            "LEFT JOIN units_of_measure u ON u.id = m.uom_id " +
+            "LEFT JOIN warehouses w ON w.id = mi.warehouse_id" +
+            (orderId.HasValue ? " WHERE mi.production_order_id = @orderId" : "") +
+            " ORDER BY mi.issued_at DESC, ii.id DESC LIMIT @limit";
+        return scope.QueryAsync<MaterialIssueItemDto>(sql, new { orderId, limit });
+    }
+
+    public Task<string?> GetMaterialLabelAsync(TenantScope scope, long materialId) =>
+        scope.QueryFirstOrDefaultAsync<string?>(
+            "SELECT sku || ' — ' || name FROM materials WHERE id = @materialId", new { materialId });
+
     public async Task<(long Id, string IssueNo)> InsertIssueAsync(
         TenantScope scope, long productionOrderId, long warehouseId, string? note)
     {

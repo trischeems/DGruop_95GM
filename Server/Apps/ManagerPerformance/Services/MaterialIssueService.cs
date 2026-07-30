@@ -27,6 +27,13 @@ public sealed class MaterialIssueService
     public Task<IEnumerable<MaterialIssueDto>> ListAsync(long? orderId, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, s => _repo.ListAsync(s, orderId), ct);
 
+    /// <summary>Danh sach DONG NVL cua cac phieu xuat (kem ma + ten NVL) — phuc vu bang chi tiet o app.</summary>
+    public Task<IEnumerable<MaterialIssueItemDto>> ListItemsAsync(long? orderId, int limit, CancellationToken ct)
+    {
+        var cap = limit is <= 0 or > 500 ? 200 : limit;
+        return _db.RunAsync(_tenant.Tenant, s => _repo.ListItemsAsync(s, orderId, cap), ct);
+    }
+
     public Task<MaterialIssueResultDto> CreateAsync(CreateMaterialIssueRequest req, CancellationToken ct)
     {
         if (req.ProductionOrderId <= 0 || req.WarehouseId <= 0) throw new ArgumentException("Don/kho khong hop le.");
@@ -49,7 +56,13 @@ public sealed class MaterialIssueService
             {
                 var stock = await _repo.LockStockAsync(scope, req.WarehouseId, it.MaterialId);
                 if (stock is null || stock.Value.QtyOnHand < it.QtyIssued)
-                    throw new ArgumentException("Ton kho khong du cho NVL " + it.MaterialId);
+                {
+                    // Bao loi de doc: SKU — ten + con bao nhieu so voi yeu cau.
+                    var label = await _repo.GetMaterialLabelAsync(scope, it.MaterialId) ?? $"id={it.MaterialId}";
+                    var onHand = stock?.QtyOnHand ?? 0m;
+                    throw new ArgumentException(
+                        $"Ton kho khong du cho NVL {label}: con {onHand:0.####}, can xuat {it.QtyIssued:0.####}.");
+                }
 
                 var newOnHand = stock.Value.QtyOnHand - it.QtyIssued;
                 var newReserved = Math.Max(0m, stock.Value.QtyReserved - it.QtyIssued);

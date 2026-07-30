@@ -1,0 +1,50 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="620"
+             x:Class="GM95.App.ManagerPerformance.Views.Dialogs.ExportFormView"
+             x:DataType="vm:ExportOptionsViewModel">
+    <!-- Hop thoai XUAT EXCEL dung chung cho moi trang: chon bang + pham vi thoi gian + che do sheet. -->
+    <StackPanel Spacing="14">
+
+        <!-- Chon bang -->
+        <StackPanel Spacing="6">
+            <TextBlock Classes="h2" Text="Chọn bảng cần xuất"/>
+            <ItemsControl ItemsSource="{Binding Tables}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ExportTableChoice">
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2">
+                            <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding Name}"/>
+                            <TextBlock Classes="muted" Text="{Binding DateHint}" VerticalAlignment="Center" FontSize="11"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <!-- Pham vi thoi gian -->
+        <StackPanel Spacing="6">
+            <TextBlock Classes="h2" Text="Phạm vi thời gian"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <ComboBox ItemsSource="{Binding RangeModes}" SelectedItem="{Binding RangeMode}" Width="180"/>
+                <CalendarDatePicker SelectedDate="{Binding Day}" Width="150" IsVisible="{Binding IsDayMode}"/>
+                <TextBlock Classes="label" Text="Từ" VerticalAlignment="Center" IsVisible="{Binding IsRangeMode}"/>
+                <CalendarDatePicker SelectedDate="{Binding FromDate}" Width="145" IsVisible="{Binding IsRangeMode}"/>
+                <TextBlock Classes="label" Text="đến" VerticalAlignment="Center" IsVisible="{Binding IsRangeMode}"/>
+                <CalendarDatePicker SelectedDate="{Binding ToDate}" Width="145" IsVisible="{Binding IsRangeMode}"/>
+            </StackPanel>
+            <TextBlock Classes="muted" FontSize="11" TextWrapping="Wrap"
+                       Text="Lọc thời gian chỉ áp dụng cho bảng có cột ngày; bảng không có cột ngày luôn xuất toàn bộ."/>
+        </StackPanel>
+
+        <!-- Che do sheet -->
+        <StackPanel Spacing="6">
+            <TextBlock Classes="h2" Text="Cách chia sheet"/>
+            <ComboBox ItemsSource="{Binding SheetModes}" SelectedItem="{Binding SheetMode}" Width="220"/>
+            <TextBlock Classes="muted" FontSize="11" TextWrapping="Wrap"
+                       Text="Mỗi bảng 1 sheet: dữ liệu tách riêng, có sẵn bộ lọc Excel. Gộp 1 sheet: các bảng xếp dọc trong cùng 1 sheet để xem liền mạch/liên kết."/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

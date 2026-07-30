@@ -7,8 +7,41 @@ using GM95.App.ManagerPerformance.Services;
 namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Man hinh Don hang san xuat: tao don, xac nhan (giu cho NVL), theo doi thieu hut.</summary>
-public sealed partial class ProductionOrdersViewModel : PageViewModel
+public sealed partial class ProductionOrdersViewModel : PageViewModel, IExportProvider
 {
+    /// <summary>Cac bang cua trang nay cho nut "Xuất Excel" chung (xuat dung du lieu dang hien thi).</summary>
+    public IReadOnlyList<ExportTable> GetExportTables() => new[]
+    {
+        ExportTable.Create<ProductionOrder>("Danh sách đơn", () => Orders, rowDate: null,
+            ("ID", o => o.Id),
+            ("Số đơn", o => o.OrderNo),
+            ("Mã hàng", o => o.ProductId),
+            ("SKU", o => o.ProductSku),
+            ("Tên mã hàng", o => o.ProductName),
+            ("SL", o => o.Quantity),
+            ("ĐVT", o => o.ProductUomName),
+            ("Trạng thái", o => Converters.CodeToVietnameseConverter.Translate(o.Status)),
+            ("Hạn giao", o => o.DueDate),
+            ("Ngày xác nhận", o => o.ConfirmedAt)),
+        ExportTable.Create<Reservation>("Giữ chỗ NVL", () => Reservations, rowDate: null,
+            ("NVL", r => r.MaterialId),
+            ("Mã NVL", r => r.MaterialSku),
+            ("Tên NVL", r => r.MaterialName),
+            ("Kho", r => r.WarehouseName),
+            ("Giữ chỗ", r => r.QtyReserved),
+            ("ĐVT", r => r.MaterialUomName),
+            ("Trạng thái", r => Converters.CodeToVietnameseConverter.Translate(r.Status))),
+        ExportTable.Create<OrderMaterialRequirement>("Nhu cầu / thiếu hụt", () => Requirements, rowDate: null,
+            ("NVL", q => q.MaterialId),
+            ("Mã NVL", q => q.MaterialSku),
+            ("Tên NVL", q => q.MaterialName),
+            ("Cần", q => q.RequiredQty),
+            ("Khả dụng", q => q.TotalAvailable),
+            ("Thiếu", q => q.ShortageQty),
+            ("Đề xuất mua", q => q.SuggestedPurchaseQty),
+            ("ĐVT", q => q.MaterialUomName)),
+    };
+
     private readonly ApiClient _api;
 
     public ProductionOrdersViewModel(ApiClient api) => _api = api;

@@ -34,4 +34,14 @@ public sealed class ReportService
     /// <summary>So lieu tong hop 12 thang (phuc vu so sanh thang).</summary>
     public Task<IEnumerable<MonthlyStatsDto>> MonthlyStatsAsync(int year, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, s => _repo.MonthlyStatsAsync(s, year), ct);
+
+    /// <summary>So NVL theo tung ma trong khoang tu/den ngay (null = khong chan).</summary>
+    public Task<IEnumerable<MaterialLedgerDto>> MaterialLedgerAsync(DateTime? from, DateTime? to, CancellationToken ct) =>
+        _db.RunAsync(_tenant.Tenant,
+            s => _repo.MaterialLedgerAsync(s, PeriodUtil.FromUtc(from), PeriodUtil.ToExclusiveUtc(to)), ct);
+
+    /// <summary>Thong ke san xuat theo ma hang trong khoang tu/den ngay (null = khong chan).</summary>
+    public Task<IEnumerable<ProductionSummaryDto>> ProductionSummaryAsync(DateTime? from, DateTime? to, CancellationToken ct) =>
+        _db.RunAsync(_tenant.Tenant,
+            s => _repo.ProductionSummaryAsync(s, PeriodUtil.FromUtc(from), PeriodUtil.ToExclusiveUtc(to)), ct);
 }

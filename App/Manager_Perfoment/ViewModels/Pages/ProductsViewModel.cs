@@ -7,8 +7,19 @@ using GM95.App.ManagerPerformance.Services;
 namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Danh muc ma hang thanh pham: danh sach + tao moi. Dung API that.</summary>
-public sealed partial class ProductsViewModel : PageViewModel
+public sealed partial class ProductsViewModel : PageViewModel, IExportProvider
 {
+    /// <summary>Cac bang cua trang nay cho nut "Xuất Excel" chung (xuat dung du lieu dang hien thi).</summary>
+    public IReadOnlyList<ExportTable> GetExportTables() => new[]
+    {
+        ExportTable.Create<Product>("Danh mục mã hàng", () => Products, rowDate: null,
+            ("ID", p => p.Id),
+            ("SKU", p => p.Sku),
+            ("Tên", p => p.Name),
+            ("ĐVT", p => p.UomName),
+            ("Hoạt động", p => p.IsActive)),
+    };
+
     private readonly ApiClient _api;
 
     public ProductsViewModel(ApiClient api) => _api = api;

@@ -48,7 +48,7 @@
         <!-- ===== COT PHAI: cong doan + phieu xuat cua don dang chon ===== -->
         <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
 
-        <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*,Auto">
+        <Grid Grid.Column="2" RowDefinitions="Auto,Auto,Auto,*,Auto">
 
             <!-- Card: Cap nhat cong doan dang chon + nut Khoi tao cong doan -->
             <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
@@ -94,8 +94,14 @@
                 </Grid>
             </Border>
 
+            <!-- Loi cap nhat cong doan: hien do NGAY DUOI form (Status cuoi trang de bi bo sot) -->
+            <TextBlock Grid.Row="1" FontWeight="SemiBold" Foreground="#DC2626" TextWrapping="Wrap"
+                       Margin="4,0,4,10"
+                       Text="{Binding StepError}"
+                       IsVisible="{Binding StepError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
             <!-- Card: Xuat kho NVL cho san xuat -> mo CUA SO rieng (phieu nhieu dong). -->
-            <Border Classes="card" Grid.Row="1" Margin="0,0,0,12">
+            <Border Classes="card" Grid.Row="2" Margin="0,0,0,12">
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <TextBlock Classes="h2" Text="Xuất kho NVL cho sản xuất"/>
@@ -106,8 +112,8 @@
                 </Grid>
             </Border>
 
-            <!-- Row 2: trai = bang cong doan; phai = danh sach phieu xuat NVL da xuat cho don. -->
-            <Grid Grid.Row="2" ColumnDefinitions="2*,Auto,*">
+            <!-- Row 3: trai = bang cong doan; phai = cac dong NVL da xuat cho don. -->
+            <Grid Grid.Row="3" ColumnDefinitions="2*,Auto,*">
                 <Border Classes="card" Grid.Column="0" Margin="0,0,6,0">
                     <Grid RowDefinitions="Auto,*">
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,10">
@@ -175,27 +181,31 @@
                 <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
                 <Border Classes="card" Grid.Column="2" Margin="6,0,0,0">
                     <Grid RowDefinitions="Auto,*">
-                        <TextBlock Grid.Row="0" Classes="h2" Text="Phiếu xuất NVL đã xuất" Margin="0,0,0,10"/>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding Issues}" IsReadOnly="True">
+                        <TextBlock Grid.Row="0" Classes="h2" Text="NVL đã xuất cho đơn (từng dòng phiếu)" Margin="0,0,0,10"/>
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding IssueItems}" IsReadOnly="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Số phiếu" Binding="{Binding IssueNo}" Width="2*" MinWidth="140"/>
-                                <DataGridTemplateColumn Header="Trạng thái" Width="*" MinWidth="100">
+                                <DataGridTextColumn Header="Số phiếu" Binding="{Binding IssueNo}" Width="Auto" MinWidth="120"/>
+                                <DataGridTextColumn Header="Mã NVL" Binding="{Binding MaterialSku}" Width="Auto" MinWidth="95"/>
+                                <DataGridTextColumn Header="Tên NVL" Binding="{Binding MaterialName}" Width="*" MinWidth="130"/>
+                                <DataGridTemplateColumn Header="SL xuất" Width="Auto" MinWidth="90">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding Status, Converter={StaticResource CodeVi}}" VerticalAlignment="Center" FontWeight="SemiBold"
-                                                       Margin="12,0,0,0"
-                                                       Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
+                                            <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding QtyIssued, StringFormat='{}{0:0.####}'}"/>
+                                                <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
+                                            </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="Ngày xuất" Binding="{Binding IssuedAt, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" Width="*" MinWidth="150"/>
+                                <DataGridTextColumn Header="Đơn giá" Binding="{Binding UnitCost, StringFormat='{}{0:#,##0}'}" Width="Auto" MinWidth="85"/>
+                                <DataGridTextColumn Header="Ngày xuất" Binding="{Binding IssuedAt, StringFormat='{}{0:dd/MM/yy HH:mm}'}" Width="Auto" MinWidth="110"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
                 </Border>
             </Grid>
 
-            <TextBlock Grid.Row="3" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
+            <TextBlock Grid.Row="4" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
         </Grid>
     </Grid>
 </UserControl>

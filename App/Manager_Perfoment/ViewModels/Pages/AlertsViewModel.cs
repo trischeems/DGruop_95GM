@@ -7,8 +7,21 @@ using GM95.App.ManagerPerformance.Services;
 namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Canh bao he thong (ton thap, don thieu NVL). Dung API alerts that.</summary>
-public sealed partial class AlertsViewModel : PageViewModel
+public sealed partial class AlertsViewModel : PageViewModel, IExportProvider
 {
+    /// <summary>Cac bang cua trang nay cho nut "Xuất Excel" chung (xuat dung du lieu dang hien thi).</summary>
+    public IReadOnlyList<ExportTable> GetExportTables() => new[]
+    {
+        ExportTable.Create<Alert>("Cảnh báo đang mở", () => Alerts, rowDate: a => a.CreatedAt,
+            ("ID", a => a.Id),
+            ("Loại", a => Converters.CodeToVietnameseConverter.Translate(a.AlertType)),
+            ("Mức", a => Converters.CodeToVietnameseConverter.Translate(a.Severity)),
+            ("Đối tượng", a => Converters.CodeToVietnameseConverter.Translate(a.EntityType)),
+            ("Nội dung", a => a.Message),
+            ("Trạng thái", a => Converters.CodeToVietnameseConverter.Translate(a.Status)),
+            ("Ngày tạo", a => a.CreatedAt)),
+    };
+
     private readonly ApiClient _api;
 
     public AlertsViewModel(ApiClient api) => _api = api;

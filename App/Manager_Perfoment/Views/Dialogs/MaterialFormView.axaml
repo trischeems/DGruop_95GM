@@ -1,41 +1,66 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:GM95.App.ManagerPerformance.Models"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="560"
+             mc:Ignorable="d" d:DesignWidth="920"
              x:Class="GM95.App.ManagerPerformance.Views.Dialogs.MaterialFormView"
              x:DataType="vm:MaterialsViewModel">
-    <!-- Than form Tao NVL — hien trong cua so dialog rieng. Bind vao MaterialsViewModel. -->
-    <StackPanel Spacing="12">
-        <Grid ColumnDefinitions="*,2*" >
-            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                <TextBlock Classes="label" Text="SKU"/>
-                <TextBox Text="{Binding NewSku}" Watermark="VD: VAI-001"/>
+    <!-- Than form Tao NVL — hien trong cua so dialog rieng. Bind vao MaterialsViewModel.
+         Trai = form nhap; phai = sidebar "SKU tuong tu" goi y chong tao trung. -->
+    <Grid ColumnDefinitions="3*,12,2*">
+        <StackPanel Grid.Column="0" Spacing="12">
+            <Grid ColumnDefinitions="*,2*" >
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Classes="label" Text="SKU"/>
+                    <TextBox Text="{Binding NewSku}" Watermark="VD: VAI-001"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Classes="label" Text="Tên NVL"/>
+                    <TextBox Text="{Binding NewName}" Watermark="VD: Vải cotton"/>
+                </StackPanel>
+            </Grid>
+            <StackPanel>
+                <TextBlock Classes="label" Text="Đơn vị tính"/>
+                <AutoCompleteBox ItemsSource="{Binding Uoms}" SelectedItem="{Binding SelectedUom, Mode=TwoWay}"
+                                 FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
             </StackPanel>
-            <StackPanel Grid.Column="1">
-                <TextBlock Classes="label" Text="Tên NVL"/>
-                <TextBox Text="{Binding NewName}" Watermark="VD: Vải cotton"/>
-            </StackPanel>
-        </Grid>
-        <StackPanel>
-            <TextBlock Classes="label" Text="Đơn vị tính"/>
-            <AutoCompleteBox ItemsSource="{Binding Uoms}" SelectedItem="{Binding SelectedUom, Mode=TwoWay}"
-                             FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
+            <Grid ColumnDefinitions="*,*,*">
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Classes="label" Text="Ngưỡng tồn thấp"/>
+                    <NumericUpDown Value="{Binding NewReorderLevel, TargetNullValue=0}" Minimum="0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                    <TextBlock Classes="label" Text="Cỡ lô mua"/>
+                    <NumericUpDown Value="{Binding NewReorderQuantity, TargetNullValue=0}" Minimum="0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Classes="label" Text="Đơn giá (VND)"/>
+                    <NumericUpDown Classes="money" Value="{Binding NewStandardCost, TargetNullValue=0}" Minimum="0"/>
+                </StackPanel>
+            </Grid>
+            <TextBlock Classes="muted" TextWrapping="Wrap"
+                       Text="Ngưỡng tồn thấp dùng cho CẢNH BÁO: khi tồn khả dụng xuống dưới ngưỡng này, NVL sẽ xuất hiện ở trang Cảnh báo tồn thấp."/>
         </StackPanel>
-        <Grid ColumnDefinitions="*,*,*">
-            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                <TextBlock Classes="label" Text="Ngưỡng tồn thấp"/>
-                <NumericUpDown Value="{Binding NewReorderLevel, TargetNullValue=0}" Minimum="0"/>
-            </StackPanel>
-            <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                <TextBlock Classes="label" Text="Cỡ lô mua"/>
-                <NumericUpDown Value="{Binding NewReorderQuantity, TargetNullValue=0}" Minimum="0"/>
-            </StackPanel>
-            <StackPanel Grid.Column="2">
-                <TextBlock Classes="label" Text="Đơn giá (VND)"/>
-                <NumericUpDown Classes="money" Value="{Binding NewStandardCost, TargetNullValue=0}" Minimum="0"/>
-            </StackPanel>
-        </Grid>
-    </StackPanel>
+
+        <!-- Sidebar: SKU tuong tu (tranh tao trung) -->
+        <Border Grid.Column="2" Classes="card" Padding="10">
+            <Grid RowDefinitions="Auto,Auto,*">
+                <TextBlock Grid.Row="0" Classes="h2" Text="SKU tương tự" Margin="0,0,0,4"/>
+                <TextBlock Grid.Row="1" Classes="muted" TextWrapping="Wrap" Margin="0,0,0,8"
+                           Text="{Binding SimilarStatus}"/>
+                <ListBox Grid.Row="2" ItemsSource="{Binding SimilarMaterials}" MinHeight="180">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:Material">
+                            <StackPanel Margin="2">
+                                <TextBlock Text="{Binding Sku}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding Name}" Classes="muted" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+    </Grid>
 </UserControl>

@@ -20,6 +20,12 @@ public sealed class MaterialIssuesController : ControllerBase
         [FromQuery] long? orderId = null, CancellationToken ct = default) =>
         Ok(ApiResult<IEnumerable<MaterialIssueDto>>.Success(await _service.ListAsync(orderId, ct)));
 
+    /// <summary>Danh sach DONG NVL cua cac phieu xuat (kem ma + ten NVL, ten kho), moi nhat truoc.</summary>
+    [HttpGet("items")]
+    public async Task<ActionResult<ApiResult<IEnumerable<MaterialIssueItemDto>>>> GetItems(
+        [FromQuery] long? orderId = null, [FromQuery] int limit = 200, CancellationToken ct = default) =>
+        Ok(ApiResult<IEnumerable<MaterialIssueItemDto>>.Success(await _service.ListItemsAsync(orderId, limit, ct)));
+
     /// <summary>Tao & POST phieu xuat NVL: tru ton + ghi so cai + tieu thu giu cho trong 1 transaction.</summary>
     [HttpPost]
     public async Task<ActionResult<ApiResult<MaterialIssueResultDto>>> Create(

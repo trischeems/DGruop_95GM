@@ -31,11 +31,13 @@ public sealed class StockReceiptService
     public Task<IEnumerable<StockReceiptDto>> ListAsync(long? warehouseId, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, s => _repo.ListAsync(s, warehouseId), ct);
 
-    /// <summary>Lich su giao dich kho (don gia tung lan nhap/xuat), loc theo NVL neu co.</summary>
-    public Task<IEnumerable<StockTransactionDto>> ListTransactionsAsync(long? materialId, int limit, CancellationToken ct)
+    /// <summary>Lich su giao dich kho (don gia tung lan nhap/xuat), loc theo NVL + tu ngay/den ngay neu co.</summary>
+    public Task<IEnumerable<StockTransactionDto>> ListTransactionsAsync(
+        long? materialId, int limit, DateTime? from, DateTime? to, CancellationToken ct)
     {
         var cap = limit is <= 0 or > 500 ? 200 : limit;   // gioi han so dong tra ve
-        return _db.RunAsync(_tenant.Tenant, s => _repo.ListTransactionsAsync(s, materialId, cap), ct);
+        return _db.RunAsync(_tenant.Tenant,
+            s => _repo.ListTransactionsAsync(s, materialId, cap, PeriodUtil.FromUtc(from), PeriodUtil.ToExclusiveUtc(to)), ct);
     }
 
     public Task<StockReceiptResultDto> CreateAsync(CreateStockReceiptRequest req, CancellationToken ct)

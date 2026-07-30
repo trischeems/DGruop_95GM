@@ -1,0 +1,168 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels.Pages"
+             xmlns:models="using:GM95.App.ManagerPerformance.Models"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+             x:Class="GM95.App.ManagerPerformance.Views.Pages.StatsView"
+             x:DataType="vm:StatsViewModel">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+        <!-- Bo loc ky: theo thang hoac tu-den -->
+        <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
+                <TextBlock Grid.Column="0" Classes="label" Text="Xem theo" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox Grid.Column="1" ItemsSource="{Binding ModeOptions}" SelectedItem="{Binding FilterMode}"
+                          Width="170" Margin="0,0,12,0"/>
+
+                <!-- Che do THANG -->
+                <ComboBox Grid.Column="2" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}"
+                          Width="100" Margin="0,0,6,0" IsVisible="{Binding IsMonthMode}"/>
+                <ComboBox Grid.Column="3" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}"
+                          Width="90" Margin="0,0,12,0" IsVisible="{Binding IsMonthMode}"/>
+
+                <!-- Che do TU-DEN -->
+                <TextBlock Grid.Column="4" Classes="label" Text="Từ" VerticalAlignment="Center" Margin="0,0,6,0"
+                           IsVisible="{Binding IsRangeMode}"/>
+                <CalendarDatePicker Grid.Column="5" SelectedDate="{Binding FromDate}" Width="150" Margin="0,0,8,0"
+                                    IsVisible="{Binding IsRangeMode}"/>
+                <TextBlock Grid.Column="6" Classes="label" Text="đến" VerticalAlignment="Center" Margin="0,0,6,0"
+                           IsVisible="{Binding IsRangeMode}"/>
+                <CalendarDatePicker Grid.Column="7" SelectedDate="{Binding ToDate}" Width="150" Margin="0,0,8,0"
+                                    IsVisible="{Binding IsRangeMode}"/>
+
+                <TextBox Grid.Column="8" Text="{Binding LedgerSearch}" Watermark="🔍 Tìm SKU / tên NVL trong sổ..."
+                         MaxWidth="300" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <Button Grid.Column="9" Classes="accent" Content="Xem" Command="{Binding LoadCommand}"
+                        IsEnabled="{Binding !IsBusy}"/>
+            </Grid>
+        </Border>
+
+        <!-- Dai tong hop -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*,*" Margin="0,0,0,12">
+            <Border Classes="card" Grid.Column="0" Margin="0,0,6,0">
+                <StackPanel>
+                    <TextBlock Classes="muted" Text="Tổng nhập (SL)"/>
+                    <TextBlock Classes="h2" Text="{Binding SumInText}"/>
+                </StackPanel>
+            </Border>
+            <Border Classes="card" Grid.Column="1" Margin="3,0">
+                <StackPanel>
+                    <TextBlock Classes="muted" Text="Giá trị nhập"/>
+                    <TextBlock Classes="h2" Text="{Binding SumInValueText}"/>
+                </StackPanel>
+            </Border>
+            <Border Classes="card" Grid.Column="2" Margin="3,0">
+                <StackPanel>
+                    <TextBlock Classes="muted" Text="Tổng xuất (SL)"/>
+                    <TextBlock Classes="h2" Text="{Binding SumOutText}"/>
+                </StackPanel>
+            </Border>
+            <Border Classes="card" Grid.Column="3" Margin="3,0">
+                <StackPanel>
+                    <TextBlock Classes="muted" Text="Giá trị xuất"/>
+                    <TextBlock Classes="h2" Text="{Binding SumOutValueText}"/>
+                </StackPanel>
+            </Border>
+            <Border Classes="card" Grid.Column="4" Margin="3,0">
+                <StackPanel>
+                    <TextBlock Classes="muted" Text="Đơn SX trong kỳ"/>
+                    <TextBlock Classes="h2" Text="{Binding SumOrderText}"/>
+                </StackPanel>
+            </Border>
+            <Border Classes="card" Grid.Column="5" Margin="6,0,0,0">
+                <StackPanel>
+                    <TextBlock Classes="muted" Text="TP nhập kho (SL)"/>
+                    <TextBlock Classes="h2" Text="{Binding SumFgText}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 3 bang: So NVL / Nhap xuat chi tiet / San xuat -->
+        <TabControl Grid.Row="2">
+            <TabItem Header="📒 Sổ NVL (tồn đầu · nhập · xuất · tồn cuối)">
+                <Border Classes="card" Margin="0,8,0,0">
+                    <DataGrid ItemsSource="{Binding Ledger}" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="Auto" MinWidth="110"/>
+                            <DataGridTextColumn Header="Tên NVL" Binding="{Binding Name}" Width="*" MinWidth="170"/>
+                            <DataGridTextColumn Header="ĐVT" Binding="{Binding UomName}" Width="Auto" MinWidth="60"/>
+                            <DataGridTextColumn Header="Tồn đầu kỳ" Binding="{Binding OpeningQty, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="95"/>
+                            <DataGridTextColumn Header="Tổng nhập" Binding="{Binding InQty, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="90"/>
+                            <DataGridTextColumn Header="GT nhập (VND)" Binding="{Binding InValue, StringFormat='{}{0:#,##0}'}" Width="Auto" MinWidth="110"/>
+                            <DataGridTextColumn Header="Tổng xuất" Binding="{Binding OutQty, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="90"/>
+                            <DataGridTextColumn Header="GT xuất (VND)" Binding="{Binding OutValue, StringFormat='{}{0:#,##0}'}" Width="Auto" MinWidth="110"/>
+                            <DataGridTextColumn Header="Tồn cuối kỳ" Binding="{Binding ClosingQty, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="100"/>
+                            <DataGridTextColumn Header="Tồn hiện tại" Binding="{Binding CurrentOnHand, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="100"/>
+                            <DataGridTextColumn Header="Khả dụng" Binding="{Binding CurrentAvailable, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="90"/>
+                            <DataGridCheckBoxColumn Header="Hoạt động" Binding="{Binding IsActive}" Width="Auto" MinWidth="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="🔄 Nhập xuất chi tiết (sổ giao dịch)">
+                <Border Classes="card" Margin="0,8,0,0">
+                    <DataGrid ItemsSource="{Binding Transactions}" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Mã NVL" Binding="{Binding MaterialSku}" Width="Auto" MinWidth="100"/>
+                            <DataGridTextColumn Header="Tên NVL" Binding="{Binding MaterialName}" Width="*" MinWidth="160"/>
+                            <DataGridTemplateColumn Header="Loại" Width="Auto" MinWidth="85">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding TxnType, Converter={StaticResource CodeVi}}" VerticalAlignment="Center"
+                                                   FontWeight="SemiBold" Margin="12,0,0,0"
+                                                   Foreground="{Binding TxnType, Converter={StaticResource StatusToBrush}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="SL" Width="Auto" MinWidth="95">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Quantity, StringFormat='{}{0:0.####}'}"/>
+                                            <TextBlock Text="{Binding MaterialUomName}" Classes="uom"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Đơn giá" Binding="{Binding UnitCost, StringFormat='{}{0:#,##0}'}" Width="Auto" MinWidth="85"/>
+                            <DataGridTextColumn Header="Tồn sau" Binding="{Binding BalanceAfter, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="85"/>
+                            <DataGridTextColumn Header="Kho" Binding="{Binding WarehouseName}" Width="Auto" MinWidth="90"/>
+                            <DataGridTextColumn Header="Ngày" Binding="{Binding CreatedAt, StringFormat='{}{0:dd/MM/yy HH:mm}'}" Width="Auto" MinWidth="110"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="🏭 Sản xuất theo mã hàng">
+                <Border Classes="card" Margin="0,8,0,0">
+                    <DataGrid ItemsSource="{Binding Production}" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="Auto" MinWidth="110"/>
+                            <DataGridTextColumn Header="Tên mã hàng" Binding="{Binding Name}" Width="*" MinWidth="180"/>
+                            <DataGridTextColumn Header="Số đơn" Binding="{Binding OrderCount}" Width="Auto" MinWidth="75"/>
+                            <DataGridTemplateColumn Header="SL đặt" Width="Auto" MinWidth="95">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding OrderQty, StringFormat='{}{0:0.####}'}"/>
+                                            <TextBlock Text="{Binding UomName}" Classes="uom"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="SL lỗi (công đoạn)" Binding="{Binding DefectQty, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="130"/>
+                            <DataGridTextColumn Header="TP nhập kho" Binding="{Binding FgQty, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="100"/>
+                            <DataGridTextColumn Header="GT NVL xuất (VND)" Binding="{Binding IssueValue, StringFormat='{}{0:#,##0}'}" Width="Auto" MinWidth="130"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </TabItem>
+        </TabControl>
+
+        <TextBlock Grid.Row="3" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
+    </Grid>
+</UserControl>

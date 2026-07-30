@@ -14,11 +14,13 @@ public sealed class ProductionPlanService
 
     // State machine ke hoach: tu trang thai X duoc chuyen sang nhung trang thai nao.
     // Luong tien: PLANNED -> RELEASED -> IN_PROGRESS -> DONE. Huy duoc tu cac buoc chua xong.
-    // DONE/CANCELLED la trang thai KET THUC -> khong quay lai (chong "Done ve Planned").
+    // DONE cho phep nhay thang tu PLANNED/RELEASED (danh dau "xong" khong bat buoc qua tung buoc).
+    // DONE/CANCELLED la trang thai KET THUC -> khong quay lai (chong "Done ve Planned",
+    // va chong cong tien do cong doan 2 lan).
     private static readonly Dictionary<string, string[]> AllowedTransitions = new(StringComparer.Ordinal)
     {
-        ["PLANNED"]     = new[] { "RELEASED", "IN_PROGRESS", "CANCELLED" },
-        ["RELEASED"]    = new[] { "IN_PROGRESS", "PLANNED", "CANCELLED" },
+        ["PLANNED"]     = new[] { "RELEASED", "IN_PROGRESS", "DONE", "CANCELLED" },
+        ["RELEASED"]    = new[] { "IN_PROGRESS", "PLANNED", "DONE", "CANCELLED" },
         ["IN_PROGRESS"] = new[] { "DONE", "CANCELLED" },
         ["DONE"]        = Array.Empty<string>(),   // ket thuc
         ["CANCELLED"]   = Array.Empty<string>(),   // ket thuc
@@ -27,12 +29,16 @@ public sealed class ProductionPlanService
     private readonly ITenantConnection _db;
     private readonly ITenantContext _tenant;
     private readonly IProductionPlanRepository _repo;
+    private readonly IProductionStepRepository _steps;
 
-    public ProductionPlanService(ITenantConnection db, ITenantContext tenant, IProductionPlanRepository repo)
+    public ProductionPlanService(
+        ITenantConnection db, ITenantContext tenant,
+        IProductionPlanRepository repo, IProductionStepRepository steps)
     {
         _db = db;
         _tenant = tenant;
         _repo = repo;
+        _steps = steps;
     }
 
     public Task<IEnumerable<ProductionPlanDto>> ListAsync(long? orderId, int? year, int? month, CancellationToken ct) =>
@@ -68,6 +74,12 @@ public sealed class ProductionPlanService
 
         return _db.RunAsync(_tenant.Tenant, async s =>
         {
+            // THU TU KHOA TOAN CUC: don -> ke hoach -> cong doan (khop ProductionStepService)
+            // — chong deadlock khi nguoi khac dang luu cong doan cua cung don.
+            var orderId = await _repo.GetPlanOrderIdAsync(s, id);
+            if (orderId is null) return false;
+            var orderQty = await _repo.LockOrderQuantityAsync(s, orderId.Value);
+
             // Doc trang thai hien tai (khoa dong) roi kiem tra chuyen trang thai co hop le khong.
             var cur = await _repo.LockPlanAsync(s, id);
             if (cur is null) return false;
@@ -81,7 +93,27 @@ public sealed class ProductionPlanService
                         ? "Day la trang thai ket thuc, khong doi duoc."
                         : $"Chi duoc chuyen sang: {string.Join(", ", allowed)}."));
 
-            return await _repo.UpdateStatusAsync(s, id, req.Status);
+            var ok = await _repo.UpdateStatusAsync(s, id, req.Status);
+
+            // ----- LIEN KET MODULE (cung transaction) -----
+            // Ke hoach DONE -> tu dong keo tien do cac cong doan cua don len TONG SL ke hoach da DONE
+            // (du SL don thi cong doan DONE) — khong can nhap tay nua.
+            if (ok && req.Status == "DONE" && orderQty.HasValue)
+            {
+                // Don chua bam "Khoi tao cong doan" thi tu sinh truoc (idempotent) —
+                // neu khong, tien do cua ke hoach DONE se mat khong ghi lai duoc (DONE la ket thuc).
+                await _steps.InitStepsAsync(s, cur.ProductionOrderId);
+                var doneQty = await _steps.SumDonePlannedQtyAsync(s, cur.ProductionOrderId);
+                await _steps.AutoProgressStepsAsync(s, cur.ProductionOrderId, doneQty, orderQty.Value);
+                await _steps.MarkOrderInProgressAsync(s, cur.ProductionOrderId);
+            }
+            // Ke hoach bat dau chay -> keo don CONFIRMED sang IN_PROGRESS cho khop.
+            else if (ok && req.Status == "IN_PROGRESS")
+            {
+                await _steps.MarkOrderInProgressAsync(s, cur.ProductionOrderId);
+            }
+
+            return ok;
         }, ct);
     }
 
@@ -94,11 +126,22 @@ public sealed class ProductionPlanService
         if (req.PlannedQty <= 0) throw new ArgumentException("plannedQty phai > 0.");
         return _db.RunAsync(_tenant.Tenant, async s =>
         {
-            // Khi sua SL 1 ke hoach cung phai dam bao tong (khong tinh chinh no) + SL moi <= SL don.
+            // Thu tu khoa toan cuc: don -> ke hoach (khop UpdateStatusAsync/ProductionStepService).
+            var orderId = await _repo.GetPlanOrderIdAsync(s, id);
+            if (orderId is null) return false;
+            var orderQty = await _repo.LockOrderQuantityAsync(s, orderId.Value)
+                ?? throw new ArgumentException("Khong tim thay don san xuat cua ke hoach.");
+
             var cur = await _repo.LockPlanAsync(s, id);
             if (cur is null) return false;
-            var orderQty = await _repo.LockOrderQuantityAsync(s, cur.ProductionOrderId)
-                ?? throw new ArgumentException("Khong tim thay don san xuat cua ke hoach.");
+
+            // Ke hoach da KET THUC: SL cua no da duoc cong vao tien do cong doan (DONE) —
+            // sua SL luc nay se lech so lieu khong bao gio dong bo lai duoc.
+            if (cur.Status is "DONE" or "CANCELLED")
+                throw new ArgumentException(
+                    $"Ke hoach da o trang thai ket thuc ({cur.Status}), khong sua duoc SL/chuyen.");
+
+            // Khi sua SL 1 ke hoach cung phai dam bao tong (khong tinh chinh no) + SL moi <= SL don.
             var others = await _repo.SumPlannedQtyAsync(s, cur.ProductionOrderId, id);
             if (others + req.PlannedQty > orderQty)
                 throw new ArgumentException(

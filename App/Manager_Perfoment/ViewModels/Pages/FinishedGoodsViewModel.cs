@@ -7,8 +7,41 @@ using GM95.App.ManagerPerformance.Services;
 namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Man hinh Nhap kho thanh pham + doi chieu hao hut so voi dinh muc.</summary>
-public sealed partial class FinishedGoodsViewModel : PageViewModel
+public sealed partial class FinishedGoodsViewModel : PageViewModel, IExportProvider
 {
+    /// <summary>Cac bang cua trang nay cho nut "Xuất Excel" chung (xuat dung du lieu dang hien thi).</summary>
+    public IReadOnlyList<ExportTable> GetExportTables() => new[]
+    {
+        ExportTable.Create<ProductionOrder>("Đơn sản xuất", () => FilteredOrders, rowDate: o => o.DueDate,
+            ("Số đơn", o => o.OrderNo),
+            ("SKU", o => o.ProductSku),
+            ("Tên mã hàng", o => o.ProductName),
+            ("SL đặt", o => o.Quantity),
+            ("ĐVT", o => o.ProductUomName),
+            ("Trạng thái", o => Converters.CodeToVietnameseConverter.Translate(o.Status)),
+            ("Hạn giao", o => o.DueDate)),
+        ExportTable.Create<FinishedGoodsReceipt>("Phiếu nhập TP", () => Receipts, rowDate: r => r.ReceivedAt,
+            ("Số phiếu", r => r.ReceiptNo),
+            ("Số đơn", r => r.OrderNo),
+            ("Mã hàng", r => r.ProductId),
+            ("SKU", r => r.ProductSku),
+            ("Tên mã hàng", r => r.ProductName),
+            ("Kho", r => r.WarehouseName),
+            ("SL nhập", r => r.QtyReceived),
+            ("ĐVT", r => r.ProductUomName),
+            ("Ngày nhập", r => r.ReceivedAt)),
+        ExportTable.Create<LossReport>("Đối chiếu hao hụt", () => Losses, rowDate: null,
+            ("NVL", l => l.MaterialId),
+            ("SKU NVL", l => l.MaterialSku),
+            ("Tên NVL", l => l.MaterialName),
+            ("Cấp phát", l => l.QtyIssued),
+            ("Định mức", l => l.QtyStandard),
+            ("Hao hụt", l => l.QtyVariance),
+            ("ĐVT NVL", l => l.MaterialUomName),
+            ("SL TP", l => l.FinishedQty),
+            ("ĐVT TP", l => l.ProductUomName)),
+    };
+
     private readonly ApiClient _api;
 
     public FinishedGoodsViewModel(ApiClient api) => _api = api;

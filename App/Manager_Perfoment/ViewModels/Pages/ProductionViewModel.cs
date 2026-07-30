@@ -7,8 +7,40 @@ using GM95.App.ManagerPerformance.Services;
 namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Trang San xuat: theo doi cong doan Cat/May/QC va xuat kho NVL cho san xuat.</summary>
-public sealed partial class ProductionViewModel : PageViewModel
+public sealed partial class ProductionViewModel : PageViewModel, IExportProvider
 {
+    /// <summary>Cac bang cua trang nay cho nut "Xuất Excel" chung (xuat dung du lieu dang hien thi).</summary>
+    public IReadOnlyList<ExportTable> GetExportTables() => new[]
+    {
+        ExportTable.Create<ProductionOrder>("Đơn sản xuất", () => FilteredOrders, rowDate: o => o.DueDate,
+            ("Số đơn", o => o.OrderNo),
+            ("Mã hàng", o => o.ProductSku),
+            ("Tên mã hàng", o => o.ProductName),
+            ("SL", o => o.Quantity),
+            ("ĐVT", o => o.ProductUomName),
+            ("Trạng thái", o => Converters.CodeToVietnameseConverter.Translate(o.Status)),
+            ("Hạn giao", o => o.DueDate),
+            ("Quy trình", o => o.RoutingName)),
+        ExportTable.Create<ProductionStep>("Công đoạn của đơn", () => Steps, rowDate: null,
+            ("TT", s => s.Seq),
+            ("Công đoạn", s => s.StageName),
+            ("Trạng thái", s => Converters.CodeToVietnameseConverter.Translate(s.Status)),
+            ("Bỏ qua", s => s.IsSkipped),
+            ("Vào", s => s.QtyIn),
+            ("Ra", s => s.QtyOut),
+            ("Lỗi", s => s.QtyDefect),
+            ("ĐVT", s => s.ProductUomName)),
+        ExportTable.Create<MaterialIssueItem>("NVL đã xuất cho đơn", () => IssueItems, rowDate: t => t.IssuedAt,
+            ("Số phiếu", t => t.IssueNo),
+            ("Mã NVL", t => t.MaterialSku),
+            ("Tên NVL", t => t.MaterialName),
+            ("SL xuất", t => t.QtyIssued),
+            ("ĐVT", t => t.MaterialUomName),
+            ("Đơn giá", t => t.UnitCost),
+            ("Kho", t => t.WarehouseName),
+            ("Ngày xuất", t => t.IssuedAt)),
+    };
+
     private readonly ApiClient _api;
     public ProductionViewModel(ApiClient api) => _api = api;
 
@@ -38,8 +70,11 @@ public sealed partial class ProductionViewModel : PageViewModel
                 FilteredMaterials.Add(m);
     }
     public ObservableCollection<Warehouse> Warehouses { get; } = new();
-    // Danh sach phieu xuat NVL cua don dang chon (M5-16: xem lai phieu da xuat).
-    public ObservableCollection<MaterialIssue> Issues { get; } = new();
+    // Cac DONG NVL cua phieu xuat cua don dang chon (co ma + ten NVL tung dong).
+    public ObservableCollection<MaterialIssueItem> IssueItems { get; } = new();
+
+    // Ton kho hien tai theo NVL (de goi y "con lai bao nhieu" khi xuat kho).
+    private readonly Dictionary<long, MaterialStock> _stockByMaterial = new();
 
     public string[] StepStatusOptions { get; } = new[] { "PENDING", "IN_PROGRESS", "DONE", "ON_HOLD", "CANCELLED" };
 
@@ -119,6 +154,37 @@ public sealed partial class ProductionViewModel : PageViewModel
     public ObservableCollection<IssueLine> IssueLines { get; } = new();
     [ObservableProperty] private IssueLine? _selectedIssueLine;
 
+    // Goi y ton kho cua NVL dang chon trong dialog xuat (con lai bao nhieu de biet duong nhap).
+    [ObservableProperty] private string _issueAvailableText = "Chọn NVL để xem tồn còn lại.";
+    // Gia da TU DIEN cho NVL truoc do — de doi NVL thi cap nhat lai goi y,
+    // nhung KHONG de gia cua NVL cu dinh sang NVL moi, cung khong de gia nguoi dung tu go.
+    private decimal _autoFilledCost;
+    partial void OnSelectedMaterialChanged(Material? value) => UpdateIssueAvailable();
+    private void UpdateIssueAvailable()
+    {
+        if (SelectedMaterial is null)
+        {
+            IssueAvailableText = "Chọn NVL để xem tồn còn lại.";
+            return;
+        }
+        if (_stockByMaterial.TryGetValue(SelectedMaterial.Id, out var s))
+        {
+            IssueAvailableText =
+                $"Còn lại (tất cả kho): {s.TotalOnHand:0.####} {s.UomName} (khả dụng {s.TotalAvailable:0.####}, đã giữ chỗ {s.TotalReserved:0.####})";
+            // Goi y don gia = gia nhap gan nhat. Chi ghi de khi o gia dang 0 hoac dang mang
+            // gia tu-dien cua NVL truoc (gia nguoi dung tu go thi giu nguyen).
+            if ((IssueUnitCost == 0 || IssueUnitCost == _autoFilledCost) && s.LastUnitCost > 0)
+            {
+                IssueUnitCost = s.LastUnitCost;
+                _autoFilledCost = s.LastUnitCost;
+            }
+        }
+        else
+        {
+            IssueAvailableText = $"NVL {SelectedMaterial.Sku} chưa có tồn kho — không thể xuất.";
+        }
+    }
+
 
     // ===== Bo loc thang/nam ("Tất cả" = khong loc; "Cả năm" = ca nam dang chon) =====
     public string[] FilterMonthOptions { get; } =
@@ -162,6 +228,12 @@ public sealed partial class ProductionViewModel : PageViewModel
         ApplyMaterialFilter();   // danh sach NVL cho dialog xuat kho
         SelectedMaterial = Materials.FirstOrDefault(m => m.Id == keepMat);
 
+        // Ton kho hien tai (khong loc thang) de goi y "con lai" khi xuat kho.
+        var stockRows = await _api.GetStockAsync(false, null, null);
+        _stockByMaterial.Clear();
+        foreach (var s in stockRows) _stockByMaterial[s.MaterialId] = s;
+        UpdateIssueAvailable();
+
         // Mau quy trinh + danh muc cong doan (phuc vu sua quy trinh rieng cho don).
         var keepRouting = SelectedRouting?.Id;
         var rts = await _api.GetRoutingsAsync(activeOnly: true);
@@ -196,17 +268,20 @@ public sealed partial class ProductionViewModel : PageViewModel
         var keepStep = selectStepId ?? SelectedStep?.Id;
 
         Steps.Clear();
-        Issues.Clear();
+        IssueItems.Clear();
         if (SelectedOrder is null) return;
         var ss = await _api.GetStepsAsync(SelectedOrder.Id);
         foreach (var s in ss) Steps.Add(s);
         SelectedStep = Steps.FirstOrDefault(s => s.Id == keepStep);
 
-        // Nap phieu xuat NVL cua don (M5-16: xem lai phieu da xuat).
-        var iss = await _api.GetIssuesAsync(SelectedOrder.Id);
-        foreach (var i in iss) Issues.Add(i);
+        // Nap tung DONG NVL cua cac phieu xuat cua don (co ma + ten NVL). Toi da 500 dong moi nhat.
+        const int issueLimit = 500;
+        var items = await _api.GetIssueItemsAsync(SelectedOrder.Id, issueLimit);
+        foreach (var i in items) IssueItems.Add(i);
+        var issueCount = items.Select(i => i.MaterialIssueId).Distinct().Count();
 
-        Status = $"{Steps.Count} công đoạn · {Issues.Count} phiếu xuất NVL.";
+        Status = $"{Steps.Count} công đoạn · {issueCount} phiếu xuất NVL ({items.Count} dòng)"
+               + (items.Count >= issueLimit ? $" — chỉ hiển thị {issueLimit} dòng mới nhất." : ".");
     }
 
     [RelayCommand]
@@ -221,14 +296,33 @@ public sealed partial class ProductionViewModel : PageViewModel
         });
     }
 
+    // Loi cap nhat cong doan — hien do ngay canh form (Status o cuoi trang de bi bo sot).
+    [ObservableProperty] private string _stepError = "";
+
     [RelayCommand]
     private async Task UpdateStepAsync()
     {
-        if (SelectedStep is null) { Status = "Chọn công đoạn."; return; }
+        StepError = "";
+        if (SelectedStep is null) { StepError = "Chọn một công đoạn trong bảng trước."; return; }
+        // CONG THUC: ra + loi khong duoc vuot vao (khop kiem tra server, bao som cho ro).
+        if (QtyOut + QtyDefect > QtyIn)
+        {
+            StepError = $"SL ra ({QtyOut:0.####}) + SL lỗi ({QtyDefect:0.####}) = {QtyOut + QtyDefect:0.####} " +
+                        $"vượt SL vào ({QtyIn:0.####}). Sửa lại số liệu trước khi lưu.";
+            return;
+        }
         await RunAsync("Đang cập nhật công đoạn...", async () =>
         {
             var stepId = SelectedStep!.Id;
-            await _api.UpdateStepAsync(stepId, new { status = SelectedStepStatus, qtyIn = QtyIn, qtyOut = QtyOut, qtyDefect = QtyDefect, note = (string?)null });
+            try
+            {
+                await _api.UpdateStepAsync(stepId, new { status = SelectedStepStatus, qtyIn = QtyIn, qtyOut = QtyOut, qtyDefect = QtyDefect, note = (string?)null });
+            }
+            catch (ApiException ex)
+            {
+                StepError = ex.Message;   // hien do ngay canh form
+                throw;                    // RunAsync van ghi Status
+            }
             await LoadStepsCoreAsync(stepId);
             Status = "Đã cập nhật công đoạn.";
         });
@@ -395,18 +489,28 @@ public sealed partial class ProductionViewModel : PageViewModel
     }
 
     /// <summary>Thêm 1 dòng NVL vào phiếu xuất (lưới trong dialog). Chặn trùng NVL.</summary>
+    // Loi/goi y trong dialog xuat kho — hien ngay trong cua so (Status trang bi dialog che).
+    [ObservableProperty] private string _issueError = "";
+
     [RelayCommand]
     private void AddIssueLine()
     {
-        if (SelectedMaterial is null) { Status = "Chọn NVL để thêm dòng."; return; }
-        if (IssueQty <= 0) { Status = "Số lượng xuất phải > 0."; return; }
+        IssueError = "";
+        if (SelectedMaterial is null) { IssueError = "Chọn NVL ở danh sách bên trái trước."; return; }
+        if (IssueQty <= 0) { IssueError = "Số lượng xuất phải > 0."; return; }
         if (IssueLines.Any(l => l.Material?.Id == SelectedMaterial.Id))
         {
-            Status = $"NVL {SelectedMaterial.Sku} đã có trong phiếu.";
+            IssueError = $"NVL {SelectedMaterial.Sku} đã có trong phiếu. Xoá dòng cũ nếu muốn sửa.";
+            return;
+        }
+        // Chan xuat qua TONG ton cac kho (server con kiem tra chinh xac theo kho da chon trong transaction).
+        if (_stockByMaterial.TryGetValue(SelectedMaterial.Id, out var s) && IssueQty > s.TotalOnHand)
+        {
+            IssueError = $"Tồn không đủ: {SelectedMaterial.Sku} còn tổng cộng {s.TotalOnHand:0.####} {s.UomName} ở mọi kho, cần xuất {IssueQty:0.####}.";
             return;
         }
         IssueLines.Add(new IssueLine { Material = SelectedMaterial, QtyIssued = IssueQty, UnitCost = IssueUnitCost });
-        SelectedMaterial = null; IssueQty = 0; IssueUnitCost = 0;
+        SelectedMaterial = null; IssueQty = 0; IssueUnitCost = 0; _autoFilledCost = 0;
         Status = $"Phiếu có {IssueLines.Count} dòng.";
     }
 
@@ -414,8 +518,9 @@ public sealed partial class ProductionViewModel : PageViewModel
     [RelayCommand]
     private void RemoveIssueLine()
     {
-        if (SelectedIssueLine is null) { Status = "Chọn một dòng để xoá."; return; }
+        if (SelectedIssueLine is null) { IssueError = "Chọn một dòng để xoá."; return; }
         IssueLines.Remove(SelectedIssueLine);
+        IssueError = "";
     }
 
     /// <summary>Mở CỬA SỔ riêng "Xuất kho NVL phiếu nhiều dòng" cho đơn đang chọn.</summary>
@@ -425,6 +530,9 @@ public sealed partial class ProductionViewModel : PageViewModel
         if (SelectedOrder is null) { Status = "Chọn đơn sản xuất trước."; return; }
         IssueLines.Clear();
         SelectedWarehouse = null; SelectedMaterial = null; IssueQty = 0; IssueUnitCost = 0;
+        _autoFilledCost = 0;
+        IssueError = "";
+        UpdateIssueAvailable();
         var form = new Views.Dialogs.IssueFormView { DataContext = this };
         await DialogService.ShowFormAsync(
             $"Xuất kho NVL — đơn {SelectedOrder.OrderNo}", form, async () =>

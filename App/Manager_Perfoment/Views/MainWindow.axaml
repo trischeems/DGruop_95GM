@@ -82,6 +82,10 @@
                     <TextBlock Classes="h1" Text="{Binding CurrentPage.Title}"/>
                     <TextBlock Classes="muted" Text="{Binding CurrentPage.Subtitle}"/>
                 </StackPanel>
+                <!-- Nut XUAT EXCEL dung chung: hoat dong voi moi trang (chon bang / theo ngay / tu-den / che do sheet) -->
+                <Button Grid.Column="1" Classes="ghost" Content="📤 Xuất Excel" VerticalAlignment="Center"
+                        Command="{Binding ExportExcelCommand}"
+                        ToolTip.Tip="Xuất các bảng của trang này ra Excel — chọn bảng, lọc theo ngày hoặc từ–đến, mỗi bảng 1 sheet hoặc gộp 1 sheet"/>
             </Grid>
 
             <!-- Noi dung trang (ViewLocator map PageViewModel -> View) -->

@@ -26,6 +26,15 @@ public sealed class MaterialService
     public Task<MaterialDto?> GetAsync(long id, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, s => _repo.GetByIdAsync(s, id), ct);
 
+    /// <summary>Goi y NVL gan giong theo SKU/ten (chong tao trung). Chuoi rong -> danh sach rong.</summary>
+    public Task<IEnumerable<MaterialDto>> SearchAsync(string? query, int limit, CancellationToken ct)
+    {
+        var q = (query ?? "").Trim();
+        if (q.Length == 0) return Task.FromResult(Enumerable.Empty<MaterialDto>());
+        var lim = Math.Clamp(limit, 1, 50);
+        return _db.RunAsync(_tenant.Tenant, s => _repo.SearchAsync(s, q, lim), ct);
+    }
+
     // Quy chuan SKU: bat dau chu/so, sau do chu/so/dau . _ - , dai 2..50 ky tu.
     private static readonly Regex SkuPattern =
         new(@"^[A-Za-z0-9][A-Za-z0-9._-]{1,49}$", RegexOptions.Compiled);

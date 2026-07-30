@@ -27,8 +27,25 @@ public sealed partial class MonthCheck : ObservableObject
 /// - Che do "So sanh cac thang chon": chi hien cac thang duoc tick.
 /// - Moi khoi du lieu co the doi kieu bieu do (Duong/Cot); khoi ty trong dung bieu do tron.
 /// </summary>
-public sealed partial class MonthCompareViewModel : PageViewModel
+public sealed partial class MonthCompareViewModel : PageViewModel, IExportProvider
 {
+    /// <summary>Cac bang cua trang nay cho nut "Xuất Excel" chung (xuat dung du lieu dang hien thi).</summary>
+    public IReadOnlyList<ExportTable> GetExportTables() => new[]
+    {
+        ExportTable.Create<MonthlyStats>("Số liệu 12 tháng", () => Visible(), rowDate: null,
+            ("Tháng", s => s.Month),
+            ("Số đơn", s => s.OrderCount),
+            ("SL đặt", s => s.OrderQty),
+            ("NVL nhập", s => s.StockInQty),
+            ("GT nhập", s => s.StockInValue),
+            ("NVL xuất", s => s.StockOutQty),
+            ("GT xuất", s => s.StockOutValue),
+            ("Số phiếu TP", s => s.FgReceiptCount),
+            ("SL TP", s => s.FgQty),
+            ("Hao hụt", s => s.LossVariance),
+            ("Cảnh báo", s => s.AlertCount)),
+    };
+
     private readonly ApiClient _api;
 
     public MonthCompareViewModel(ApiClient api)

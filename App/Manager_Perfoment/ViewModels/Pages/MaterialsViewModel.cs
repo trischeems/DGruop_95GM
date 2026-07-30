@@ -7,8 +7,44 @@ using GM95.App.ManagerPerformance.Services;
 namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 
 /// <summary>Kho nguyen vat lieu: danh sach NVL + tao moi + nhap kho + xem ton. Dung API that.</summary>
-public sealed partial class MaterialsViewModel : PageViewModel
+public sealed partial class MaterialsViewModel : PageViewModel, IExportProvider
 {
+    /// <summary>Cac bang cua trang nay cho nut "Xuất Excel" chung (xuat dung du lieu dang hien thi).</summary>
+    public IReadOnlyList<ExportTable> GetExportTables() => new[]
+    {
+        ExportTable.Create<Material>("Danh mục NVL", () => CatalogView, rowDate: null,
+            ("ID", m => m.Id),
+            ("SKU", m => m.Sku),
+            ("Tên NVL", m => m.Name),
+            ("ĐVT", m => m.UomName),
+            ("Ngưỡng tồn thấp", m => m.ReorderLevel),
+            ("Cỡ lô mua", m => m.ReorderQuantity),
+            ("Đơn giá (VND)", m => m.StandardCost),
+            ("Hoạt động", m => m.IsActive)),
+        ExportTable.Create<MaterialStock>("Tồn kho khả dụng", () => Stock, rowDate: null,
+            ("NVL ID", s => s.MaterialId),
+            ("SKU", s => s.Sku),
+            ("Tên NVL", s => s.Name),
+            ("ĐVT", s => s.UomName),
+            ("Tồn thực", s => s.TotalOnHand),
+            ("Đã giữ chỗ", s => s.TotalReserved),
+            ("Khả dụng", s => s.TotalAvailable),
+            ("Tồn thấp", s => s.IsLowStock),
+            ("Đơn giá gần nhất", s => s.LastUnitCost),
+            ("Đơn giá bình quân", s => s.AvgUnitCost),
+            ("Giá trị tồn (VND)", s => s.StockValue)),
+        ExportTable.Create<StockTransaction>("Lịch sử nhập xuất (sổ kho)", () => History, rowDate: t => t.CreatedAt,
+            ("Mã NVL", t => t.MaterialSku),
+            ("Tên NVL", t => t.MaterialName),
+            ("Loại", t => Converters.CodeToVietnameseConverter.Translate(t.TxnType)),
+            ("SL", t => t.Quantity),
+            ("ĐVT", t => t.MaterialUomName),
+            ("Đơn giá", t => t.UnitCost),
+            ("Tồn sau", t => t.BalanceAfter),
+            ("Kho", t => t.WarehouseName),
+            ("Ngày", t => t.CreatedAt)),
+    };
+
     private readonly ApiClient _api;
 
     public MaterialsViewModel(ApiClient api) => _api = api;
@@ -42,6 +78,54 @@ public sealed partial class MaterialsViewModel : PageViewModel
     public ObservableCollection<ReceiptLine> ReceiptLines { get; } = new();
     // Lich su giao dich kho cua NVL dang chon trong bang ton (don gia tung lan nhap/xuat).
     public ObservableCollection<StockTransaction> History { get; } = new();
+
+    // ===== O tim kiem danh muc NVL (loc tai cho tren danh sach da tai) =====
+    public ObservableCollection<Material> CatalogView { get; } = new();
+    [ObservableProperty] private string _catalogSearch = "";
+    partial void OnCatalogSearchChanged(string value) => ApplyCatalogFilter();
+    private void ApplyCatalogFilter()
+    {
+        var kw = (CatalogSearch ?? "").Trim();
+        CatalogView.Clear();
+        foreach (var m in Materials)
+            if (kw.Length == 0
+                || (m.Name?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (m.Sku?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false))
+                CatalogView.Add(m);
+    }
+
+    // ===== Sidebar "SKU tuong tu" trong dialog tao NVL (goi y chong tao trung) =====
+    public ObservableCollection<Material> SimilarMaterials { get; } = new();
+    [ObservableProperty] private string _similarStatus = "Gõ SKU hoặc tên để xem các NVL gần giống.";
+    private CancellationTokenSource? _similarCts;
+    partial void OnNewSkuChanged(string value) => _ = RefreshSimilarAsync();
+    partial void OnNewNameChanged(string value) => _ = RefreshSimilarAsync();
+    private async Task RefreshSimilarAsync()
+    {
+        _similarCts?.Cancel();
+        var cts = _similarCts = new CancellationTokenSource();
+        // Uu tien tim theo SKU dang go; chua go SKU thi tim theo ten.
+        var q = !string.IsNullOrWhiteSpace(NewSku) ? NewSku.Trim() : (NewName ?? "").Trim();
+        if (q.Length < 2)
+        {
+            SimilarMaterials.Clear();
+            SimilarStatus = "Gõ SKU hoặc tên để xem các NVL gần giống.";
+            return;
+        }
+        try
+        {
+            await Task.Delay(250, cts.Token);   // debounce go phim
+            var found = await _api.SearchMaterialsAsync(q, 10, cts.Token);
+            if (cts.Token.IsCancellationRequested) return;
+            SimilarMaterials.Clear();
+            foreach (var m in found) SimilarMaterials.Add(m);
+            SimilarStatus = found.Count == 0
+                ? "Chưa có SKU nào gần giống — an toàn để tạo."
+                : $"{found.Count} NVL gần giống — kiểm tra để tránh tạo trùng:";
+        }
+        catch (OperationCanceledException) { /* go tiep -> lan sau */ }
+        catch { /* goi y chi la phu, khong chan viec tao */ }
+    }
 
     // Form tao NVL (chon ĐVT tu dropdown thay vi go id)
     [ObservableProperty] private string _newSku = "";
@@ -125,11 +209,15 @@ public sealed partial class MaterialsViewModel : PageViewModel
         var mats = await _api.GetMaterialsAsync(activeOnly: false, year: fy, month: fm);
         Materials.Clear(); foreach (var m in mats) Materials.Add(m);
         ApplyMaterialFilter();   // danh sach NVL cho dialog nhap kho
+        ApplyCatalogFilter();    // danh muc tren trang (co o tim kiem)
         ReceiveMaterial = Materials.FirstOrDefault(m => m.Id == keepMat);
         SelectedListMaterial = Materials.FirstOrDefault(m => m.Id == keepListSel);
 
         var stock = await _api.GetStockAsync(false, fy, fm);
         Stock.Clear(); foreach (var s in stock) Stock.Add(s);
+
+        // Lich su: chua chon NVL thi hien cac giao dich moi nhat (moi NVL).
+        await LoadHistoryAsync(SelectedStockRow?.MaterialId);
 
         Status = $"{Materials.Count} NVL · {Stock.Count} dòng tồn kho.";
     }
@@ -138,9 +226,11 @@ public sealed partial class MaterialsViewModel : PageViewModel
     [RelayCommand]
     private async Task CreateMaterialAsync()
     {
-        // Reset o nhap cho lan tao moi.
+        // Reset o nhap cho lan tao moi (ca sidebar goi y SKU tuong tu).
         NewSku = ""; NewName = ""; SelectedUom = null;
         NewReorderLevel = 0; NewReorderQuantity = 0; NewStandardCost = 0;
+        SimilarMaterials.Clear();
+        SimilarStatus = "Gõ SKU hoặc tên để xem các NVL gần giống.";
 
         var form = new Views.Dialogs.MaterialFormView { DataContext = this };
         await DialogService.ShowFormAsync("Tạo nguyên vật liệu", form, async () =>
@@ -160,7 +250,7 @@ public sealed partial class MaterialsViewModel : PageViewModel
             await LoadCoreAsync();
             Status = $"Đã tạo NVL id={id} ({sku}).";
             return null; // thanh cong -> dong dialog
-        }, saveText: "Tạo NVL", height: 360);
+        }, saveText: "Tạo NVL", width: 960, height: 440);
     }
 
     /// <summary>Them 1 dong NVL vao phieu nhap (luoi). Chan trung NVL trong cung phieu.</summary>
@@ -221,17 +311,16 @@ public sealed partial class MaterialsViewModel : PageViewModel
         }, saveText: "Lưu phiếu nhập", width: 900, height: 540, scrollable: false);
     }
 
-    // Nap lich su giao dich kho cua 1 NVL (khi chon dong trong bang ton).
+    // Nap lich su giao dich kho: co NVL -> loc theo NVL do; null -> giao dich moi nhat cua moi NVL.
     private async Task LoadHistoryAsync(long? materialId)
     {
-        History.Clear();
-        if (materialId is null) return;
         try
         {
             var txns = await _api.GetStockTransactionsAsync(materialId, 50);
+            History.Clear();
             foreach (var t in txns) History.Add(t);
         }
-        catch { /* im lang: lich su chi la phu, khong chan thao tac chinh */ }
+        catch (Exception ex) { Status = $"Không tải được lịch sử nhập/xuất: {ex.Message}"; }
     }
 
     /// <summary>Luu thay doi cua dong NVL dang chon (hang field tren dau bang).</summary>

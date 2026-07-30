@@ -79,4 +79,9 @@ public sealed class ProductionPlanRepository : IProductionPlanRepository
         scope.QueryFirstOrDefaultAsync<PlanLockRow>(
             "SELECT production_order_id, status, planned_qty FROM production_plans WHERE id = @id FOR UPDATE",
             new { id });
+
+    // Doc order id cua plan KHONG khoa — de khoa dong DON truoc roi moi khoa plan (chong deadlock).
+    public Task<long?> GetPlanOrderIdAsync(TenantScope scope, long id) =>
+        scope.QueryFirstOrDefaultAsync<long?>(
+            "SELECT production_order_id FROM production_plans WHERE id = @id", new { id });
 }

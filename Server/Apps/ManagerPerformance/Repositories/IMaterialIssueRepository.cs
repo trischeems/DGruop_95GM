@@ -11,6 +11,12 @@ public interface IMaterialIssueRepository
     /// <summary>Danh sach phieu xuat, loc theo don san xuat (null = tat ca), moi nhat truoc.</summary>
     Task<IEnumerable<MaterialIssueDto>> ListAsync(TenantScope scope, long? orderId);
 
+    /// <summary>Danh sach DONG NVL cua cac phieu xuat (kem ma + ten NVL, ten kho), moi nhat truoc.</summary>
+    Task<IEnumerable<MaterialIssueItemDto>> ListItemsAsync(TenantScope scope, long? orderId, int limit);
+
+    /// <summary>Nhan "SKU — ten" cua NVL de bao loi de doc (null neu khong co).</summary>
+    Task<string?> GetMaterialLabelAsync(TenantScope scope, long materialId);
+
     /// <summary>Tao phieu xuat (issue_no sinh trong SQL, status POSTED). Tra ve (id, issue_no).</summary>
     Task<(long Id, string IssueNo)> InsertIssueAsync(
         TenantScope scope, long productionOrderId, long warehouseId, string? note);
