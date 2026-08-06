@@ -40,6 +40,42 @@ public sealed class ProductionOrdersController : ControllerBase
         return Ok(ApiResult<object>.Success(new { id }));
     }
 
+    /// <summary>Cac MAT HANG (dong) cua don — 1 don co the nhieu ma hang, moi ma hang 1 SL.</summary>
+    [HttpGet("{id:long}/items")]
+    public async Task<ActionResult<ApiResult<IEnumerable<ProductionOrderItemDto>>>> GetItems(
+        long id, CancellationToken ct) =>
+        Ok(ApiResult<IEnumerable<ProductionOrderItemDto>>.Success(await _service.ListItemsAsync(id, ct)));
+
+    /// <summary>Them 1 mat hang vao don (chi khi don con DRAFT).</summary>
+    [HttpPost("{id:long}/items")]
+    public async Task<ActionResult<ApiResult<object>>> AddItem(
+        long id, [FromBody] OrderItemInput item, CancellationToken ct)
+    {
+        var itemId = await _service.AddItemAsync(id, item, ct);
+        return Ok(ApiResult<object>.Success(new { id = itemId }));
+    }
+
+    /// <summary>Sua 1 mat hang cua don: so luong / BOM / quy trinh / ghi chu (chi khi DRAFT).</summary>
+    [HttpPut("items/{itemId:long}")]
+    public async Task<ActionResult<ApiResult<object>>> UpdateItem(
+        long itemId, [FromBody] UpdateOrderItemRequest req, CancellationToken ct)
+    {
+        var ok = await _service.UpdateItemAsync(itemId, req, ct);
+        return ok
+            ? Ok(ApiResult.Success())
+            : NotFound(ApiResult<object>.Fail("NOT_FOUND", $"Khong tim thay mat hang id={itemId} trong don."));
+    }
+
+    /// <summary>Xoa 1 mat hang khoi don (chi khi DRAFT, don phai con it nhat 1 mat hang).</summary>
+    [HttpDelete("items/{itemId:long}")]
+    public async Task<ActionResult<ApiResult<object>>> DeleteItem(long itemId, CancellationToken ct)
+    {
+        var ok = await _service.DeleteItemAsync(itemId, ct);
+        return ok
+            ? Ok(ApiResult.Success())
+            : NotFound(ApiResult<object>.Fail("NOT_FOUND", $"Khong tim thay mat hang id={itemId} trong don."));
+    }
+
     /// <summary>Cac phieu giu cho NVL cua don hang.</summary>
     [HttpGet("{id:long}/reservations")]
     public async Task<ActionResult<ApiResult<IEnumerable<ReservationDto>>>> GetReservations(

@@ -25,12 +25,9 @@
         <!-- Card 2: Danh muc ma hang — hang field sua tren dau bang -->
         <Border Classes="card" Grid.Row="1">
             <Grid RowDefinitions="Auto,Auto,*">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="0,0,0,10">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
                     <TextBlock Grid.Column="0" Classes="h2" Text="Danh mục mã hàng" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="1" Classes="label" Text="Tháng" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <ComboBox Grid.Column="2" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" Width="100" Margin="0,0,6,0"/>
-                    <ComboBox Grid.Column="3" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" Width="90" Margin="0,0,8,0"/>
-                    <Button Grid.Column="4" Classes="ghost" Content="Làm mới" Command="{Binding LoadCommand}"/>
+                    <Button Grid.Column="1" Classes="ghost" Content="Làm mới" Command="{Binding LoadCommand}"/>
                 </Grid>
                 <Grid Grid.Row="1" ColumnDefinitions="*,2*,*,Auto,Auto,Auto" Margin="0,0,0,10"
                       IsEnabled="{Binding SelectedListProduct, Converter={x:Static ObjectConverters.IsNotNull}}">

@@ -171,37 +171,81 @@ public sealed partial class ProductionOrdersViewModel : PageViewModel, IExportPr
         foreach (var q in rq) Requirements.Add(q);
     }
 
-    /// <summary>Mo CUA SO rieng de tao don san xuat. Dien xong bam Luu -> goi API, dong dialog, nap lai.</summary>
+    // ===== Tao don NHIEU MAT HANG: luoi cac dong (ma hang + SL + quy trinh), luu 1 lan =====
+    /// <summary>Cac mat hang dang cho trong don sap tao.</summary>
+    public ObservableCollection<OrderLineInput> NewOrderLines { get; } = new();
+    [ObservableProperty] private OrderLineInput? _selectedNewLine;
+    /// <summary>Loi/goi y trong dialog tao don (Status cua trang bi dialog che).</summary>
+    [ObservableProperty] private string _orderFormError = "";
+
+    /// <summary>Them mat hang dang chon vao luoi don. Chan trung ma hang.</summary>
+    [RelayCommand]
+    private void AddOrderLine()
+    {
+        OrderFormError = "";
+        if (SelectedProduct is null) { OrderFormError = "Chọn mã hàng ở danh sách bên trái trước."; return; }
+        if (NewQuantity <= 0) { OrderFormError = "Số lượng phải lớn hơn 0."; return; }
+        if (NewOrderLines.Any(l => l.Product?.Id == SelectedProduct.Id))
+        {
+            OrderFormError = $"Mã hàng {SelectedProduct.Sku} đã có trong đơn — sửa số lượng ở dòng cũ.";
+            return;
+        }
+        NewOrderLines.Add(new OrderLineInput
+        {
+            Product = SelectedProduct,
+            Quantity = NewQuantity,
+            Routing = SelectedRouting,
+        });
+        SelectedProduct = null; NewQuantity = 1;
+    }
+
+    /// <summary>Bo mat hang dang chon khoi luoi don.</summary>
+    [RelayCommand]
+    private void RemoveOrderLine()
+    {
+        if (SelectedNewLine is null) { OrderFormError = "Chọn một dòng để bỏ."; return; }
+        NewOrderLines.Remove(SelectedNewLine);
+        OrderFormError = "";
+    }
+
+    /// <summary>Mo CUA SO rieng de tao don san xuat NHIEU MAT HANG. Luu 1 lan cho ca don.</summary>
     [RelayCommand]
     private async Task CreateAsync()
     {
         NewOrderNo = ""; SelectedProduct = null; NewQuantity = 1;
         ProductListFilter = "";
+        NewOrderLines.Clear();
+        OrderFormError = "";
         SelectedRouting ??= Routings.FirstOrDefault(r => r.IsDefault) ?? Routings.FirstOrDefault();
         var form = new Views.Dialogs.OrderFormView { DataContext = this };
         await DialogService.ShowFormAsync("Tạo đơn sản xuất", form, async () =>
         {
             if (string.IsNullOrWhiteSpace(NewOrderNo)) return "Nhập số đơn.";
-            if (SelectedProduct is null) return "Chọn mã hàng.";
-            if (NewQuantity <= 0) return "Số lượng phải > 0.";
+            // Chua bam "+ Thêm mặt hàng" nhung da chon san 1 ma hang -> tu them cho tien.
+            if (NewOrderLines.Count == 0 && SelectedProduct is not null && NewQuantity > 0) AddOrderLine();
+            if (NewOrderLines.Count == 0) return "Đơn chưa có mặt hàng nào. Chọn mã hàng rồi bấm '+ Thêm mặt hàng'.";
 
             var orderNo = NewOrderNo.Trim();
             var id = await _api.CreateOrderAsync(new
             {
                 orderNo,
-                productId = SelectedProduct!.Id,
-                bomId = (long?)null,
-                quantity = NewQuantity,
                 dueDate = (string?)null,
                 note = (string?)null,
-                routingId = SelectedRouting?.Id
+                items = NewOrderLines.Select(l => new
+                {
+                    productId = l.Product!.Id,
+                    bomId = (long?)null,
+                    routingId = l.Routing?.Id,
+                    quantity = l.Quantity,
+                    note = (string?)null,
+                }).ToArray(),
             });
+            var n = NewOrderLines.Count;
+            NewOrderLines.Clear();
             await LoadCoreAsync(id);
-            Status = SelectedRouting is null
-                ? $"Đã tạo đơn {orderNo} (DRAFT)."
-                : $"Đã tạo đơn {orderNo} (DRAFT) — quy trình {SelectedRouting.Name}.";
+            Status = $"Đã tạo đơn {orderNo} (DRAFT) với {n} mặt hàng.";
             return null;
-        }, saveText: "Tạo đơn", width: 860, height: 470, scrollable: false);
+        }, saveText: "Tạo đơn", width: 980, height: 560, scrollable: false);
     }
 
     [RelayCommand]
@@ -301,14 +345,25 @@ public sealed partial class ProductionOrdersViewModel : PageViewModel, IExportPr
         });
     }
 
+    // Lenh nap bi bo qua vi dang ban -> chay lai ngay sau khi xong (chong lech du lieu).
+    private bool _reloadPending;
+
     private async Task RunAsync(string busy, Func<Task> a)
     {
-        if (IsBusy) return;
-        IsBusy = true;
-        Status = busy;
-        try { await a(); }
+        // Dang ban ma nguoi dung doi bo loc / bam lam moi: ghi nho de tu nap lai sau,
+        // KHONG nuot lenh (truoc day bang se lech so voi lua chon tren man hinh).
+        if (IsBusy) { _reloadPending = true; return; }
+        IsBusy = true; Status = busy;
+        try
+        {
+            do
+            {
+                _reloadPending = false;
+                await a();
+            } while (_reloadPending);
+        }
         catch (ApiException ex) { Status = $"Lỗi [{ex.Code}]: {ex.Message}"; }
         catch (Exception ex) { Status = $"Lỗi: {ex.Message}"; }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; _reloadPending = false; }
     }
 }

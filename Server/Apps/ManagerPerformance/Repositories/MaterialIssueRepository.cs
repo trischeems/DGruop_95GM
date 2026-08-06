@@ -68,13 +68,21 @@ public sealed class MaterialIssueRepository : IMaterialIssueRepository
             WHERE warehouse_id = @warehouseId AND material_id = @materialId
             """, new { warehouseId, materialId, newOnHand, newReserved });
 
+    // orderItemId: cap NVL cho MAT HANG nao trong don (V007). Null -> don 1 mat hang, tu gan dong duy nhat.
     public Task InsertItemAsync(
-        TenantScope scope, long materialIssueId, long materialId, decimal qtyIssued, decimal unitCost) =>
+        TenantScope scope, long materialIssueId, long materialId, decimal qtyIssued, decimal unitCost,
+        long? orderItemId) =>
         scope.ExecuteAsync(
             """
-            INSERT INTO material_issue_items (material_issue_id, material_id, qty_issued, unit_cost)
-            VALUES (@materialIssueId, @materialId, @qtyIssued, @unitCost)
-            """, new { materialIssueId, materialId, qtyIssued, unitCost });
+            INSERT INTO material_issue_items
+                (material_issue_id, material_id, qty_issued, unit_cost, production_order_item_id)
+            VALUES (@materialIssueId, @materialId, @qtyIssued, @unitCost,
+                    COALESCE(@orderItemId,
+                             (SELECT i.id FROM production_order_items i
+                              JOIN material_issues mi ON mi.production_order_id = i.production_order_id
+                              WHERE mi.id = @materialIssueId
+                              LIMIT 1)))
+            """, new { materialIssueId, materialId, qtyIssued, unitCost, orderItemId });
 
     public Task<long> InsertTransactionAsync(
         TenantScope scope, long warehouseId, long materialId, string txnType,

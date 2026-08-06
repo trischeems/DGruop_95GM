@@ -55,21 +55,6 @@ public sealed partial class ProductsViewModel : PageViewModel, IExportProvider
         EditIsActive = value.IsActive;
     }
 
-
-    // ===== Bo loc thang/nam ("Tất cả" = khong loc; "Cả năm" = ca nam dang chon) =====
-    public string[] FilterMonthOptions { get; } =
-        { "Tất cả", "Cả năm", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12" };
-    public int[] FilterYearOptions { get; } =
-        { DateTime.Now.Year - 2, DateTime.Now.Year - 1, DateTime.Now.Year, DateTime.Now.Year + 1 };
-    [ObservableProperty] private string _filterMonth = "T" + DateTime.Now.Month;
-    [ObservableProperty] private int _filterYear = DateTime.Now.Year;
-    partial void OnFilterMonthChanged(string value) => _ = LoadAsync();
-    partial void OnFilterYearChanged(int value) => _ = LoadAsync();
-    private (int? Year, int? Month) FilterPeriod =>
-        FilterMonth == "Tất cả" ? (null, null)
-        : FilterMonth == "Cả năm" ? (FilterYear, null)
-        : (FilterYear, int.Parse(FilterMonth.TrimStart('T')));
-
     public override Task OnActivatedAsync() => LoadAsync();
 
     [RelayCommand]
@@ -87,8 +72,7 @@ public sealed partial class ProductsViewModel : PageViewModel, IExportProvider
         SelectedUom = Uoms.FirstOrDefault(u => u.Id == keepUom);
 
         var keepSel = SelectedListProduct?.Id;
-        var (fy, fm) = FilterPeriod;
-        var ps = await _api.GetProductsAsync(false, fy, fm);
+        var ps = await _api.GetProductsAsync(false);
         Products.Clear();
         foreach (var p in ps) Products.Add(p);
         SelectedListProduct = Products.FirstOrDefault(p => p.Id == keepSel);
@@ -179,13 +163,25 @@ public sealed partial class ProductsViewModel : PageViewModel, IExportProvider
         });
     }
 
+    // Lenh nap bi bo qua vi dang ban -> chay lai ngay sau khi xong (chong lech du lieu).
+    private bool _reloadPending;
+
     private async Task RunAsync(string busy, Func<Task> a)
     {
-        if (IsBusy) return;
+        // Dang ban ma nguoi dung doi bo loc / bam lam moi: ghi nho de tu nap lai sau,
+        // KHONG nuot lenh (truoc day bang se lech so voi lua chon tren man hinh).
+        if (IsBusy) { _reloadPending = true; return; }
         IsBusy = true; Status = busy;
-        try { await a(); }
+        try
+        {
+            do
+            {
+                _reloadPending = false;
+                await a();
+            } while (_reloadPending);
+        }
         catch (ApiException ex) { Status = $"Lỗi [{ex.Code}]: {ex.Message}"; }
         catch (Exception ex) { Status = $"Lỗi: {ex.Message}"; }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; _reloadPending = false; }
     }
 }

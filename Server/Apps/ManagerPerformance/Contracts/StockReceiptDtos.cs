@@ -30,6 +30,15 @@ public sealed record StockReceiptDto(
     DateTime ReceivedAt,
     string? Note);
 
+/// <summary>
+/// Sua 1 dong so cai giao dich kho (nhap/xuat). Quantity la so TUYET DOI nguoi dung go (> 0);
+/// chieu nhap/xuat cua dong duoc GIU NGUYEN theo dau cua so luong cu.
+/// </summary>
+public sealed record UpdateStockTransactionRequest(
+    decimal Quantity,
+    decimal UnitCost,
+    string? Note);
+
 /// <summary>1 dong so cai giao dich kho (phuc vu xem lich su nhap/xuat + don gia tung lan).</summary>
 public sealed record StockTransactionDto(
     long Id,

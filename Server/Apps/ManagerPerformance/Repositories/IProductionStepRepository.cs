@@ -9,8 +9,14 @@ public interface IProductionStepRepository
     /// <summary>Tao du 4 dong cong doan cho don (bo qua neu da co). Tra ve so dong them moi.</summary>
     Task<int> InitStepsAsync(TenantScope scope, long orderId);
 
-    /// <summary>Danh sach buoc quy trinh cua 1 don, JOIN cong doan, sap xep theo seq.</summary>
+    /// <summary>Sinh cong doan cho RIENG 1 mat hang cua don (theo mau quy trinh cua dong do).</summary>
+    Task<int> InitStepsForItemAsync(TenantScope scope, long orderItemId);
+
+    /// <summary>Danh sach buoc quy trinh cua 1 don (moi mat hang mot bo), sap theo dong roi seq.</summary>
     Task<IEnumerable<ProductionStepDto>> ListByOrderAsync(TenantScope scope, long orderId);
+
+    /// <summary>Danh sach buoc quy trinh cua RIENG 1 mat hang trong don.</summary>
+    Task<IEnumerable<ProductionStepDto>> ListByItemAsync(TenantScope scope, long orderItemId);
 
     /// <summary>Khoa dong buoc (SELECT ... FOR UPDATE), tra ve trang thai + started_at (null neu khong co).</summary>
     Task<(string Status, DateTime? StartedAt)?> LockStepAsync(TenantScope scope, long id);
@@ -25,7 +31,7 @@ public interface IProductionStepRepository
     Task<int> LockOrderAsync(TenantScope scope, long orderId);
 
     /// <summary>Tong TP da nhap kho cua don (SUM finished_goods_receipts.qty_received).</summary>
-    Task<decimal> SumFinishedGoodsAsync(TenantScope scope, long orderId);
+    Task<decimal> SumFinishedGoodsForItemAsync(TenantScope scope, long orderItemId);
 
     /// <summary>
     /// Cap nhat 1 buoc: status, qty_in, qty_out, qty_defect, note, updated_at.
@@ -40,8 +46,19 @@ public interface IProductionStepRepository
     Task<int> MarkOrderInProgressAsync(TenantScope scope, long orderId);
     /// <summary>Day cac ke hoach PLANNED/RELEASED cua don sang IN_PROGRESS (khi bat dau san xuat). Tra ve so dong doi.</summary>
     Task<int> MarkPlansInProgressAsync(TenantScope scope, long orderId);
-    /// <summary>Day cac ke hoach IN_PROGRESS cua don sang DONE (khi cong doan cuoi hoan tat). Tra ve so dong doi.</summary>
+    /// <summary>
+    /// Day MOI ke hoach chua ket thuc cua don (PLANNED/RELEASED/IN_PROGRESS) sang DONE
+    /// khi don da chay xong. Ke hoach DONE/CANCELLED giu nguyen -> goi lai nhieu lan van an toan.
+    /// Tra ve so dong doi.
+    /// </summary>
     Task<int> MarkPlansDoneAsync(TenantScope scope, long orderId);
+
+    /// <summary>
+    /// True khi don da chay xong het: co IT NHAT 1 cong doan phai lam (khong bo qua, khong CANCELLED)
+    /// VA khong con cong doan phai lam nao chua ket thuc (DONE/CANCELLED).
+    /// Don chua co cong doan nao / bo qua het -> false (khong duoc coi la xong).
+    /// </summary>
+    Task<bool> AreAllStepsDoneAsync(TenantScope scope, long orderId);
 
     /// <summary>
     /// Tu dong keo tien do MOI cong doan cua don (tru CANCELLED/da bo qua) len muc doneQty
@@ -52,7 +69,17 @@ public interface IProductionStepRepository
 
     /// <summary>Tong planned_qty cac ke hoach DONE cua don (thuoc do tien do tu dong).</summary>
     Task<decimal> SumDonePlannedQtyAsync(TenantScope scope, long orderId);
+
+    /// <summary>
+    /// Nhu AutoProgressStepsAsync nhung cho RIENG 1 MAT HANG cua don (V007):
+    /// keo cong doan cua mat hang do len muc doneQty; du SL mat hang thi DONE.
+    /// </summary>
+    Task<int> AutoProgressItemStepsAsync(TenantScope scope, long orderItemId, decimal doneQty, decimal itemQty);
+
+    /// <summary>Tong planned_qty cac ke hoach DONE cua RIENG 1 mat hang.</summary>
+    Task<decimal> SumDonePlannedQtyForItemAsync(TenantScope scope, long orderItemId);
 }
 
 /// <summary>Ngu canh 1 buoc (da khoa FOR UPDATE) phuc vu lien ket module.</summary>
-public sealed record StepContextRow(long ProductionOrderId, string StageCode, int Seq, string Status);
+public sealed record StepContextRow(
+    long ProductionOrderId, long ProductionOrderItemId, string StageCode, int Seq, string Status);

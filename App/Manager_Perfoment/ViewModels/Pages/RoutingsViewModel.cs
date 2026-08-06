@@ -431,13 +431,25 @@ public sealed partial class RoutingsViewModel : PageViewModel, IExportProvider
     }
 
     // =================================================================================
+    // Lenh nap bi bo qua vi dang ban -> chay lai ngay sau khi xong (chong lech du lieu).
+    private bool _reloadPending;
+
     private async Task RunAsync(string busy, Func<Task> a)
     {
-        if (IsBusy) return;
+        // Dang ban ma nguoi dung doi bo loc / bam lam moi: ghi nho de tu nap lai sau,
+        // KHONG nuot lenh (truoc day bang se lech so voi lua chon tren man hinh).
+        if (IsBusy) { _reloadPending = true; return; }
         IsBusy = true; Status = busy;
-        try { await a(); }
+        try
+        {
+            do
+            {
+                _reloadPending = false;
+                await a();
+            } while (_reloadPending);
+        }
         catch (ApiException ex) { Status = $"Lỗi [{ex.Code}]: {ex.Message}"; }
         catch (Exception ex) { Status = $"Lỗi: {ex.Message}"; }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; _reloadPending = false; }
     }
 }

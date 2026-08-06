@@ -28,10 +28,10 @@
                             <StackPanel Spacing="1">
                                 <TextBlock Classes="itemmain" Text="{Binding OrderNo}"/>
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Classes="itemsub" Text="{Binding ProductName}"/>
+                                    <TextBlock Classes="itemsub" Text="{Binding ProductLabel}"/>
                                     <TextBlock FontSize="11" FontWeight="SemiBold"
                                                Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"
-                                               Text="{Binding Status, Converter={StaticResource CodeVi}}"/>
+                                               Text="{Binding StatusLabel}"/>
                                 </StackPanel>
                             </StackPanel>
                         </DataTemplate>

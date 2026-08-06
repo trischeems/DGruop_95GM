@@ -51,4 +51,25 @@ public sealed class StockController : ControllerBase
         [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null, CancellationToken ct = default) =>
         Ok(ApiResult<IEnumerable<StockTransactionDto>>.Success(
             await _receipts.ListTransactionsAsync(materialId, limit, from, to, ct)));
+
+    /// <summary>Sua 1 dong nhap/xuat (so luong + don gia + ghi chu): dong bo lai ton kho & phieu goc.</summary>
+    [HttpPut("transactions/{id:long}")]
+    public async Task<ActionResult<ApiResult<object>>> UpdateTransaction(
+        long id, [FromBody] UpdateStockTransactionRequest req, CancellationToken ct)
+    {
+        var ok = await _receipts.UpdateTransactionAsync(id, req, ct);
+        return ok
+            ? Ok(ApiResult.Success())
+            : NotFound(ApiResult<object>.Fail("NOT_FOUND", $"Khong tim thay dong giao dich kho id={id}."));
+    }
+
+    /// <summary>Xoa 1 dong nhap/xuat: tra ton ve nhu chua co dong nay + xoa dong trong phieu goc.</summary>
+    [HttpDelete("transactions/{id:long}")]
+    public async Task<ActionResult<ApiResult<object>>> DeleteTransaction(long id, CancellationToken ct)
+    {
+        var ok = await _receipts.DeleteTransactionAsync(id, ct);
+        return ok
+            ? Ok(ApiResult.Success())
+            : NotFound(ApiResult<object>.Fail("NOT_FOUND", $"Khong tim thay dong giao dich kho id={id}."));
+    }
 }

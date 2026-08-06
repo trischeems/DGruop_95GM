@@ -79,4 +79,91 @@ public sealed class StockReceiptService
             return new StockReceiptResultDto(receiptId, receiptNo, items.Count);
         }, ct);
     }
+
+    /// <summary>
+    /// SUA 1 dong so cai kho (so luong + don gia + ghi chu) trong 1 transaction:
+    ///   khoa dong so cai -> khoa dong stock -> kiem tra ton moi -> cap nhat ton, so cai,
+    ///   dong chung tu goc -> tinh lai balance_after.
+    /// Chieu nhap/xuat GIU NGUYEN theo dau cu; Quantity gui len la so tuyet doi.
+    /// Tra ve false neu khong co dong so cai id nay.
+    /// </summary>
+    public Task<bool> UpdateTransactionAsync(long id, UpdateStockTransactionRequest req, CancellationToken ct)
+    {
+        if (req.Quantity <= 0) throw new ArgumentException("So luong phai > 0.");
+        if (req.UnitCost < 0) throw new ArgumentException("Don gia khong duoc am.");
+
+        return _db.RunAsync(_tenant.Tenant, async scope =>
+        {
+            var txn = await _repo.LockTransactionAsync(scope, id);
+            if (txn is null) return false;
+
+            var st = await _repo.LockStockAsync(scope, txn.WarehouseId, txn.MaterialId)
+                     ?? throw new ArgumentException(
+                         $"Khong tim thay dong ton kho cua NVL id={txn.MaterialId} tai kho id={txn.WarehouseId}.");
+
+            // Giu nguyen CHIEU cua dong: dong nhap van duong, dong xuat van am.
+            var signed = txn.Quantity < 0 ? -req.Quantity : req.Quantity;
+            var delta = signed - txn.Quantity;
+            var newOnHand = st.QtyOnHand + delta;
+            EnsureStockValid(newOnHand, st.QtyOnHand, st.QtyReserved, "sua");
+
+            await _repo.SetOnHandAsync(scope, txn.WarehouseId, txn.MaterialId, newOnHand);
+            await _repo.UpdateTransactionAsync(scope, id, signed, req.UnitCost, req.Note);
+
+            // Dong chung tu goc (phieu nhap / phieu xuat) phai khop lai voi so cai.
+            if (txn.RefType is not null && txn.RefId is not null)
+                await _repo.UpdateParentLineAsync(
+                    scope, txn.RefType, txn.RefId.Value, txn.MaterialId, req.Quantity, req.UnitCost);
+
+            await _repo.RecomputeBalancesAsync(scope, txn.WarehouseId, txn.MaterialId, newOnHand);
+            return true;
+        }, ct);
+    }
+
+    /// <summary>
+    /// XOA 1 dong so cai kho trong 1 transaction: khoa dong so cai -> khoa dong stock ->
+    /// tra ton ve nhu chua co dong nay (tru quantity CO DAU) -> xoa dong chung tu goc
+    /// (va header khi phieu khong con dong nao) -> xoa dong so cai -> tinh lai balance_after.
+    /// Tra ve false neu khong co dong so cai id nay.
+    /// </summary>
+    public Task<bool> DeleteTransactionAsync(long id, CancellationToken ct) =>
+        _db.RunAsync(_tenant.Tenant, async scope =>
+        {
+            var txn = await _repo.LockTransactionAsync(scope, id);
+            if (txn is null) return false;
+
+            var st = await _repo.LockStockAsync(scope, txn.WarehouseId, txn.MaterialId)
+                     ?? throw new ArgumentException(
+                         $"Khong tim thay dong ton kho cua NVL id={txn.MaterialId} tai kho id={txn.WarehouseId}.");
+
+            // quantity CO DAU -> xoa dong NHAP thi tru ton, xoa dong XUAT thi cong ton tra lai.
+            var newOnHand = st.QtyOnHand - txn.Quantity;
+            EnsureStockValid(newOnHand, st.QtyOnHand, st.QtyReserved, "xoa");
+
+            await _repo.SetOnHandAsync(scope, txn.WarehouseId, txn.MaterialId, newOnHand);
+
+            // Xoa dong NVL tuong ung trong phieu goc; phieu rong (het dong) thi xoa luon header.
+            if (txn.RefType is not null && txn.RefId is not null)
+            {
+                await _repo.DeleteParentLineAsync(scope, txn.RefType, txn.RefId.Value, txn.MaterialId);
+                await _repo.DeleteParentHeaderIfEmptyAsync(scope, txn.RefType, txn.RefId.Value);
+            }
+
+            await _repo.DeleteTransactionAsync(scope, id);
+            await _repo.RecomputeBalancesAsync(scope, txn.WarehouseId, txn.MaterialId, newOnHand);
+            return true;
+        }, ct);
+
+    /// <summary>Chan ton am / ton it hon so da giu cho khi sua-xoa (bao kem con so cho de hieu).</summary>
+    private static void EnsureStockValid(decimal newOnHand, decimal oldOnHand, decimal reserved, string action)
+    {
+        if (newOnHand < 0)
+            throw new ArgumentException(
+                $"Khong the {action} dong nay: ton kho se bi am " +
+                $"(ton hien tai {oldOnHand:0.####} -> {newOnHand:0.####}).");
+        if (newOnHand < reserved)
+            throw new ArgumentException(
+                $"Khong the {action} dong nay: ton con lai {newOnHand:0.####} nho hon so da giu cho " +
+                $"{reserved:0.####} (ton hien tai {oldOnHand:0.####}).");
+    }
 }

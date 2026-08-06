@@ -5,37 +5,64 @@ namespace GM95.Server.Apps.ManagerPerformance.Repositories;
 
 public sealed class ProductionStepRepository : IProductionStepRepository
 {
+    // Sinh buoc cho MOI MAT HANG cua don theo mau quy trinh RIENG cua tung mat hang (V007):
+    // uu tien routing_id cua dong, chua chon thi lay mau mac dinh. Buoc da co thi bo qua.
     public Task<int> InitStepsAsync(TenantScope scope, long orderId) =>
         scope.ExecuteAsync(
-            // Sinh buoc theo MAU QUY TRINH cua don (V006): uu tien routing_id cua don,
-            // chua chon thi lay mau mac dinh. Buoc da co (UNIQUE order+stage) thi bo qua.
             """
-            INSERT INTO production_steps (production_order_id, stage_id, seq, status)
-            SELECT @OrderId, rs.stage_id, rs.seq, 'PENDING'
-            FROM routing_steps rs
-            WHERE rs.routing_id = COALESCE(
-                    (SELECT routing_id FROM production_orders WHERE id = @OrderId),
+            INSERT INTO production_steps (production_order_id, production_order_item_id, stage_id, seq, status)
+            SELECT i.production_order_id, i.id, rs.stage_id, rs.seq, 'PENDING'
+            FROM production_order_items i
+            JOIN routing_steps rs ON rs.routing_id = COALESCE(
+                    i.routing_id,
                     (SELECT id FROM production_routings WHERE is_default AND is_active LIMIT 1))
-            ON CONFLICT (production_order_id, stage_id) DO NOTHING
+            WHERE i.production_order_id = @OrderId
+            ON CONFLICT (production_order_item_id, stage_id) DO NOTHING
             """, new { OrderId = orderId });
+
+    // Sinh buoc cho RIENG 1 mat hang (khi them mat hang moi vao don da khoi tao cong doan).
+    public Task<int> InitStepsForItemAsync(TenantScope scope, long orderItemId) =>
+        scope.ExecuteAsync(
+            """
+            INSERT INTO production_steps (production_order_id, production_order_item_id, stage_id, seq, status)
+            SELECT i.production_order_id, i.id, rs.stage_id, rs.seq, 'PENDING'
+            FROM production_order_items i
+            JOIN routing_steps rs ON rs.routing_id = COALESCE(
+                    i.routing_id,
+                    (SELECT id FROM production_routings WHERE is_default AND is_active LIMIT 1))
+            WHERE i.id = @ItemId
+            ON CONFLICT (production_order_item_id, stage_id) DO NOTHING
+            """, new { ItemId = orderItemId });
+
+    // SELECT chung: cong doan + ten cong doan + MAT HANG cua dong (de biet dang lam cho hang nao).
+    private const string StepSelect =
+        """
+        SELECT ps.id, ps.production_order_id, ps.production_order_item_id,
+               i.line_no, lp.sku AS line_product_sku, lp.name AS line_product_name, i.quantity AS line_quantity,
+               ps.stage_id, st.code AS stage_code, st.name AS stage_name,
+               COALESCE(ps.seq, st.seq) AS seq,
+               ps.status, ps.qty_in, ps.qty_out, ps.qty_defect,
+               ps.started_at, ps.finished_at, ps.note, ps.is_skipped,
+               pu.code AS product_uom_code, pu.name AS product_uom_name
+        FROM production_steps ps
+        JOIN production_stages st ON st.id = ps.stage_id
+        LEFT JOIN production_order_items i ON i.id = ps.production_order_item_id
+        LEFT JOIN products lp ON lp.id = i.product_id
+        LEFT JOIN units_of_measure pu ON pu.id = lp.uom_id
+        """;
 
     public Task<IEnumerable<ProductionStepDto>> ListByOrderAsync(TenantScope scope, long orderId) =>
         scope.QueryAsync<ProductionStepDto>(
-            """
-            SELECT ps.id, ps.production_order_id, ps.stage_id,
-                   st.code AS stage_code, st.name AS stage_name,
-                   COALESCE(ps.seq, st.seq) AS seq,
-                   ps.status, ps.qty_in, ps.qty_out, ps.qty_defect,
-                   ps.started_at, ps.finished_at, ps.note, ps.is_skipped,
-                   pu.code AS product_uom_code, pu.name AS product_uom_name
-            FROM production_steps ps
-            JOIN production_stages st ON st.id = ps.stage_id
-            LEFT JOIN production_orders po ON po.id = ps.production_order_id
-            LEFT JOIN products p ON p.id = po.product_id
-            LEFT JOIN units_of_measure pu ON pu.id = p.uom_id
-            WHERE ps.production_order_id = @OrderId
-            ORDER BY COALESCE(ps.seq, st.seq), st.name
-            """, new { OrderId = orderId });
+            $"{StepSelect} WHERE ps.production_order_id = @OrderId " +
+            "ORDER BY i.line_no, COALESCE(ps.seq, st.seq), st.name",
+            new { OrderId = orderId });
+
+    /// <summary>Cong doan cua RIENG 1 mat hang trong don.</summary>
+    public Task<IEnumerable<ProductionStepDto>> ListByItemAsync(TenantScope scope, long orderItemId) =>
+        scope.QueryAsync<ProductionStepDto>(
+            $"{StepSelect} WHERE ps.production_order_item_id = @ItemId " +
+            "ORDER BY COALESCE(ps.seq, st.seq), st.name",
+            new { ItemId = orderItemId });
 
     public async Task<(string Status, DateTime? StartedAt)?> LockStepAsync(TenantScope scope, long id)
     {
@@ -57,16 +84,18 @@ public sealed class ProductionStepRepository : IProductionStepRepository
         scope.ExecuteAsync(
             "SELECT id FROM production_orders WHERE id = @orderId FOR UPDATE", new { orderId });
 
-    // Tong TP da nhap kho cua don — chan ha SL ra cua QC xuong duoi so TP da nhap.
-    public Task<decimal> SumFinishedGoodsAsync(TenantScope scope, long orderId) =>
+    // Tong TP da nhap kho cua RIENG 1 MAT HANG — chan ha SL ra cua QC xuong duoi so da nhap.
+    // Phai tinh theo mat hang (V007): don nhieu mat hang thi so cua mat hang khac khong lien quan.
+    public Task<decimal> SumFinishedGoodsForItemAsync(TenantScope scope, long orderItemId) =>
         scope.ExecuteScalarAsync<decimal>(
-            "SELECT COALESCE(SUM(qty_received), 0) FROM finished_goods_receipts WHERE production_order_id = @orderId",
-            new { orderId });
+            "SELECT COALESCE(SUM(qty_received), 0) FROM finished_goods_receipts " +
+            "WHERE production_order_item_id = @orderItemId",
+            new { orderItemId });
 
     public Task<StepContextRow?> LockStepContextAsync(TenantScope scope, long id) =>
         scope.QueryFirstOrDefaultAsync<StepContextRow>(
             """
-            SELECT ps.production_order_id, st.code AS stage_code,
+            SELECT ps.production_order_id, ps.production_order_item_id, st.code AS stage_code,
                    COALESCE(ps.seq, st.seq) AS seq, ps.status
             FROM production_steps ps
             JOIN production_stages st ON st.id = ps.stage_id
@@ -88,11 +117,30 @@ public sealed class ProductionStepRepository : IProductionStepRepository
             WHERE production_order_id = @orderId AND status IN ('PLANNED', 'RELEASED')
             """, new { orderId });
 
-    // Day ke hoach IN_PROGRESS -> DONE khi cong doan cuoi hoan tat.
+    // Day MOI ke hoach chua ket thuc (PLANNED/RELEASED/IN_PROGRESS) -> DONE khi don da chay xong.
+    // Truoc day chi bat IN_PROGRESS nen ke hoach PLANNED/RELEASED bi ket lai mai mai.
+    // Bo qua DONE/CANCELLED (trang thai ket thuc) -> chay lai nhieu lan khong doi gi them.
     public Task<int> MarkPlansDoneAsync(TenantScope scope, long orderId) =>
         scope.ExecuteAsync(
-            "UPDATE production_plans SET status = 'DONE', updated_at = now() WHERE production_order_id = @orderId AND status = 'IN_PROGRESS'",
-            new { orderId });
+            """
+            UPDATE production_plans SET status = 'DONE', updated_at = now()
+            WHERE production_order_id = @orderId AND status NOT IN ('DONE', 'CANCELLED')
+            """, new { orderId });
+
+    // Don da chay xong het chua? 1 truy van scalar duy nhat:
+    //   - EXISTS: phai co it nhat 1 cong doan PHAI LAM (khong bo qua, khong huy) — neu khong,
+    //     don chua khoi tao cong doan / bo qua het se bi ket luan "xong" sai.
+    //   - NOT EXISTS: khong con cong doan phai lam nao dang do (PENDING/IN_PROGRESS/ON_HOLD).
+    public Task<bool> AreAllStepsDoneAsync(TenantScope scope, long orderId) =>
+        scope.ExecuteScalarAsync<bool>(
+            """
+            SELECT EXISTS (SELECT 1 FROM production_steps
+                           WHERE production_order_id = @orderId
+                             AND NOT is_skipped AND status <> 'CANCELLED')
+               AND NOT EXISTS (SELECT 1 FROM production_steps
+                               WHERE production_order_id = @orderId
+                                 AND NOT is_skipped AND status NOT IN ('DONE', 'CANCELLED'))
+            """, new { orderId });
 
     public Task<int> UpdateStepAsync(TenantScope scope, long id, UpdateStepRequest req) =>
         scope.ExecuteAsync(
@@ -140,6 +188,35 @@ public sealed class ProductionStepRepository : IProductionStepRepository
               AND status <> 'CANCELLED'
               AND NOT is_skipped
             """, new { OrderId = orderId, DoneQty = doneQty, OrderQty = orderQty });
+
+    // Keo tien do cong doan cua RIENG 1 MAT HANG len muc doneQty (tong SL ke hoach DONE cua mat hang do).
+    // Dung GREATEST — khong cong don, chay lai khong phong so, khong dem trung voi so nhap tay.
+    public Task<int> AutoProgressItemStepsAsync(TenantScope scope, long orderItemId, decimal doneQty, decimal itemQty) =>
+        scope.ExecuteAsync(
+            """
+            UPDATE production_steps SET
+                qty_in  = GREATEST(qty_in,  @DoneQty, qty_out + qty_defect),
+                qty_out = GREATEST(qty_out, @DoneQty - qty_defect),
+                status = CASE
+                    WHEN GREATEST(qty_in, @DoneQty) >= @ItemQty THEN 'DONE'
+                    WHEN status = 'DONE' THEN 'DONE'
+                    ELSE 'IN_PROGRESS' END,
+                started_at = COALESCE(started_at, now()),
+                finished_at = CASE
+                    WHEN GREATEST(qty_in, @DoneQty) >= @ItemQty OR status = 'DONE' THEN COALESCE(finished_at, now())
+                    ELSE NULL END,
+                updated_at = now()
+            WHERE production_order_item_id = @ItemId
+              AND status <> 'CANCELLED'
+              AND NOT is_skipped
+            """, new { ItemId = orderItemId, DoneQty = doneQty, ItemQty = itemQty });
+
+    // Tong SL cac ke hoach da DONE cua RIENG 1 mat hang.
+    public Task<decimal> SumDonePlannedQtyForItemAsync(TenantScope scope, long orderItemId) =>
+        scope.ExecuteScalarAsync<decimal>(
+            "SELECT COALESCE(SUM(planned_qty), 0) FROM production_plans " +
+            "WHERE production_order_item_id = @orderItemId AND status = 'DONE'",
+            new { orderItemId });
 
     // Tong SL cac ke hoach da DONE cua don (thuoc do tien do tu dong).
     public Task<decimal> SumDonePlannedQtyAsync(TenantScope scope, long orderId) =>

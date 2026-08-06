@@ -37,17 +37,26 @@ public sealed class LossReportService
 
         return _db.RunAsync(_tenant.Tenant, async scope =>
         {
-            var finishedQty = await _repo.GetFinishedQtyAsync(scope, orderId);
+            // Tinh cho TUNG MAT HANG cua don (V007): moi mat hang co BOM + TP nhap kho rieng.
+            var lines = (await _repo.ListItemsForLossAsync(scope, orderId)).ToList();
+            if (lines.Count == 0) throw new ArgumentException("Don chua co mat hang nao.");
 
-            var bomId = await _repo.GetBomIdAsync(scope, orderId);
-            if (bomId is null) throw new ArgumentException("Don chua chot BOM.");
+            var missingBom = lines.Where(l => l.BomId is null).ToList();
+            if (missingBom.Count == lines.Count)
+                throw new ArgumentException("Don chua chot BOM cho mat hang nao.");
 
-            var items = await _repo.ListBomItemsAsync(scope, bomId.Value);
-            foreach (var item in items)
+            foreach (var line in lines)
             {
-                var qtyStandard = finishedQty * item.QtyPerUnit * (1 + item.WastePct / 100m);
-                var qtyIssued = await _repo.GetIssuedQtyAsync(scope, orderId, item.MaterialId);
-                await _repo.UpsertAsync(scope, orderId, item.MaterialId, qtyIssued, qtyStandard, finishedQty);
+                if (line.BomId is null) continue;   // mat hang chua chot BOM -> bo qua, tinh cac mat hang con lai
+
+                var bomItems = await _repo.ListBomItemsAsync(scope, line.BomId.Value);
+                foreach (var item in bomItems)
+                {
+                    var qtyStandard = line.FinishedQty * item.QtyPerUnit * (1 + item.WastePct / 100m);
+                    var qtyIssued = await _repo.GetIssuedQtyForItemAsync(scope, orderId, line.Id, item.MaterialId);
+                    await _repo.UpsertAsync(
+                        scope, orderId, line.Id, item.MaterialId, qtyIssued, qtyStandard, line.FinishedQty);
+                }
             }
 
             return await _repo.ListAsync(scope, orderId);

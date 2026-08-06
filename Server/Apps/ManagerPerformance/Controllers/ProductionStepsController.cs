@@ -27,11 +27,17 @@ public sealed class ProductionStepsController : ControllerBase
         return Ok(ApiResult.Success());
     }
 
-    /// <summary>Danh sach buoc quy trinh cua 1 don, sap xep theo seq.</summary>
+    /// <summary>
+    /// Danh sach buoc quy trinh: theo DON (moi mat hang mot bo, sap theo dong) hoac
+    /// theo RIENG 1 mat hang khi truyen itemId.
+    /// </summary>
     [HttpGet]
     public async Task<ActionResult<ApiResult<IEnumerable<ProductionStepDto>>>> GetByOrder(
-        [FromQuery] long orderId, CancellationToken ct) =>
-        Ok(ApiResult<IEnumerable<ProductionStepDto>>.Success(await _service.ListByOrderAsync(orderId, ct)));
+        [FromQuery] long orderId, [FromQuery] long? itemId = null, CancellationToken ct = default) =>
+        Ok(ApiResult<IEnumerable<ProductionStepDto>>.Success(
+            itemId.HasValue
+                ? await _service.ListByItemAsync(itemId.Value, ct)
+                : await _service.ListByOrderAsync(orderId, ct)));
 
     /// <summary>Cap nhat 1 buoc quy trinh (trang thai + so luong vao/ra/loi).</summary>
     [HttpPut("{id:long}")]

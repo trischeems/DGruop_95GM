@@ -6,6 +6,8 @@ public sealed record FinishedGoodsReceiptDto(
     string ReceiptNo,
     long ProductionOrderId,
     string? OrderNo,         // So don (join production_orders)
+    long ProductionOrderItemId, // Nhap kho cho MAT HANG nao trong don (V007)
+    int LineNo,                 // So thu tu mat hang trong don
     long ProductId,
     string? ProductSku,      // SKU ma hang (join products) - hien thi canh ProductId
     string? ProductName,     // Ten ma hang (join products)
@@ -19,6 +21,7 @@ public sealed record FinishedGoodsReceiptDto(
 /// <summary>Yeu cau nhap kho thanh pham tu 1 lenh san xuat.</summary>
 public sealed record CreateFinishedGoodsRequest(
     long ProductionOrderId,
+    long ProductionOrderItemId, // Nhap kho cho MAT HANG nao trong don (V007)
     long ProductId,
     long WarehouseId,
     decimal QtyReceived,

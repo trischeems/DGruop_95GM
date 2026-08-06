@@ -25,6 +25,13 @@ public sealed class BomService
     public Task<IEnumerable<BomDto>> ListAsync(long? productId, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, s => _repo.ListAsync(s, productId), ct);
 
+    /// <summary>
+    /// TAT CA dong dinh muc (moi BOM) kem ma hang + NVL + DVT bang 1 query -
+    /// man hinh thong ke khoi phai goi tung BOM (tranh N+1).
+    /// </summary>
+    public Task<IEnumerable<BomItemRowDto>> ListAllItemsAsync(bool activeOnly, CancellationToken ct) =>
+        _db.RunAsync(_tenant.Tenant, s => _repo.ListAllItemsAsync(s, activeOnly), ct);
+
     /// <summary>Chi tiet: header + items trong cung 1 transaction (null neu khong co header).</summary>
     public Task<BomDetailDto?> GetDetailAsync(long id, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, async scope =>

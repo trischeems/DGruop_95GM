@@ -32,10 +32,10 @@
                             <StackPanel Spacing="1">
                                 <TextBlock Classes="itemmain" Text="{Binding OrderNo}"/>
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Classes="itemsub" Text="{Binding ProductName}"/>
+                                    <TextBlock Classes="itemsub" Text="{Binding ProductLabel}"/>
                                     <TextBlock FontSize="11" FontWeight="SemiBold"
                                                Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"
-                                               Text="{Binding Status, Converter={StaticResource CodeVi}}"/>
+                                               Text="{Binding StatusLabel}"/>
                                 </StackPanel>
                             </StackPanel>
                         </DataTemplate>
@@ -47,18 +47,22 @@
         <!-- ===== COT PHAI: nhap TP + phieu + hao hut cua don dang chon ===== -->
         <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
 
-        <Grid Grid.Column="2" RowDefinitions="Auto,*,*,Auto">
+        <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*,*,Auto">
 
             <!-- Card: Nhap kho thanh pham (1 hang field + nut) -->
             <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
-                <Grid RowDefinitions="Auto,Auto">
+                <Grid RowDefinitions="Auto,Auto,Auto">
                     <TextBlock Grid.Row="0" Classes="h2" Text="Nhập kho thành phẩm" Margin="0,0,0,10"/>
-                    <Grid Grid.Row="1" ColumnDefinitions="2*,*,*,Auto">
+                    <!-- Chua chon don -> nhac nguoi dung (nut nhap kho lay ma hang tu don). -->
+                    <TextBlock Grid.Row="1" Classes="muted" TextWrapping="Wrap" Margin="0,0,0,10"
+                               Text="Chọn đơn sản xuất ở cột trái để nhập kho."
+                               IsVisible="{Binding NoOrderSelected}"/>
+                    <Grid Grid.Row="2" ColumnDefinitions="2*,*,*,Auto">
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock Classes="label" Text="Mã hàng (theo đơn)"/>
-                            <AutoCompleteBox ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
-                                  FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"
-                                  IsEnabled="{Binding !ProductLocked}"/>
+                            <!-- Don nhieu mat hang: chon mat hang can nhap kho (moi mat hang nhap rieng) -->
+                            <TextBlock Classes="label" Text="Mặt hàng cần nhập (theo đơn)"/>
+                            <ComboBox ItemsSource="{Binding OrderItems}" SelectedItem="{Binding SelectedOrderItem}"
+                                      HorizontalAlignment="Stretch"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="0,0,8,0">
                             <TextBlock Classes="label" Text="Kho"/>
@@ -76,8 +80,14 @@
                 </Grid>
             </Border>
 
+            <!-- Loi nhap kho TP: hien do NGAY DUOI form (Status cuoi trang de bi bo sot) -->
+            <TextBlock Grid.Row="1" FontWeight="SemiBold" Foreground="#DC2626" TextWrapping="Wrap"
+                       Margin="4,0,4,10"
+                       Text="{Binding ReceiveError}"
+                       IsVisible="{Binding ReceiveError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
             <!-- Card: Phieu nhap TP -->
-            <Border Classes="card" Grid.Row="1">
+            <Border Classes="card" Grid.Row="2">
                 <Grid RowDefinitions="Auto,*">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
                         <TextBlock Grid.Column="0" Classes="h2" Text="Phiếu nhập TP" VerticalAlignment="Center"/>
@@ -108,7 +118,7 @@
             </Border>
 
             <!-- Card: Doi chieu hao hut -->
-            <Border Classes="card" Grid.Row="2" Margin="0,12,0,0">
+            <Border Classes="card" Grid.Row="3" Margin="0,12,0,0">
                 <Grid RowDefinitions="Auto,*">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
                         <TextBlock Grid.Column="0" Classes="h2" Text="Đối chiếu hao hụt" VerticalAlignment="Center"/>
@@ -164,7 +174,7 @@
                 </Grid>
             </Border>
 
-            <TextBlock Grid.Row="3" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
+            <TextBlock Grid.Row="4" Classes="muted" Text="{Binding Status}" Margin="0,8,0,0"/>
         </Grid>
     </Grid>
 </UserControl>

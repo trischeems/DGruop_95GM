@@ -36,42 +36,75 @@
         <!-- ===== COT PHAI: thong tin don ===== -->
         <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
 
-        <StackPanel Grid.Column="2" Spacing="12" VerticalAlignment="Top">
-            <StackPanel>
+        <!-- Phai: thong tin don + luoi CAC MAT HANG (1 don nhieu mat hang) -->
+        <Grid Grid.Column="2" RowDefinitions="Auto,Auto,Auto,Auto,*">
+            <StackPanel Grid.Row="0" Margin="0,0,0,8">
                 <TextBlock Classes="label" Text="Số đơn"/>
                 <TextBox Text="{Binding NewOrderNo}" Watermark="VD: PO-001"/>
             </StackPanel>
 
-            <StackPanel>
-                <TextBlock Classes="label" Text="Mã hàng đã chọn"/>
-                <TextBox Text="{Binding SelectedProduct.Name}" IsReadOnly="True"
-                         Watermark="Bấm chọn ở danh sách bên trái"/>
-            </StackPanel>
+            <!-- O nhap 1 mat hang: chon ma hang o cot trai, dien SL + quy trinh roi bam Them -->
+            <Grid Grid.Row="1" ColumnDefinitions="2*,*,2*,Auto" Margin="0,0,0,8">
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Classes="label" Text="Mã hàng đã chọn"/>
+                    <TextBox Text="{Binding SelectedProduct.Name}" IsReadOnly="True"
+                             Watermark="Bấm chọn ở danh sách bên trái"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                    <TextBlock Classes="label" Text="Số lượng"/>
+                    <NumericUpDown Value="{Binding NewQuantity, TargetNullValue=0}" Minimum="0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                    <TextBlock Classes="label" Text="Quy trình sản xuất"/>
+                    <ComboBox ItemsSource="{Binding Routings}" SelectedItem="{Binding SelectedRouting, Mode=TwoWay}"
+                              HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="models:Routing">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding Name}"/>
+                                    <TextBlock Classes="uom" Text="{Binding StepCount, StringFormat='{}{0} bước'}"/>
+                                    <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#16A34A"
+                                               Text="mặc định" IsVisible="{Binding IsDefault}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+                <Button Grid.Column="3" Classes="accent" Content="+ Thêm mặt hàng" VerticalAlignment="Bottom"
+                        Command="{Binding AddOrderLineCommand}"/>
+            </Grid>
 
-            <StackPanel>
-                <TextBlock Classes="label" Text="Số lượng"/>
-                <NumericUpDown Value="{Binding NewQuantity, TargetNullValue=0}" Minimum="0"/>
-            </StackPanel>
+            <TextBlock Grid.Row="2" FontWeight="SemiBold" Foreground="#DC2626" TextWrapping="Wrap" Margin="0,0,0,6"
+                       Text="{Binding OrderFormError}"
+                       IsVisible="{Binding OrderFormError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
-            <StackPanel>
-                <TextBlock Classes="label" Text="Quy trình sản xuất"/>
-                <ComboBox ItemsSource="{Binding Routings}" SelectedItem="{Binding SelectedRouting, Mode=TwoWay}"
-                          HorizontalAlignment="Stretch">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="models:Routing">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="{Binding Name}"/>
-                                <TextBlock Classes="uom" Text="{Binding StepCount, StringFormat='{}{0} bước'}"/>
-                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#16A34A"
-                                           Text="mặc định" IsVisible="{Binding IsDefault}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-            </StackPanel>
+            <TextBlock Grid.Row="3" Classes="muted" TextWrapping="Wrap" Margin="0,0,0,6"
+                       Text="Một đơn có thể gồm nhiều mặt hàng, mỗi mặt hàng có số lượng và quy trình riêng. Công đoạn, giữ chỗ NVL, nhập kho thành phẩm đều tách theo từng mặt hàng."/>
 
-            <TextBlock Classes="muted" TextWrapping="Wrap"
-                       Text="Quy trình quyết định các công đoạn sinh ra cho đơn. Sau khi tạo, vào trang Sản xuất vẫn có thể thêm/bỏ/nhảy bước riêng cho đơn này."/>
-        </StackPanel>
+            <!-- Luoi cac mat hang cua don -->
+            <Grid Grid.Row="4" RowDefinitions="*,Auto">
+                <DataGrid Grid.Row="0" ItemsSource="{Binding NewOrderLines}" SelectedItem="{Binding SelectedNewLine}"
+                          IsReadOnly="True" MinHeight="120">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="SKU" Binding="{Binding Product.Sku}" Width="Auto" MinWidth="100"/>
+                        <DataGridTextColumn Header="Tên mã hàng" Binding="{Binding Product.Name}" Width="*" MinWidth="150"/>
+                        <DataGridTemplateColumn Header="Số lượng" Width="Auto" MinWidth="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="3" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Quantity, StringFormat='{}{0:0.####}'}"/>
+                                        <TextBlock Text="{Binding Product.UomName}" Classes="uom"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Quy trình" Binding="{Binding Routing.Name}" Width="*" MinWidth="130"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <Button Grid.Row="1" Classes="ghost" Content="✕ Bỏ mặt hàng đang chọn" HorizontalAlignment="Left"
+                        Margin="0,8,0,0" Command="{Binding RemoveOrderLineCommand}"
+                        IsEnabled="{Binding SelectedNewLine, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+            </Grid>
+        </Grid>
     </Grid>
 </UserControl>

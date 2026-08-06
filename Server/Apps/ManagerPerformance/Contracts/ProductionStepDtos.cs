@@ -4,6 +4,11 @@ namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 public sealed record ProductionStepDto(
     long Id,
     long ProductionOrderId,
+    long ProductionOrderItemId, // Cong doan thuoc MAT HANG nao trong don (V007)
+    int LineNo,                 // So thu tu mat hang trong don
+    string? LineProductSku,     // SKU mat hang cua dong — de biet dang lam cong doan cho hang nao
+    string? LineProductName,
+    decimal LineQuantity,       // SL dat cua RIENG mat hang do
     long StageId,
     string StageCode,
     string StageName,

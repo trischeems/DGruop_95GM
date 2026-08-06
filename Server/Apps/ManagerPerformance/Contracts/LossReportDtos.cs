@@ -8,6 +8,10 @@ public sealed record LossReportDto(
     long Id,
     long ProductionOrderId,
     string? OrderNo,         // So don (join production_orders)
+    long ProductionOrderItemId, // Hao hut cua MAT HANG nao trong don (V007)
+    int LineNo,                 // So thu tu mat hang trong don
+    string? LineProductSku,     // SKU mat hang — 1 don nhieu hang thi tach hao hut theo tung hang
+    string? LineProductName,
     long MaterialId,
     string? MaterialSku,     // SKU NVL (join materials) - hien thi canh MaterialId
     string? MaterialName,    // Ten NVL (join materials)

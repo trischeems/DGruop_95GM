@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GM95.App.ManagerPerformance.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="560"
+             x:Class="GM95.App.ManagerPerformance.Views.Dialogs.StockTxnEditView"
+             x:DataType="vm:StockTxnEditViewModel">
+    <!-- Than form SUA 1 dong so nhap/xuat kho. Ton kho se duoc cong/tru theo phan chenh lech. -->
+    <StackPanel Spacing="12">
+        <TextBlock Classes="muted" TextWrapping="Wrap" Text="{Binding Header}"/>
+        <Grid ColumnDefinitions="*,*">
+            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock Classes="label" Text="Số lượng"/>
+                <NumericUpDown Value="{Binding Quantity, TargetNullValue=0}" Minimum="0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+                <TextBlock Classes="label" Text="Đơn giá (VND)"/>
+                <NumericUpDown Classes="money" Value="{Binding UnitCost, TargetNullValue=0}" Minimum="0"/>
+            </StackPanel>
+        </Grid>
+        <StackPanel>
+            <TextBlock Classes="label" Text="Ghi chú"/>
+            <TextBox Text="{Binding Note}" Watermark="Lý do sửa (không bắt buộc)"/>
+        </StackPanel>
+        <TextBlock Classes="muted" TextWrapping="Wrap"
+                   Text="Sửa số lượng sẽ tự cộng/trừ tồn kho tương ứng và tính lại cột 'Tồn sau' của các dòng sau đó. Không sửa được loại giao dịch hay NVL — nếu sai, hãy xoá dòng rồi nhập lại."/>
+    </StackPanel>
+</UserControl>

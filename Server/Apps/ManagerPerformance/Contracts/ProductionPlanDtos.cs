@@ -5,6 +5,11 @@ public sealed record ProductionPlanDto(
     long Id,
     long ProductionOrderId,
     string? OrderNo,         // So don (join production_orders) - hien thi canh ProductionOrderId
+    long ProductionOrderItemId, // Ke hoach cho MAT HANG nao trong don (V007)
+    int LineNo,                 // So thu tu mat hang trong don
+    string? LineProductSku,     // SKU mat hang — 1 don nhieu hang thi phai biet lap cho hang nao
+    string? LineProductName,
+    decimal LineQuantity,       // SL dat cua rieng mat hang do
     decimal PlannedQty,
     DateTime? PlannedStart,
     DateTime? PlannedEnd,
@@ -17,6 +22,7 @@ public sealed record ProductionPlanDto(
 /// <summary>Yeu cau tao ke hoach san xuat moi.</summary>
 public sealed record CreateProductionPlanRequest(
     long ProductionOrderId,
+    long ProductionOrderItemId, // Lap ke hoach cho MAT HANG nao trong don (V007)
     decimal PlannedQty,
     DateTime? PlannedStart,
     DateTime? PlannedEnd,

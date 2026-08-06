@@ -262,6 +262,17 @@ public sealed partial class ProductionViewModel : PageViewModel, IExportProvider
         _ = LoadStepsCoreAsync();
     }
 
+    // ===== MAT HANG cua don dang chon (V007: 1 don nhieu mat hang, cong doan tach theo mat hang) =====
+    public ObservableCollection<ProductionOrderItem> OrderItems { get; } = new();
+    [ObservableProperty] private ProductionOrderItem? _selectedOrderItem;
+    /// <summary>Don co tu 2 mat hang tro len -> hien o chon mat hang tren trang.</summary>
+    public bool HasMultipleItems => OrderItems.Count > 1;
+    partial void OnSelectedOrderItemChanged(ProductionOrderItem? value)
+    {
+        if (_suppressSelectionHook) return;
+        _ = LoadStepsCoreAsync();
+    }
+
     // Nap cong doan cua don dang chon; giu nguyen cong doan dang chon theo Id.
     private async Task LoadStepsCoreAsync(long? selectStepId = null)
     {
@@ -269,8 +280,24 @@ public sealed partial class ProductionViewModel : PageViewModel, IExportProvider
 
         Steps.Clear();
         IssueItems.Clear();
-        if (SelectedOrder is null) return;
-        var ss = await _api.GetStepsAsync(SelectedOrder.Id);
+        if (SelectedOrder is null) { OrderItems.Clear(); OnPropertyChanged(nameof(HasMultipleItems)); return; }
+
+        // Nap danh sach mat hang cua don, giu lai mat hang dang xem neu con.
+        var keepItem = SelectedOrderItem?.Id;
+        var items0 = await _api.GetOrderItemsAsync(SelectedOrder.Id);
+        var wasSuppressed = _suppressSelectionHook;
+        _suppressSelectionHook = true;
+        try
+        {
+            OrderItems.Clear();
+            foreach (var it in items0) OrderItems.Add(it);
+            SelectedOrderItem = OrderItems.FirstOrDefault(i => i.Id == keepItem) ?? OrderItems.FirstOrDefault();
+        }
+        finally { _suppressSelectionHook = wasSuppressed; }
+        OnPropertyChanged(nameof(HasMultipleItems));
+
+        // Cong doan cua RIENG mat hang dang xem (don 1 mat hang thi khong khac gi truoc).
+        var ss = await _api.GetStepsAsync(SelectedOrder.Id, SelectedOrderItem?.Id);
         foreach (var s in ss) Steps.Add(s);
         SelectedStep = Steps.FirstOrDefault(s => s.Id == keepStep);
 
@@ -280,7 +307,10 @@ public sealed partial class ProductionViewModel : PageViewModel, IExportProvider
         foreach (var i in items) IssueItems.Add(i);
         var issueCount = items.Select(i => i.MaterialIssueId).Distinct().Count();
 
-        Status = $"{Steps.Count} công đoạn · {issueCount} phiếu xuất NVL ({items.Count} dòng)"
+        var matHang = HasMultipleItems && SelectedOrderItem is not null
+            ? $" · mặt hàng {SelectedOrderItem.ProductSku} ({OrderItems.Count} mặt hàng trong đơn)"
+            : "";
+        Status = $"{Steps.Count} công đoạn{matHang} · {issueCount} phiếu xuất NVL ({items.Count} dòng)"
                + (items.Count >= issueLimit ? $" — chỉ hiển thị {issueLimit} dòng mới nhất." : ".");
     }
 
@@ -557,14 +587,25 @@ public sealed partial class ProductionViewModel : PageViewModel, IExportProvider
             }, saveText: "↓ Xuất kho", width: 900, height: 540, scrollable: false);
     }
 
+    // Lenh nap bi bo qua vi dang ban -> chay lai ngay sau khi xong (chong lech du lieu).
+    private bool _reloadPending;
+
     private async Task RunAsync(string busy, Func<Task> a)
     {
-        if (IsBusy) return;
-        IsBusy = true;
-        Status = busy;
-        try { await a(); }
+        // Dang ban ma nguoi dung doi bo loc / bam lam moi: ghi nho de tu nap lai sau,
+        // KHONG nuot lenh (truoc day bang se lech so voi lua chon tren man hinh).
+        if (IsBusy) { _reloadPending = true; return; }
+        IsBusy = true; Status = busy;
+        try
+        {
+            do
+            {
+                _reloadPending = false;
+                await a();
+            } while (_reloadPending);
+        }
         catch (ApiException ex) { Status = $"Lỗi [{ex.Code}]: {ex.Message}"; }
         catch (Exception ex) { Status = $"Lỗi: {ex.Message}"; }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; _reloadPending = false; }
     }
 }

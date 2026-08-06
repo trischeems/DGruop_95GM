@@ -33,10 +33,10 @@
                             <StackPanel Spacing="1">
                                 <TextBlock Classes="itemmain" Text="{Binding OrderNo}"/>
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Classes="itemsub" Text="{Binding ProductName}"/>
+                                    <TextBlock Classes="itemsub" Text="{Binding ProductLabel}"/>
                                     <TextBlock FontSize="11" FontWeight="SemiBold"
                                                Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"
-                                               Text="{Binding Status, Converter={StaticResource CodeVi}}"/>
+                                               Text="{Binding StatusLabel}"/>
                                 </StackPanel>
                             </StackPanel>
                         </DataTemplate>
@@ -53,9 +53,16 @@
             <!-- Card: Cap nhat cong doan dang chon + nut Khoi tao cong doan -->
             <Border Classes="card" Grid.Row="0" Margin="0,0,0,12">
                 <Grid RowDefinitions="Auto,Auto">
-                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,10">
                         <TextBlock Grid.Column="0" Classes="h2" Text="Cập nhật công đoạn đang chọn" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <!-- Don nhieu mat hang: chon mat hang de xem/sua cong doan cua rieng no -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="16,0,8,0"
+                                    VerticalAlignment="Center" IsVisible="{Binding HasMultipleItems}">
+                            <TextBlock Classes="label" Text="Mặt hàng" VerticalAlignment="Center"/>
+                            <ComboBox ItemsSource="{Binding OrderItems}" SelectedItem="{Binding SelectedOrderItem}"
+                                      MinWidth="260"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
                             <Button Classes="ghost" Content="Khởi tạo công đoạn"
                                     Command="{Binding InitStepsCommand}"
                                     ToolTip.Tip="Sinh các bước theo quy trình đã chọn của đơn"/>

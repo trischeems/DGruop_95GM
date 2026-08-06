@@ -60,6 +60,9 @@ public sealed partial class ApiClient
         GetListAsync<Bom>($"{_prefix}/boms" + (productId.HasValue ? $"?productId={productId}" : ""), ct);
     public Task<BomDetail?> GetBomAsync(long id, CancellationToken ct = default) =>
         GetOneAsync<BomDetail>($"{_prefix}/boms/{id}", ct);
+    /// <summary>Toan bo dong dinh muc cua MOI BOM (phang, kem ma hang + NVL) — cho trang So &amp; thong ke.</summary>
+    public Task<List<BomItemRow>> GetAllBomItemsAsync(bool activeOnly = false, CancellationToken ct = default) =>
+        GetListAsync<BomItemRow>($"{_prefix}/boms/items?activeOnly={activeOnly.ToString().ToLowerInvariant()}", ct);
     public Task<long> CreateBomAsync(object body, CancellationToken ct = default) =>
         PostForIdAsync($"{_prefix}/boms", body, ct);
     public Task UpsertBomItemAsync(long bomId, object body, CancellationToken ct = default) =>
@@ -90,6 +93,20 @@ public sealed partial class ApiClient
         ActionAsync(HttpMethod.Post, $"{_prefix}/production-orders/{id}/confirm", null, ct);
     public Task CancelOrderAsync(long id, CancellationToken ct = default) =>
         ActionAsync(HttpMethod.Post, $"{_prefix}/production-orders/{id}/cancel", null, ct);
+    // ----- Mat hang trong don (V007: 1 don nhieu mat hang) -----
+    /// <summary>Cac mat hang (dong) cua don, kem SL/BOM/quy trinh + tien do rieng.</summary>
+    public Task<List<ProductionOrderItem>> GetOrderItemsAsync(long orderId, CancellationToken ct = default) =>
+        GetListAsync<ProductionOrderItem>($"{_prefix}/production-orders/{orderId}/items", ct);
+    /// <summary>Them 1 mat hang vao don (chi khi don con DRAFT).</summary>
+    public Task<long> AddOrderItemAsync(long orderId, object body, CancellationToken ct = default) =>
+        PostForIdAsync($"{_prefix}/production-orders/{orderId}/items", body, ct);
+    /// <summary>Sua 1 mat hang cua don: SL / BOM / quy trinh / ghi chu.</summary>
+    public Task UpdateOrderItemAsync(long itemId, object body, CancellationToken ct = default) =>
+        ActionAsync(HttpMethod.Put, $"{_prefix}/production-orders/items/{itemId}", body, ct);
+    /// <summary>Xoa 1 mat hang khoi don.</summary>
+    public Task DeleteOrderItemAsync(long itemId, CancellationToken ct = default) =>
+        ActionAsync(HttpMethod.Delete, $"{_prefix}/production-orders/items/{itemId}", null, ct);
+
     public Task<List<Reservation>> GetReservationsAsync(long orderId, CancellationToken ct = default) =>
         GetListAsync<Reservation>($"{_prefix}/production-orders/{orderId}/reservations", ct);
     public Task UpdateOrderAsync(long id, object body, CancellationToken ct = default) =>
@@ -114,8 +131,10 @@ public sealed partial class ApiClient
     // ===== Production Steps (Cat/May/QC) =====
     public Task InitStepsAsync(long orderId, CancellationToken ct = default) =>
         ActionAsync(HttpMethod.Post, $"{_prefix}/production-steps/init/{orderId}", null, ct);
-    public Task<List<ProductionStep>> GetStepsAsync(long orderId, CancellationToken ct = default) =>
-        GetListAsync<ProductionStep>($"{_prefix}/production-steps?orderId={orderId}", ct);
+    /// <summary>Cong doan cua don; truyen itemId de chi lay cong doan cua 1 MAT HANG.</summary>
+    public Task<List<ProductionStep>> GetStepsAsync(long orderId, long? itemId = null, CancellationToken ct = default) =>
+        GetListAsync<ProductionStep>(
+            $"{_prefix}/production-steps?orderId={orderId}" + (itemId.HasValue ? $"&itemId={itemId}" : ""), ct);
     public Task UpdateStepAsync(long id, object body, CancellationToken ct = default) =>
         ActionAsync(HttpMethod.Put, $"{_prefix}/production-steps/{id}", body, ct);
 

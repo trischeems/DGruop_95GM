@@ -6,18 +6,31 @@ namespace GM95.Server.Apps.ManagerPerformance.Repositories;
 /// <summary>
 /// Thong tin don phuc vu kiem tra khi nhap kho thanh pham (da khoa dong don FOR UPDATE):
 /// - Status/ProductId: chan nhap sai trang thai / sai ma hang.
-/// - QcOutput: san luong dat cua cong doan QC (qty_out) — tran duoc phep nhap.
-///   Neu chua co cong doan QC thi null (chua san xuat/khoi tao) -> chan nhap.
-/// - AlreadyReceived: tong da nhap kho cua don (chong nhap vuot).
+/// - ReceivableLimit: TRAN duoc phep nhap kho, lay theo thu tu:
+///   (1) SL ra cua cong doan QC neu don co buoc QC khong bo qua/khong huy;
+///   (2) neu khong, SL ra LON NHAT trong cac cong doan phai lam cua don (quy trinh tu do V006
+///       co the khong co QC — vd ket thuc o Dong goi);
+///   (3) neu don chua co cong doan nao, lay luon SL dat cua don.
+/// - AlreadyReceived: tong da nhap kho cua don (chong nhap vuot + biet khi nao nhap du).
 /// </summary>
 public sealed record OrderReceiptCheckRow(
-    string Status, long ProductId, decimal? QcOutput, decimal AlreadyReceived);
+    string Status, long ProductId, decimal ReceivableLimit, decimal AlreadyReceived);
 
 /// <summary>Truy van/ghi phieu nhap kho thanh pham. Ghi PHAI trong 1 transaction cua scope.</summary>
 public interface IFinishedGoodsRepository
 {
-    /// <summary>Khoa don (FOR UPDATE) + lay status/product/san luong QC/tong da nhap. Null neu don khong ton tai.</summary>
-    Task<OrderReceiptCheckRow?> LockOrderForReceiptAsync(TenantScope scope, long orderId);
+    /// <summary>
+    /// Khoa don + MAT HANG (FOR UPDATE) + lay status/product/tran duoc nhap/tong da nhap cua RIENG
+    /// mat hang do (V007 — moi mat hang trong don co cong doan va han muc nhap rieng).
+    /// Null neu mat hang khong ton tai.
+    /// </summary>
+    Task<OrderReceiptCheckRow?> LockItemForReceiptAsync(TenantScope scope, long orderItemId);
+
+    /// <summary>TAT CA mat hang cua don da nhap du chua (moi dong don khi tat ca da du).</summary>
+    Task<bool> AreAllItemsReceivedAsync(TenantScope scope, long orderId);
+
+    /// <summary>Danh dau cong doan FG_RECEIPT cua RIENG 1 mat hang -> DONE.</summary>
+    Task<int> MarkItemFinishingStepsDoneAsync(TenantScope scope, long orderItemId);
 
     /// <summary>Danh sach phieu nhap (loc theo lenh san xuat neu co), moi nhat truoc.</summary>
     Task<IEnumerable<FinishedGoodsReceiptDto>> ListAsync(TenantScope scope, long? orderId, int? year, int? month);

@@ -34,11 +34,18 @@ public sealed class ProductionStepService
         return _db.RunAsync(_tenant.Tenant, s => _repo.InitStepsAsync(s, orderId), ct);
     }
 
-    /// <summary>Danh sach buoc quy trinh cua 1 don, sap xep theo seq.</summary>
+    /// <summary>Danh sach buoc quy trinh cua 1 don (moi mat hang mot bo).</summary>
     public Task<IEnumerable<ProductionStepDto>> ListByOrderAsync(long orderId, CancellationToken ct)
     {
         if (orderId <= 0) throw new ArgumentException("orderId khong hop le.");
         return _db.RunAsync(_tenant.Tenant, s => _repo.ListByOrderAsync(s, orderId), ct);
+    }
+
+    /// <summary>Danh sach buoc quy trinh cua RIENG 1 mat hang trong don.</summary>
+    public Task<IEnumerable<ProductionStepDto>> ListByItemAsync(long orderItemId, CancellationToken ct)
+    {
+        if (orderItemId <= 0) throw new ArgumentException("itemId khong hop le.");
+        return _db.RunAsync(_tenant.Tenant, s => _repo.ListByItemAsync(s, orderItemId), ct);
     }
 
     /// <summary>
@@ -73,7 +80,7 @@ public sealed class ProductionStepService
             // (giu bat bien SUM(nhap TP) <= SL ra QC ma module Kho TP dua vao).
             if (ctx.StageCode == "QC")
             {
-                var received = await _repo.SumFinishedGoodsAsync(scope, ctx.ProductionOrderId);
+                var received = await _repo.SumFinishedGoodsForItemAsync(scope, ctx.ProductionOrderItemId);
                 if (req.QtyOut < received)
                     throw new ArgumentException(
                         $"SL ra QC moi ({req.QtyOut:0.####}) thap hon tong TP da nhap kho ({received:0.####}). " +
@@ -91,11 +98,14 @@ public sealed class ProductionStepService
                 await _repo.MarkOrderInProgressAsync(scope, ctx.ProductionOrderId);
                 await _repo.MarkPlansInProgressAsync(scope, ctx.ProductionOrderId);
             }
-            // Khi cong doan CUOI (FG_RECEIPT - nhap kho TP) DONE: keo ke hoach sang DONE.
+            // Khi 1 cong doan KET THUC (DONE/CANCELLED): neu MOI cong doan phai lam cua don da xong
+            // thi dong luon cac ke hoach cua don. Truoc day chi bat cong doan co ma 'FG_RECEIPT'
+            // nen quy trinh tu do (V006 — co the khong co buoc nhap kho) khong bao gio dong ke hoach.
             // (Don se COMPLETED khi nhap kho thanh pham o module Kho TP.)
-            else if (req.Status == "DONE" && ctx.StageCode == "FG_RECEIPT")
+            else if (req.Status is "DONE" or "CANCELLED")
             {
-                await _repo.MarkPlansDoneAsync(scope, ctx.ProductionOrderId);
+                if (await _repo.AreAllStepsDoneAsync(scope, ctx.ProductionOrderId))
+                    await _repo.MarkPlansDoneAsync(scope, ctx.ProductionOrderId);
             }
 
             return true;

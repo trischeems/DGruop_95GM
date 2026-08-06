@@ -15,6 +15,12 @@ public interface IBomRepository
     /// <summary>Cac dong NVL cua 1 BOM.</summary>
     Task<IEnumerable<BomItemDto>> ListItemsAsync(TenantScope scope, long bomId);
 
+    /// <summary>
+    /// TAT CA dong dinh muc (moi BOM) kem thong tin ma hang + NVL + DVT, 1 lan query.
+    /// activeOnly = true: chi lay dong thuoc ban dinh muc ACTIVE.
+    /// </summary>
+    Task<IEnumerable<BomItemRowDto>> ListAllItemsAsync(TenantScope scope, bool activeOnly);
+
     /// <summary>Trang thai hien tai cua BOM (null neu khong co).</summary>
     Task<string?> GetStatusAsync(TenantScope scope, long id);
 

@@ -41,14 +41,11 @@
         <!-- Bang NVL: hang field sua tren dau bang (bam 1 dong -> tu nap; Luu / Xoa ben phai) -->
         <Border Classes="card" Grid.Row="1">
             <Grid RowDefinitions="Auto,Auto,*">
-                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto" Margin="0,0,0,10">
+                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,10">
                     <TextBlock Grid.Column="0" Classes="h2" Text="Danh mục nguyên vật liệu" VerticalAlignment="Center" Margin="0,0,12,0"/>
                     <TextBox Grid.Column="1" Text="{Binding CatalogSearch}" Watermark="🔍 Tìm theo SKU hoặc tên NVL..."
                              VerticalAlignment="Center" MaxWidth="320" HorizontalAlignment="Left" Margin="0,0,8,0"/>
-                    <TextBlock Grid.Column="2" Classes="label" Text="Tháng" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <ComboBox Grid.Column="3" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" Width="100" Margin="0,0,6,0"/>
-                    <ComboBox Grid.Column="4" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" Width="90" Margin="0,0,8,0"/>
-                    <Button Grid.Column="5" Classes="ghost" Content="Làm mới" Command="{Binding LoadCommand}"/>
+                    <Button Grid.Column="2" Classes="ghost" Content="Làm mới" Command="{Binding LoadCommand}"/>
                 </Grid>
                 <Grid Grid.Row="1" ColumnDefinitions="*,2*,*,*,*,Auto,Auto,Auto" Margin="0,0,0,10"
                       IsEnabled="{Binding SelectedListMaterial, Converter={x:Static ObjectConverters.IsNotNull}}">
@@ -151,8 +148,16 @@
             <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
             <Border Classes="card" Grid.Column="2" Margin="6,0,0,0">
                 <Grid RowDefinitions="Auto,*">
-                    <TextBlock Grid.Row="0" Classes="h2" Text="Lịch sử nhập / xuất (sổ kho — bấm dòng tồn để lọc theo NVL)" Margin="0,0,0,10"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding History}" IsReadOnly="True">
+                    <TextBlock Grid.Row="0" Classes="h2" Text="Lịch sử nhập / xuất (bấm dòng tồn để lọc · chuột phải để sửa/xoá)" Margin="0,0,0,10"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding History}" IsReadOnly="True"
+                              SelectedItem="{Binding SelectedHistoryRow}">
+                        <!-- Chuot phai vao 1 dong so: sua so lieu hoac xoa han (ton kho tu cap nhat lai) -->
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="✏️ Sửa dòng sổ..." Command="{Binding EditHistoryCommand}"/>
+                                <MenuItem Header="🗑 Xoá dòng sổ" Command="{Binding DeleteHistoryCommand}"/>
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Mã NVL" Binding="{Binding MaterialSku}" Width="Auto" MinWidth="95"/>
                             <DataGridTextColumn Header="Tên NVL" Binding="{Binding MaterialName}" Width="*" MinWidth="140"/>

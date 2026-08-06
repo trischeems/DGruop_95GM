@@ -20,6 +20,15 @@ public sealed class BomsController : ControllerBase
         [FromQuery] long? productId = null, CancellationToken ct = default) =>
         Ok(ApiResult<IEnumerable<BomDto>>.Success(await _service.ListAsync(productId, ct)));
 
+    /// <summary>
+    /// TAT CA dong dinh muc cua moi BOM (kem ma hang + NVL + DVT) trong 1 lan goi.
+    /// Phai dat TRUOC route "{id:long}" de "items" khong bi hieu la id.
+    /// </summary>
+    [HttpGet("items")]
+    public async Task<ActionResult<ApiResult<IEnumerable<BomItemRowDto>>>> GetAllItems(
+        [FromQuery] bool activeOnly = false, CancellationToken ct = default) =>
+        Ok(ApiResult<IEnumerable<BomItemRowDto>>.Success(await _service.ListAllItemsAsync(activeOnly, ct)));
+
     /// <summary>Chi tiet 1 BOM (header + cac dong NVL).</summary>
     [HttpGet("{id:long}")]
     public async Task<ActionResult<ApiResult<BomDetailDto>>> GetById(long id, CancellationToken ct)

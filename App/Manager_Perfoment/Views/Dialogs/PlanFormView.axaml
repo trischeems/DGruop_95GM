@@ -13,6 +13,12 @@
             <AutoCompleteBox ItemsSource="{Binding Orders}" SelectedItem="{Binding SelectedOrder, Mode=TwoWay}"
                              FilterMode="Contains" MinimumPrefixLength="0" HorizontalAlignment="Stretch"/>
         </StackPanel>
+        <!-- 1 don co the nhieu mat hang -> ke hoach phai lap cho tung mat hang -->
+        <StackPanel>
+            <TextBlock Classes="label" Text="Mặt hàng cần lập kế hoạch"/>
+            <ComboBox ItemsSource="{Binding OrderItems}" SelectedItem="{Binding SelectedOrderItem}"
+                      HorizontalAlignment="Stretch"/>
+        </StackPanel>
         <StackPanel>
             <TextBlock Classes="label" Text="Số lượng kế hoạch"/>
             <NumericUpDown Value="{Binding NewPlannedQty, TargetNullValue=0}" Minimum="0"/>

@@ -14,18 +14,14 @@
 
         <!-- ===== COT TRAI: danh sach ma hang ===== -->
         <Border Classes="card" Grid.Column="0" Margin="0,0,10,0">
-            <Grid RowDefinitions="Auto,Auto,Auto,*">
+            <Grid RowDefinitions="Auto,Auto,*">
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
                     <TextBlock Grid.Column="0" Classes="h2" Text="Mã hàng" VerticalAlignment="Center"/>
                     <Button Grid.Column="1" Classes="ghost" Content="⟳" Command="{Binding LoadCommand}"
                             ToolTip.Tip="Làm mới danh sách"/>
                 </Grid>
-                <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,0,0,6">
-                    <ComboBox Grid.Column="0" ItemsSource="{Binding FilterMonthOptions}" SelectedItem="{Binding FilterMonth}" HorizontalAlignment="Stretch" Margin="0,0,4,0"/>
-                    <ComboBox Grid.Column="1" ItemsSource="{Binding FilterYearOptions}" SelectedItem="{Binding FilterYear}" HorizontalAlignment="Stretch"/>
-                </Grid>
-                <TextBox Grid.Row="2" Text="{Binding ListFilter}" Watermark="Tìm tên / SKU mã hàng..." Margin="0,0,0,8"/>
-                <ListBox Grid.Row="3" Classes="master" ItemsSource="{Binding FilteredProducts}"
+                <TextBox Grid.Row="1" Text="{Binding ListFilter}" Watermark="Tìm tên / SKU mã hàng..." Margin="0,0,0,8"/>
+                <ListBox Grid.Row="2" Classes="master" ItemsSource="{Binding FilteredProducts}"
                          SelectedItem="{Binding SelectedProduct, Mode=TwoWay}">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="models:Product">

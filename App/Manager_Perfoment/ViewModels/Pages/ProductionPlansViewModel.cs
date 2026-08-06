@@ -49,23 +49,46 @@ public sealed partial class ProductionPlansViewModel : PageViewModel, IExportPro
     public ObservableCollection<ProductionOrder> FilteredOrders { get; } = new();
     public ObservableCollection<ProductionPlan> Plans { get; } = new();
 
+    // ===== MAT HANG cua don dang chon (V007: ke hoach lap cho TUNG mat hang) =====
+    public ObservableCollection<ProductionOrderItem> OrderItems { get; } = new();
+    [ObservableProperty] private ProductionOrderItem? _selectedOrderItem;
+    /// <summary>Don co tu 2 mat hang tro len -> bat buoc chon mat hang khi lap ke hoach.</summary>
+    public bool HasMultipleItems => OrderItems.Count > 1;
+
     // O tim cot trai: loc Orders theo so don / ten ma hang / SKU (khong phan biet hoa thuong).
     [ObservableProperty] private string _listFilter = "";
     partial void OnListFilterChanged(string value) => ApplyOrderFilter();
 
-    /// <summary>Rebuild FilteredOrders tu Orders theo ListFilter. Goi sau khi nap Orders hoac doi o tim.</summary>
+    /// <summary>
+    /// Rebuild FilteredOrders tu Orders theo ListFilter. Goi sau khi nap Orders hoac doi o tim.
+    /// FilteredOrders la ItemsSource cua ListBox (SelectedItem TwoWay): Clear() lam ListBox bo chon
+    /// va ghi nguoc null vao SelectedOrder -> phai chan hook trong luc rebuild, chon lai sau khi xong.
+    /// </summary>
     private void ApplyOrderFilter()
     {
         var kw = (ListFilter ?? "").Trim();
-        FilteredOrders.Clear();
-        foreach (var o in Orders)
+        var keep = SelectedOrder;
+        var wasSuppressed = _suppressSelectionHook;
+        _suppressSelectionHook = true;
+        try
         {
-            if (kw.Length == 0
-                || (o.OrderNo?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (o.ProductName?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (o.ProductSku?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false))
-                FilteredOrders.Add(o);
+            FilteredOrders.Clear();
+            foreach (var o in Orders)
+            {
+                if (kw.Length == 0
+                    || (o.OrderNo?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (o.ProductName?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (o.ProductSku?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false))
+                    FilteredOrders.Add(o);
+            }
+            // Giu nguyen don dang chon neu no van lot qua o tim; khong con thi bo chon.
+            SelectedOrder = keep is not null && FilteredOrders.Contains(keep) ? keep : null;
         }
+        finally { _suppressSelectionHook = wasSuppressed; }
+
+        // Don dang chon bi o tim loc ra ngoai -> bang ke hoach phai trong theo.
+        // Khi goi tu LoadCoreAsync (dang suppress) thi bo qua: ham do tu nap lai o buoc cuoi.
+        if (!wasSuppressed && !ReferenceEquals(SelectedOrder, keep)) _ = LoadPlansCoreAsync();
     }
 
     public string[] StatusOptions { get; } = new[] { "PLANNED", "RELEASED", "IN_PROGRESS", "DONE", "CANCELLED" };
@@ -106,24 +129,37 @@ public sealed partial class ProductionPlansViewModel : PageViewModel, IExportPro
     private Task LoadAsync() => RunAsync("Đang tải...", () => LoadCoreAsync());
 
     // Nap du lieu KHONG boc RunAsync (de lenh ghi goi lai duoc — guard IsBusy chan goi long nhau).
-    private async Task LoadCoreAsync()
+    private async Task LoadCoreAsync(long? selectPlanId = null)
     {
         var keepOrder = SelectedOrder?.Id;
 
         var (ofy, ofm) = FilterPeriod;
         var os = await _api.GetOrdersAsync(null, ofy, ofm);
-        Orders.Clear();
-        foreach (var o in os) Orders.Add(o);
-        ApplyOrderFilter();   // cap nhat danh sach cot trai theo o tim
-        // Chon lai; chan hook de khoi kich hoat LoadPlans 2 lan.
+        // Chan hook TU TRUOC khi dung den cac danh sach: Orders.Clear() / ApplyOrderFilter() lam
+        // ListBox bo chon va ghi nguoc null vao SelectedOrder. Neu hook con song, no ban ra mot lan
+        // nap ke hoach voi orderId = null (server tra ke hoach cua MOI don) chay song song ben duoi
+        // -> bang tron ke hoach 2 don va lua chon nhay lung tung.
+        var wasSuppressed = _suppressSelectionHook;   // co the dang mo form (form cung chan hook)
         _suppressSelectionHook = true;
-        SelectedOrder = Orders.FirstOrDefault(o => o.Id == keepOrder);
-        _suppressSelectionHook = false;
+        try
+        {
+            Orders.Clear();
+            foreach (var o in os) Orders.Add(o);
+            ApplyOrderFilter();   // cap nhat danh sach cot trai theo o tim
+            // Chon lai theo dung danh sach dang hien o cot trai (FilteredOrders — ItemsSource cua
+            // ListBox); chi khi khong co moi lay tu Orders (danh sach goc).
+            SelectedOrder = FilteredOrders.FirstOrDefault(o => o.Id == keepOrder)
+                            ?? Orders.FirstOrDefault(o => o.Id == keepOrder);
+        }
+        finally { _suppressSelectionHook = wasSuppressed; }
 
-        await LoadPlansCoreAsync();
+        await LoadPlansCoreAsync(selectPlanId);
     }
 
     private bool _suppressSelectionHook;
+
+    // So thu tu cua lan nap ke hoach: ket qua ve TRE hon lan moi nhat se bi bo qua.
+    private int _plansLoadGen;
 
     partial void OnSelectedOrderChanged(ProductionOrder? value)
     {
@@ -131,17 +167,49 @@ public sealed partial class ProductionPlansViewModel : PageViewModel, IExportPro
         _ = LoadPlansCoreAsync();
     }
 
+
+    // Nap danh sach MAT HANG cua don dang chon (V007). Giu lai mat hang dang chon neu con.
+    private async Task LoadOrderItemsCoreAsync()
+    {
+        var keepItem = SelectedOrderItem?.Id;
+        var items = SelectedOrder is null
+            ? new List<ProductionOrderItem>()
+            : await _api.GetOrderItemsAsync(SelectedOrder.Id);
+        OrderItems.Clear();
+        foreach (var it in items) OrderItems.Add(it);
+        SelectedOrderItem = OrderItems.FirstOrDefault(i => i.Id == keepItem) ?? OrderItems.FirstOrDefault();
+        OnPropertyChanged(nameof(HasMultipleItems));
+    }
+
     // Nap ke hoach cua don dang chon; giu (hoac chon moi) ke hoach theo selectPlanId.
     private async Task LoadPlansCoreAsync(long? selectPlanId = null)
     {
+        var gen = ++_plansLoadGen;   // danh dau: tu day tro di chi ket qua cua lan nay moi duoc do vao bang
+        await LoadOrderItemsCoreAsync();   // mat hang cua don (de lap ke hoach theo tung mat hang)
         var keepPlan = selectPlanId ?? SelectedPlan?.Id;
 
-        Plans.Clear();
-        long? oid = SelectedOrder?.Id;
+        // Chua chon don thi KHONG goi API: orderId = null lam server tra ke hoach cua moi don.
+        var order = SelectedOrder;
+        if (order is null)
+        {
+            Plans.Clear();
+            SelectedPlan = null;
+            Status = "Chọn một đơn sản xuất ở cột trái để xem kế hoạch.";
+            return;
+        }
+
         var (fy, fm) = FilterPeriod;
-        var ps = await _api.GetPlansAsync(oid, fy, fm);
+        var ps = await _api.GetPlansAsync(order.Id, fy, fm);
+        if (gen != _plansLoadGen) return;   // da co lan nap moi hon -> bo ket qua cu, khong dong vao bang
+
+        // Chi xoa bang SAU khi da co du lieu ve va chac chan minh la lan moi nhat
+        // (xoa truoc khi await -> 2 lan nap chong nhau deu xoa bang rong roi cung do vao = tron don).
+        Plans.Clear();
         foreach (var p in ps) Plans.Add(p);
         SelectedPlan = Plans.FirstOrDefault(p => p.Id == keepPlan);
+        // Ke hoach dang chon phai thuoc dung don dang chon — khong de lenh ghi cham vao ke hoach don khac.
+        if (SelectedPlan is not null && SelectedPlan.ProductionOrderId != SelectedOrder?.Id)
+            SelectedPlan = null;
 
         Status = $"{Plans.Count} kế hoạch.";
     }
@@ -151,25 +219,40 @@ public sealed partial class ProductionPlansViewModel : PageViewModel, IExportPro
     private async Task CreateAsync()
     {
         NewPlannedQty = 1; NewLineCode = "";
+        var orderBefore = SelectedOrder;
+        // Form nay dung CHUNG VM va bind SelectedOrder TwoWay: moi lan go trong o chon don,
+        // AutoCompleteBox ban ra hang loat lan doi SelectedOrder (ke ca null) -> chan hook cho
+        // toi khi dong form, roi tu nap lai neu don da doi.
+        _suppressSelectionHook = true;
         var form = new Views.Dialogs.PlanFormView { DataContext = this };
-        await DialogService.ShowFormAsync("Tạo kế hoạch sản xuất", form, async () =>
+        try
         {
-            if (SelectedOrder is null) return "Chọn đơn sản xuất.";
-            if (NewPlannedQty <= 0) return "Số lượng kế hoạch phải > 0.";
-
-            var id = await _api.CreatePlanAsync(new
+            await DialogService.ShowFormAsync("Tạo kế hoạch sản xuất", form, async () =>
             {
-                productionOrderId = SelectedOrder!.Id,
-                plannedQty = NewPlannedQty,
-                plannedStart = (string?)null,
-                plannedEnd = (string?)null,
-                lineCode = NewLineCode,
-                note = (string?)null
-            });
-            await LoadPlansCoreAsync(id);
-            Status = $"Đã tạo kế hoạch id={id}.";
-            return null;
-        }, saveText: "Tạo kế hoạch", height: 320);
+                if (SelectedOrder is null) return "Chọn đơn sản xuất.";
+                if (NewPlannedQty <= 0) return "Số lượng kế hoạch phải > 0.";
+
+                if (SelectedOrderItem is null) return "Chọn mặt hàng cần lập kế hoạch.";
+                var id = await _api.CreatePlanAsync(new
+                {
+                    productionOrderId = SelectedOrder!.Id,
+                    productionOrderItemId = SelectedOrderItem!.Id,
+                    plannedQty = NewPlannedQty,
+                    plannedStart = (string?)null,
+                    plannedEnd = (string?)null,
+                    lineCode = NewLineCode,
+                    note = (string?)null
+                });
+                await LoadCoreAsync(id);   // don vua co ke hoach -> nap lai ca cot trai
+                Status = $"Đã tạo kế hoạch id={id}.";
+                return null;
+            }, saveText: "Tạo kế hoạch", height: 320);
+        }
+        finally { _suppressSelectionHook = false; }
+
+        // Dong form ma don dang chon da khac (nguoi dung doi trong form) -> nap lai bang cho khop.
+        // So theo Id: sau khi tao xong da nap lai danh sach nen doi tuong don la ban moi.
+        if (SelectedOrder?.Id != orderBefore?.Id) await LoadPlansCoreAsync();
     }
 
     // Loi thao tac ke hoach — hien do ngay tren bang (Status cuoi trang mo, de bi bo sot).
@@ -188,7 +271,9 @@ public sealed partial class ProductionPlansViewModel : PageViewModel, IExportPro
                 await _api.UpdatePlanStatusAsync(planId, new { status = SelectedStatus });
             }
             catch (ApiException ex) { PlanError = ex.Message; throw; }
-            await LoadPlansCoreAsync(planId);
+            // Nap lai CA cot trai: ke hoach chay xong (DONE) keo theo trang thai don doi -> the
+            // trang thai o danh sach don phai cap nhat theo, khong chi rieng bang ke hoach.
+            await LoadCoreAsync(planId);
             Status = $"Đã đổi trạng thái -> {SelectedStatus}.";
         });
     }
@@ -231,7 +316,8 @@ public sealed partial class ProductionPlansViewModel : PageViewModel, IExportPro
                 await LoadPlansCoreAsync(planId);
                 throw;
             }
-            await LoadPlansCoreAsync(planId);
+            // Doi trang thai ke hoach co the doi luon trang thai don -> nap lai ca cot trai.
+            await LoadCoreAsync(planId);
             Status = wantStatus != curStatus
                 ? $"Đã lưu kế hoạch id={planId} và chuyển trạng thái -> {wantStatus}."
                 : $"Đã lưu kế hoạch id={planId}.";
@@ -257,13 +343,27 @@ public sealed partial class ProductionPlansViewModel : PageViewModel, IExportPro
         });
     }
 
+    // Doi bo loc trong luc dang chay: ghi nho va tu nap lai sau khi xong (khong nuot mat lua chon).
+    private bool _reloadPending;
+
     private async Task RunAsync(string busy, Func<Task> a)
     {
-        if (IsBusy) return;
+        if (IsBusy) { _reloadPending = true; return; }
         IsBusy = true; Status = busy;
-        try { await a(); }
+        try
+        {
+            _reloadPending = false;
+            await a();
+            // Nguoi dung vua doi thang/nam trong luc dang chay -> nap lai theo lua chon moi nhat.
+            // Chi NAP LAI, khong chay lai `a`: `a` co the la lenh ghi (luu/xoa) — chay 2 lan la sai.
+            while (_reloadPending)
+            {
+                _reloadPending = false;
+                await LoadCoreAsync();
+            }
+        }
         catch (ApiException ex) { Status = $"Lỗi [{ex.Code}]: {ex.Message}"; }
         catch (Exception ex) { Status = $"Lỗi: {ex.Message}"; }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; _reloadPending = false; }
     }
 }

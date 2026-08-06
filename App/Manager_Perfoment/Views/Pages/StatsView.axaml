@@ -41,38 +41,32 @@
         </Border>
 
         <!-- Dai tong hop -->
-        <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*,*" Margin="0,0,0,12">
+        <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" Margin="0,0,0,12">
             <Border Classes="card" Grid.Column="0" Margin="0,0,6,0">
-                <StackPanel>
-                    <TextBlock Classes="muted" Text="Tổng nhập (SL)"/>
-                    <TextBlock Classes="h2" Text="{Binding SumInText}"/>
-                </StackPanel>
-            </Border>
-            <Border Classes="card" Grid.Column="1" Margin="3,0">
                 <StackPanel>
                     <TextBlock Classes="muted" Text="Giá trị nhập"/>
                     <TextBlock Classes="h2" Text="{Binding SumInValueText}"/>
                 </StackPanel>
             </Border>
-            <Border Classes="card" Grid.Column="2" Margin="3,0">
+            <Border Classes="card" Grid.Column="1" Margin="3,0">
                 <StackPanel>
                     <TextBlock Classes="muted" Text="Tổng xuất (SL)"/>
                     <TextBlock Classes="h2" Text="{Binding SumOutText}"/>
                 </StackPanel>
             </Border>
-            <Border Classes="card" Grid.Column="3" Margin="3,0">
+            <Border Classes="card" Grid.Column="2" Margin="3,0">
                 <StackPanel>
                     <TextBlock Classes="muted" Text="Giá trị xuất"/>
                     <TextBlock Classes="h2" Text="{Binding SumOutValueText}"/>
                 </StackPanel>
             </Border>
-            <Border Classes="card" Grid.Column="4" Margin="3,0">
+            <Border Classes="card" Grid.Column="3" Margin="3,0">
                 <StackPanel>
                     <TextBlock Classes="muted" Text="Đơn SX trong kỳ"/>
                     <TextBlock Classes="h2" Text="{Binding SumOrderText}"/>
                 </StackPanel>
             </Border>
-            <Border Classes="card" Grid.Column="5" Margin="6,0,0,0">
+            <Border Classes="card" Grid.Column="4" Margin="6,0,0,0">
                 <StackPanel>
                     <TextBlock Classes="muted" Text="TP nhập kho (SL)"/>
                     <TextBlock Classes="h2" Text="{Binding SumFgText}"/>
@@ -80,9 +74,10 @@
             </Border>
         </Grid>
 
-        <!-- 3 bang: So NVL / Nhap xuat chi tiet / San xuat -->
+        <!-- 6 bang: 3 bang theo ky (So NVL / Nhap xuat chi tiet / San xuat)
+             + 3 bang danh muc khong theo ky (Dinh muc BOM / Ma hang / Kho NVL) -->
         <TabControl Grid.Row="2">
-            <TabItem Header="📒 Sổ NVL (tồn đầu · nhập · xuất · tồn cuối)">
+            <TabItem Header="Sổ NVL">
                 <Border Classes="card" Margin="0,8,0,0">
                     <DataGrid ItemsSource="{Binding Ledger}" IsReadOnly="True">
                         <DataGrid.Columns>
@@ -103,9 +98,17 @@
                 </Border>
             </TabItem>
 
-            <TabItem Header="🔄 Nhập xuất chi tiết (sổ giao dịch)">
+            <TabItem Header="Nhập xuất chi tiết">
                 <Border Classes="card" Margin="0,8,0,0">
-                    <DataGrid ItemsSource="{Binding Transactions}" IsReadOnly="True">
+                    <DataGrid ItemsSource="{Binding Transactions}" IsReadOnly="True"
+                              SelectedItem="{Binding SelectedTransaction}">
+                        <!-- Chuot phai vao 1 dong so: sua so lieu hoac xoa han (ton kho tu cap nhat lai) -->
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="✏️ Sửa dòng sổ..." Command="{Binding EditTransactionCommand}"/>
+                                <MenuItem Header="🗑 Xoá dòng sổ" Command="{Binding DeleteTransactionCommand}"/>
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Mã NVL" Binding="{Binding MaterialSku}" Width="Auto" MinWidth="100"/>
                             <DataGridTextColumn Header="Tên NVL" Binding="{Binding MaterialName}" Width="*" MinWidth="160"/>
@@ -137,7 +140,7 @@
                 </Border>
             </TabItem>
 
-            <TabItem Header="🏭 Sản xuất theo mã hàng">
+            <TabItem Header="Sản xuất theo mã hàng">
                 <Border Classes="card" Margin="0,8,0,0">
                     <DataGrid ItemsSource="{Binding Production}" IsReadOnly="True">
                         <DataGrid.Columns>
@@ -157,6 +160,65 @@
                             <DataGridTextColumn Header="SL lỗi (công đoạn)" Binding="{Binding DefectQty, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="130"/>
                             <DataGridTextColumn Header="TP nhập kho" Binding="{Binding FgQty, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="100"/>
                             <DataGridTextColumn Header="GT NVL xuất (VND)" Binding="{Binding IssueValue, StringFormat='{}{0:#,##0}'}" Width="Auto" MinWidth="130"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Định mức BOM">
+                <Border Classes="card" Margin="0,8,0,0">
+                    <DataGrid ItemsSource="{Binding BomItems}" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="SKU mã hàng" Binding="{Binding ProductSku}" Width="Auto" MinWidth="110"/>
+                            <DataGridTextColumn Header="Tên mã hàng" Binding="{Binding ProductName}" Width="*" MinWidth="180"/>
+                            <DataGridTextColumn Header="Phiên bản" Binding="{Binding Version}" Width="Auto" MinWidth="80"/>
+                            <DataGridTemplateColumn Header="Trạng thái" Width="Auto" MinWidth="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Status, Converter={StaticResource CodeVi}}" VerticalAlignment="Center"
+                                                   FontWeight="SemiBold" Margin="12,0,0,0"
+                                                   Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Mã NVL" Binding="{Binding MaterialSku}" Width="Auto" MinWidth="100"/>
+                            <DataGridTextColumn Header="Tên NVL" Binding="{Binding MaterialName}" Width="*" MinWidth="170"/>
+                            <DataGridTextColumn Header="ĐM/đơn vị" Binding="{Binding QtyPerUnit, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="95"/>
+                            <DataGridTextColumn Header="ĐVT NVL" Binding="{Binding MaterialUomName}" Width="Auto" MinWidth="80"/>
+                            <DataGridTextColumn Header="Hao hụt %" Binding="{Binding WastePct, StringFormat='{}{0:0.##}'}" Width="Auto" MinWidth="85"/>
+                            <DataGridTextColumn Header="Ghi chú" Binding="{Binding Note}" Width="*" MinWidth="150"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Mã hàng">
+                <Border Classes="card" Margin="0,8,0,0">
+                    <DataGrid ItemsSource="{Binding ProductList}" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="Auto" MinWidth="80"/>
+                            <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="Auto" MinWidth="120"/>
+                            <DataGridTextColumn Header="Tên" Binding="{Binding Name}" Width="*" MinWidth="220"/>
+                            <DataGridTextColumn Header="ĐVT" Binding="{Binding UomName}" Width="Auto" MinWidth="90"/>
+                            <DataGridCheckBoxColumn Header="Hoạt động" Binding="{Binding IsActive}" Width="Auto" MinWidth="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Kho NVL">
+                <Border Classes="card" Margin="0,8,0,0">
+                    <DataGrid ItemsSource="{Binding StockRows}" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Mã NVL" Binding="{Binding Sku}" Width="Auto" MinWidth="110"/>
+                            <DataGridTextColumn Header="Tên NVL" Binding="{Binding Name}" Width="*" MinWidth="180"/>
+                            <DataGridTextColumn Header="ĐVT" Binding="{Binding UomName}" Width="Auto" MinWidth="70"/>
+                            <DataGridTextColumn Header="Tồn thực" Binding="{Binding TotalOnHand, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="90"/>
+                            <DataGridTextColumn Header="Đã giữ chỗ" Binding="{Binding TotalReserved, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="100"/>
+                            <DataGridTextColumn Header="Khả dụng" Binding="{Binding TotalAvailable, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="90"/>
+                            <DataGridTextColumn Header="Ngưỡng tồn" Binding="{Binding ReorderLevel, StringFormat='{}{0:0.####}'}" Width="Auto" MinWidth="100"/>
+                            <DataGridTextColumn Header="Đơn giá gần nhất" Binding="{Binding LastUnitCost, StringFormat='{}{0:#,##0}'}" Width="Auto" MinWidth="120"/>
+                            <DataGridTextColumn Header="Giá trị tồn" Binding="{Binding StockValue, StringFormat='{}{0:#,##0}'}" Width="Auto" MinWidth="110"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>

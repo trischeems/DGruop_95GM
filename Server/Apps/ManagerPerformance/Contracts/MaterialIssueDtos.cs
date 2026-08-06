@@ -1,10 +1,11 @@
 namespace GM95.Server.Apps.ManagerPerformance.Contracts;
 
-/// <summary>1 dong NVL trong phieu xuat (so luong xuat + don gia).</summary>
+/// <summary>1 dong NVL trong phieu xuat (so luong xuat + don gia + cap cho mat hang nao).</summary>
 public sealed record MaterialIssueItemInput(
     long MaterialId,
     decimal QtyIssued,
-    decimal UnitCost);
+    decimal UnitCost,
+    long? ProductionOrderItemId = null); // Cap NVL cho MAT HANG nao trong don (V007; null = don 1 mat hang)
 
 /// <summary>Yeu cau tao phieu xuat NVL cho san xuat (tru ton kho).</summary>
 public sealed record CreateMaterialIssueRequest(

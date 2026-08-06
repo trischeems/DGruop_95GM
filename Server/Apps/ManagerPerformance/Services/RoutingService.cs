@@ -18,12 +18,16 @@ public sealed class RoutingService
     private readonly ITenantConnection _db;
     private readonly ITenantContext _tenant;
     private readonly IRoutingRepository _repo;
+    private readonly IProductionStepRepository _steps;
 
-    public RoutingService(ITenantConnection db, ITenantContext tenant, IRoutingRepository repo)
+    public RoutingService(
+        ITenantConnection db, ITenantContext tenant,
+        IRoutingRepository repo, IProductionStepRepository steps)
     {
         _db = db;
         _tenant = tenant;
         _repo = repo;
+        _steps = steps;
     }
 
     // =================================================================================
@@ -205,12 +209,23 @@ public sealed class RoutingService
         if (stepId <= 0) throw new ArgumentException("stepId khong hop le.");
         return _db.RunAsync(_tenant.Tenant, async scope =>
         {
+            // THU TU KHOA TOAN CUC: don -> ke hoach -> cong doan (khop ProductionStepService/
+            // ProductionPlanService) — doc order id KHONG khoa roi khoa dong don TRUOC.
+            var orderId = await _steps.GetStepOrderIdAsync(scope, stepId);
+            if (orderId is null) return false;
+            await _steps.LockOrderAsync(scope, orderId.Value);
+
             var step = await _repo.LockOrderStepAsync(scope, stepId);
             if (step is null) return false;
             // Buoc da lam roi thi khong duoc danh bo qua (so lieu da ghi nhan).
             if (req.IsSkipped && (step.Status is "IN_PROGRESS" or "DONE" || step.QtyIn > 0 || step.QtyOut > 0))
                 throw new ArgumentException("Buoc da bat dau/hoan tat hoac da co so lieu, khong danh 'bo qua' duoc.");
-            return await _repo.SetStepSkippedAsync(scope, stepId, req.IsSkipped, req.Note) > 0;
+
+            var ok = await _repo.SetStepSkippedAsync(scope, stepId, req.IsSkipped, req.Note) > 0;
+            // Bo qua buoc do dang CUOI CUNG cung la luc don chay xong -> dong cac ke hoach.
+            if (ok && await _steps.AreAllStepsDoneAsync(scope, orderId.Value))
+                await _steps.MarkPlansDoneAsync(scope, orderId.Value);
+            return ok;
         }, ct);
     }
 
@@ -220,11 +235,21 @@ public sealed class RoutingService
         if (stepId <= 0) throw new ArgumentException("stepId khong hop le.");
         return _db.RunAsync(_tenant.Tenant, async scope =>
         {
+            // THU TU KHOA TOAN CUC: don -> ke hoach -> cong doan (xem SkipStepAsync).
+            var orderId = await _steps.GetStepOrderIdAsync(scope, stepId);
+            if (orderId is null) return false;
+            await _steps.LockOrderAsync(scope, orderId.Value);
+
             var step = await _repo.LockOrderStepAsync(scope, stepId);
             if (step is null) return false;
             if (step.Status is not "PENDING" || step.QtyIn > 0 || step.QtyOut > 0)
                 throw new ArgumentException("Buoc da chay hoac da co so lieu, khong xoa duoc. Hay danh dau 'bo qua'.");
-            return await _repo.DeleteOrderStepAsync(scope, stepId) > 0;
+
+            var ok = await _repo.DeleteOrderStepAsync(scope, stepId) > 0;
+            // Xoa not buoc do dang cuoi cung -> don khong con gi phai lam -> dong cac ke hoach.
+            if (ok && await _steps.AreAllStepsDoneAsync(scope, orderId.Value))
+                await _steps.MarkPlansDoneAsync(scope, orderId.Value);
+            return ok;
         }, ct);
     }
 

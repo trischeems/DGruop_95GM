@@ -32,13 +32,81 @@ public sealed class ProductionOrderService
     public Task<IEnumerable<ReservationDto>> ListReservationsAsync(long id, CancellationToken ct) =>
         _db.RunAsync(_tenant.Tenant, s => _repo.ListReservationsAsync(s, id), ct);
 
+    /// <summary>Cac dong (ma hang + SL) cua don.</summary>
+    public Task<IEnumerable<ProductionOrderItemDto>> ListItemsAsync(long orderId, CancellationToken ct) =>
+        _db.RunAsync(_tenant.Tenant, s => _repo.ListItemsAsync(s, orderId), ct);
+
+    /// <summary>Tao don MOI voi 1 hoac nhieu dong ma hang (ban nhap DRAFT).</summary>
     public Task<long> CreateAsync(CreateProductionOrderRequest req, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(req.OrderNo)) throw new ArgumentException("orderNo khong duoc rong.");
-        if (req.ProductId <= 0) throw new ArgumentException("productId khong hop le.");
-        if (req.Quantity <= 0) throw new ArgumentException("quantity phai > 0.");
+        var items = req.Items?.ToList() ?? new List<OrderItemInput>();
+        if (items.Count == 0) throw new ArgumentException("Don phai co it nhat 1 mat hang.");
+        foreach (var it in items) ValidateItem(it.ProductId, it.Quantity);
+        // Chan trung ma hang trong cung don (moi ma hang 1 dong, sua SL thay vi them dong moi).
+        var dup = items.GroupBy(i => i.ProductId).FirstOrDefault(g => g.Count() > 1);
+        if (dup is not null)
+            throw new ArgumentException($"Ma hang id={dup.Key} bi lap trong don. Moi ma hang chi 1 dong.");
 
-        return _db.RunAsync(_tenant.Tenant, s => _repo.InsertAsync(s, req), ct);
+        return _db.RunAsync(_tenant.Tenant, async s =>
+        {
+            var orderId = await _repo.InsertAsync(s, req, items[0]);
+            foreach (var it in items) await _repo.InsertItemAsync(s, orderId, it);
+            return orderId;
+        }, ct);
+    }
+
+    /// <summary>Them 1 mat hang vao don (chi khi don con DRAFT).</summary>
+    public Task<long> AddItemAsync(long orderId, OrderItemInput item, CancellationToken ct)
+    {
+        ValidateItem(item.ProductId, item.Quantity);
+        return _db.RunAsync(_tenant.Tenant, async s =>
+        {
+            await EnsureDraftAsync(s, orderId);
+            return await _repo.InsertItemAsync(s, orderId, item);
+        }, ct);
+    }
+
+    /// <summary>Sua 1 dong cua don (SL/BOM/quy trinh/ghi chu) — chi khi don con DRAFT.</summary>
+    public Task<bool> UpdateItemAsync(long itemId, UpdateOrderItemRequest req, CancellationToken ct)
+    {
+        if (req.Quantity <= 0) throw new ArgumentException("So luong phai > 0.");
+        return _db.RunAsync(_tenant.Tenant, async s =>
+        {
+            var orderId = await _repo.GetItemOrderIdAsync(s, itemId);
+            if (orderId is null) return false;
+            await EnsureDraftAsync(s, orderId.Value);
+            return await _repo.UpdateItemAsync(s, itemId, req);
+        }, ct);
+    }
+
+    /// <summary>Xoa 1 mat hang khoi don — chi khi don con DRAFT va con it nhat 1 dong khac.</summary>
+    public Task<bool> DeleteItemAsync(long itemId, CancellationToken ct) =>
+        _db.RunAsync(_tenant.Tenant, async s =>
+        {
+            var orderId = await _repo.GetItemOrderIdAsync(s, itemId);
+            if (orderId is null) return false;
+            await EnsureDraftAsync(s, orderId.Value);
+            if (await _repo.CountItemsAsync(s, orderId.Value) <= 1)
+                throw new ArgumentException("Don phai con it nhat 1 mat hang. Muon bo han thi xoa ca don.");
+            return await _repo.DeleteItemAsync(s, itemId);
+        }, ct);
+
+    private static void ValidateItem(long productId, decimal quantity)
+    {
+        if (productId <= 0) throw new ArgumentException("productId khong hop le.");
+        if (quantity <= 0) throw new ArgumentException("So luong moi mat hang phai > 0.");
+    }
+
+    // Sua dong don sau khi da xac nhan se lam lech giu cho NVL -> bat huy don truoc.
+    private async Task EnsureDraftAsync(TenantScope scope, long orderId)
+    {
+        var order = await _repo.LockOrderAsync(scope, orderId)
+                    ?? throw new ArgumentException($"Khong tim thay don hang id={orderId}.");
+        if (order.Status != "DRAFT")
+            throw new ArgumentException(
+                $"Chi sua duoc mat hang cua don o trang thai DRAFT (hien tai: {order.Status}). " +
+                "Don da xac nhan can huy de nha giu cho truoc.");
     }
 
     /// <summary>
@@ -56,43 +124,47 @@ public sealed class ProductionOrderService
             if (order.Status != "DRAFT")
                 throw new ArgumentException("Chi xac nhan duoc don o trang thai DRAFT.");
 
-            // 2) Chot BOM: uu tien bom_id cua don, khong co thi lay BOM ACTIVE cua san pham.
-            long bomId;
-            if (order.BomId is long ob)
-            {
-                bomId = ob;
-            }
-            else
-            {
-                var activeBom = await _repo.FindActiveBomAsync(scope, order.ProductId)
-                    ?? throw new ArgumentException("Chua co BOM active cho ma hang.");
-                bomId = activeBom;
-                await _repo.SetBomAsync(scope, id, bomId);
-            }
+            // 2) Duyet TUNG DONG (mat hang) cua don — moi dong co BOM + SL rieng.
+            var lines = (await _repo.ListItemsForConfirmAsync(scope, id)).ToList();
+            if (lines.Count == 0) throw new ArgumentException("Don chua co mat hang nao de xac nhan.");
 
-            // 3) Cac dong NVL cua BOM.
-            var items = await _repo.ListBomItemsAsync(scope, bomId);
-
-            // 4) Voi moi NVL: tinh nhu cau (co hao hut) -> giu cho tren cac dong stock kha dung.
-            foreach (var item in items)
+            foreach (var line in lines)
             {
-                var need = order.Quantity * item.QtyPerUnit * (1 + item.WastePct / 100m);
-                var remaining = need;
-
-                var rows = await _repo.LockAvailableStockAsync(scope, item.MaterialId);
-                foreach (var row in rows)
+                // 2a) Chot BOM cua dong: uu tien bom_id da chon, khong co thi lay BOM ACTIVE cua ma hang.
+                long bomId;
+                if (line.BomId is long ob)
                 {
-                    var available = row.QtyOnHand - row.QtyReserved;
-                    var take = Math.Min(remaining, available);
-                    if (take > 0)
-                    {
-                        await _repo.AddReservedAsync(scope, row.Id, take);
-                        await _repo.UpsertReservationAsync(scope, id, item.MaterialId, row.WarehouseId, take);
-                        remaining -= take;
-                    }
-                    if (remaining <= 0) break;
+                    bomId = ob;
                 }
-                // remaining > 0: thieu hut -> khong bao loi (bao cao xu ly).
+                else
+                {
+                    bomId = await _repo.FindActiveBomAsync(scope, line.ProductId)
+                        ?? throw new ArgumentException(
+                            $"Ma hang id={line.ProductId} chua co BOM active — khong the giu cho NVL cho don.");
+                    await _repo.SetItemBomAsync(scope, line.Id, bomId);
+                }
+
+                // 2b) Voi moi NVL cua BOM: tinh nhu cau (co hao hut) -> giu cho tren cac dong stock kha dung.
+                var bomItems = await _repo.ListBomItemsAsync(scope, bomId);
+                foreach (var item in bomItems)
+                {
+                    var remaining = line.Quantity * item.QtyPerUnit * (1 + item.WastePct / 100m);
+
+                    var rows = await _repo.LockAvailableStockAsync(scope, item.MaterialId);
+                    foreach (var row in rows)
+                    {
+                        var available = row.QtyOnHand - row.QtyReserved;
+                        var take = Math.Min(remaining, available);
+                        if (take > 0)
+                        {
+                            await _repo.AddReservedAsync(scope, row.Id, take);
+                            await _repo.UpsertReservationAsync(scope, id, line.Id, item.MaterialId, row.WarehouseId, take);
+                            remaining -= take;
+                        }
+                        if (remaining <= 0) break;
+                    }
+                    // remaining > 0: thieu hut -> khong bao loi (bao cao xu ly).
+                }
             }
 
             // 5) Doi trang thai don.
@@ -124,10 +196,9 @@ public sealed class ProductionOrderService
             await _repo.MarkCancelledAsync(scope, id);
         }, ct);
 
-    /// <summary>Sua don hang: chi don DRAFT (don da xac nhan dinh giu cho, phai huy truoc).</summary>
+    /// <summary>Sua HEADER don (han giao/ghi chu): chi don DRAFT. SL nam o tung mat hang.</summary>
     public Task UpdateAsync(long id, UpdateProductionOrderRequest req, CancellationToken ct)
     {
-        if (req.Quantity <= 0) throw new ArgumentException("quantity phai > 0.");
         return _db.RunAsync(_tenant.Tenant, async scope =>
         {
             var order = await _repo.LockOrderAsync(scope, id)

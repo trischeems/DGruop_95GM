@@ -4,7 +4,7 @@ using GM95.Server.Infrastructure.Data;
 namespace GM95.Server.Apps.ManagerPerformance.Repositories;
 
 /// <summary>1 dong plan da khoa (FOR UPDATE) phuc vu kiem tra chuyen trang thai.</summary>
-public sealed record PlanLockRow(long ProductionOrderId, string Status, decimal PlannedQty);
+public sealed record PlanLockRow(long ProductionOrderId, long ProductionOrderItemId, string Status, decimal PlannedQty);
 
 /// <summary>Truy van/ghi bang production_plans (Dapper raw SQL). Nhan TenantScope (da co tx dung schema).</summary>
 public interface IProductionPlanRepository
@@ -18,8 +18,10 @@ public interface IProductionPlanRepository
 
     /// <summary>SL dat cua don (khoa dong FOR UPDATE de chong race khi kiem tra tong ke hoach). Null neu khong co don.</summary>
     Task<decimal?> LockOrderQuantityAsync(TenantScope scope, long orderId);
-    /// <summary>Tong planned_qty hien co cua don, tru 1 plan (excludePlanId) khi dang sua. 0 neu chua co.</summary>
-    Task<decimal> SumPlannedQtyAsync(TenantScope scope, long orderId, long? excludePlanId);
+    /// <summary>SL dat cua RIENG 1 mat hang trong don (khoa FOR UPDATE). Null neu khong co dong do.</summary>
+    Task<decimal?> LockItemQuantityAsync(TenantScope scope, long orderItemId);
+    /// <summary>Tong planned_qty hien co cua 1 MAT HANG, tru 1 plan (excludePlanId) khi dang sua. 0 neu chua co.</summary>
+    Task<decimal> SumPlannedQtyAsync(TenantScope scope, long orderItemId, long? excludePlanId);
     /// <summary>Doc (production_order_id, status, planned_qty) cua 1 plan, khoa dong FOR UPDATE. Null neu khong co.</summary>
     Task<PlanLockRow?> LockPlanAsync(TenantScope scope, long id);
     /// <summary>Doc order id cua plan KHONG khoa (phuc vu khoa don truoc — thu tu khoa toan cuc).</summary>

@@ -87,6 +87,14 @@ public sealed partial class ApiClient
             $"{_prefix}/stock/transactions?limit={limit}"
             + (materialId.HasValue ? $"&materialId={materialId}" : "") + Range(from, to), ct);
 
+    /// <summary>Sua 1 dong nhap/xuat (so luong tuyet doi + don gia + ghi chu); server dong bo lai ton.</summary>
+    public Task UpdateStockTransactionAsync(long id, object body, CancellationToken ct = default) =>
+        ActionAsync(HttpMethod.Put, $"{_prefix}/stock/transactions/{id}", body, ct);
+
+    /// <summary>Xoa 1 dong nhap/xuat; server tra ton ve nhu chua co dong nay.</summary>
+    public Task DeleteStockTransactionAsync(long id, CancellationToken ct = default) =>
+        ActionAsync(HttpMethod.Delete, $"{_prefix}/stock/transactions/{id}", null, ct);
+
     // ----- Bao cao -----
     public Task<List<MaterialStock>> GetLowStockAsync(int? year = null, int? month = null, CancellationToken ct = default) =>
         GetListAsync<MaterialStock>($"{_prefix}/reports/low-stock?x=1{Period(year, month)}", ct);

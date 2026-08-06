@@ -6,20 +6,25 @@ namespace GM95.Server.Apps.ManagerPerformance.Repositories;
 public sealed class ProductionPlanRepository : IProductionPlanRepository
 {
     // SELECT khop DTO (Dapper: snake_case <-> PascalCase). JOIN production_orders lay so don.
+    // JOIN dong don (V007): ke hoach lap cho TUNG MAT HANG, khong phai ca don.
     private const string PlanSelect =
-        "SELECT pp.id, pp.production_order_id, po.order_no, pp.planned_qty, pp.planned_start, " +
+        "SELECT pp.id, pp.production_order_id, po.order_no, " +
+        "pp.production_order_item_id, i.line_no, " +
+        "p.sku AS line_product_sku, p.name AS line_product_name, i.quantity AS line_quantity, " +
+        "pp.planned_qty, pp.planned_start, " +
         "pp.planned_end, pp.line_code, pp.status, pp.note, " +
         "pu.code AS product_uom_code, pu.name AS product_uom_name " +
         "FROM production_plans pp LEFT JOIN production_orders po ON po.id = pp.production_order_id " +
-        "LEFT JOIN products p ON p.id = po.product_id " +
+        "LEFT JOIN production_order_items i ON i.id = pp.production_order_item_id " +
+        "LEFT JOIN products p ON p.id = i.product_id " +
         "LEFT JOIN units_of_measure pu ON pu.id = p.uom_id";
 
     public Task<IEnumerable<ProductionPlanDto>> ListAsync(TenantScope scope, long? orderId, int? year, int? month)
     {
-        // Loc theo don san xuat + thang/nam tao; sap xep theo ngay bat dau (null xuong cuoi), roi id.
+        // Loc theo don san xuat + thang/nam tao; sap theo mat hang roi ngay bat dau (null xuong cuoi).
         var sql = $"{PlanSelect} WHERE " + PeriodWhere("pp.created_at") +
                   (orderId.HasValue ? " AND pp.production_order_id = @orderId" : "") +
-                  " ORDER BY pp.planned_start ASC NULLS LAST, pp.id";
+                  " ORDER BY i.line_no, pp.planned_start ASC NULLS LAST, pp.id";
         return scope.QueryAsync<ProductionPlanDto>(sql, new { orderId, year, month });
     }
     // Dieu kien loc theo thang/nam tren cot ngay (@year/@month null = khong loc).
@@ -30,9 +35,9 @@ public sealed class ProductionPlanRepository : IProductionPlanRepository
         scope.QuerySingleAsync<long>(
             """
             INSERT INTO production_plans
-                (production_order_id, planned_qty, planned_start, planned_end, line_code, note)
+                (production_order_id, production_order_item_id, planned_qty, planned_start, planned_end, line_code, note)
             VALUES
-                (@ProductionOrderId, @PlannedQty, @PlannedStart, @PlannedEnd, @LineCode, @Note)
+                (@ProductionOrderId, @ProductionOrderItemId, @PlannedQty, @PlannedStart, @PlannedEnd, @LineCode, @Note)
             RETURNING id
             """, req);
 
@@ -64,20 +69,27 @@ public sealed class ProductionPlanRepository : IProductionPlanRepository
         scope.QueryFirstOrDefaultAsync<decimal?>(
             "SELECT quantity FROM production_orders WHERE id = @orderId FOR UPDATE", new { orderId });
 
-    // Tong planned_qty hien co cua don (khong tinh CANCELLED), tru 1 plan dang sua neu co.
-    public Task<decimal> SumPlannedQtyAsync(TenantScope scope, long orderId, long? excludePlanId) =>
+    // SL dat cua RIENG 1 mat hang trong don (rang buoc ke hoach tinh theo tung mat hang, V007).
+    public Task<decimal?> LockItemQuantityAsync(TenantScope scope, long orderItemId) =>
+        scope.QueryFirstOrDefaultAsync<decimal?>(
+            "SELECT quantity FROM production_order_items WHERE id = @orderItemId FOR UPDATE",
+            new { orderItemId });
+
+    // Tong planned_qty hien co cua 1 MAT HANG (khong tinh CANCELLED), tru 1 plan dang sua neu co.
+    public Task<decimal> SumPlannedQtyAsync(TenantScope scope, long orderItemId, long? excludePlanId) =>
         scope.ExecuteScalarAsync<decimal>(
             """
             SELECT COALESCE(SUM(planned_qty), 0)
             FROM production_plans
-            WHERE production_order_id = @orderId
+            WHERE production_order_item_id = @orderItemId
               AND status <> 'CANCELLED'
               AND (@excludePlanId IS NULL OR id <> @excludePlanId)
-            """, new { orderId, excludePlanId });
+            """, new { orderItemId, excludePlanId });
 
     public Task<PlanLockRow?> LockPlanAsync(TenantScope scope, long id) =>
         scope.QueryFirstOrDefaultAsync<PlanLockRow>(
-            "SELECT production_order_id, status, planned_qty FROM production_plans WHERE id = @id FOR UPDATE",
+            "SELECT production_order_id, production_order_item_id, status, planned_qty " +
+            "FROM production_plans WHERE id = @id FOR UPDATE",
             new { id });
 
     // Doc order id cua plan KHONG khoa — de khoa dong DON truoc roi moi khoa plan (chong deadlock).

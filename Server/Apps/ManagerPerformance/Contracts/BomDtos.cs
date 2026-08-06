@@ -22,6 +22,26 @@ public sealed record BomItemDto(
     decimal WastePct,
     string? Note);
 
+/// <summary>
+/// 1 dong dinh muc PHANG (bom_items join header bom + products + materials + DVT).
+/// Dung cho man hinh thong ke: lay TAT CA dong dinh muc bang 1 lan goi (tranh N+1).
+/// </summary>
+public sealed record BomItemRowDto(
+    long BomId,
+    int Version,             // version cua ban dinh muc (bom.version)
+    string Status,           // trang thai ban dinh muc (bom.status)
+    long ProductId,
+    string? ProductSku,      // SKU ma hang (join products)
+    string? ProductName,     // Ten ma hang (join products)
+    string? ProductUomName,  // Ten DVT ma hang (join units_of_measure)
+    long MaterialId,
+    string? MaterialSku,     // SKU NVL (join materials)
+    string? MaterialName,    // Ten NVL (join materials)
+    string? MaterialUomName, // Ten DVT NVL (join units_of_measure)
+    decimal QtyPerUnit,
+    decimal WastePct,
+    string? Note);
+
 /// <summary>Chi tiet dinh muc: header + cac dong NVL.</summary>
 public sealed record BomDetailDto(
     BomDto Bom,

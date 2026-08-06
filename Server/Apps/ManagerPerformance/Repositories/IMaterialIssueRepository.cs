@@ -31,7 +31,8 @@ public interface IMaterialIssueRepository
 
     /// <summary>Them 1 dong NVL vao phieu xuat.</summary>
     Task InsertItemAsync(
-        TenantScope scope, long materialIssueId, long materialId, decimal qtyIssued, decimal unitCost);
+        TenantScope scope, long materialIssueId, long materialId, decimal qtyIssued, decimal unitCost,
+        long? orderItemId);
 
     /// <summary>Ghi 1 dong so cai giao dich kho (xuat: quantity am). Tra ve id.</summary>
     Task<long> InsertTransactionAsync(

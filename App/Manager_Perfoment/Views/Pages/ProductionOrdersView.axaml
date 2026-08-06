@@ -71,7 +71,7 @@
                         <DataGridTemplateColumn Header="Trạng thái" Width="*" MinWidth="130">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Status, Converter={StaticResource CodeVi}}" VerticalAlignment="Center" FontWeight="SemiBold"
+                                    <TextBlock Text="{Binding StatusLabel}" VerticalAlignment="Center" FontWeight="SemiBold"
                                                Margin="12,0,0,0"
                                                Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}"/>
                                 </DataTemplate>

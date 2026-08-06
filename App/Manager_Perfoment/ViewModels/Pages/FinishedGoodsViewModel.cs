@@ -60,11 +60,20 @@ public sealed partial class FinishedGoodsViewModel : PageViewModel, IExportProvi
     public ObservableCollection<FinishedGoodsReceipt> Receipts { get; } = new();
     public ObservableCollection<LossReport> Losses { get; } = new();
 
+    // ===== MAT HANG cua don dang chon (V007: nhap kho TP theo TUNG mat hang) =====
+    public ObservableCollection<ProductionOrderItem> OrderItems { get; } = new();
+    [ObservableProperty] private ProductionOrderItem? _selectedOrderItem;
+    /// <summary>Don co tu 2 mat hang tro len -> hien o chon mat hang de nhap kho.</summary>
+    public bool HasMultipleItems => OrderItems.Count > 1;
+
     [ObservableProperty] private ProductionOrder? _selectedOrder;
     [ObservableProperty] private Product? _selectedProduct;
     [ObservableProperty] private Warehouse? _selectedWarehouse;
     [ObservableProperty] private decimal _qtyReceived = 0;
     [ObservableProperty] private FinishedGoodsReceipt? _selectedReceipt;
+
+    // Loi nhap kho TP — hien do ngay duoi form (Status o cuoi trang de bi bo sot).
+    [ObservableProperty] private string _receiveError = "";
 
     // O tim cot trai: loc Orders theo so don / ten ma hang / SKU.
     [ObservableProperty] private string _listFilter = "";
@@ -118,19 +127,26 @@ public sealed partial class FinishedGoodsViewModel : PageViewModel, IExportProvi
         SelectedOrder = Orders.FirstOrDefault(o => o.Id == keepOrder);
         _suppressSelectionHook = false;
 
-        var ps = await _api.GetProductsAsync(false, ofy, ofm);
+        // Danh muc ma hang KHONG loc thang/nam: bo loc chi danh cho danh sach don o cot trai.
+        // (Loc ca danh muc -> ma hang cua don tao thang khac bi mat -> o "Mã hàng" trong -> khong nhap duoc.)
+        var ps = await _api.GetProductsAsync(false);
         Products.Clear();
         foreach (var p in ps) Products.Add(p);
         // Neu dang chon don -> khoa ma hang theo don; nguoc lai giu lua chon cu.
         SelectedProduct = SelectedOrder is not null
-            ? Products.FirstOrDefault(p => p.Id == SelectedOrder.ProductId)
+            ? ProductOfOrder(SelectedOrder)
             : Products.FirstOrDefault(p => p.Id == keepProduct);
         OnPropertyChanged(nameof(ProductLocked));
+        OnPropertyChanged(nameof(NoOrderSelected));
 
         var ws = await _api.GetWarehousesAsync();
         Warehouses.Clear();
         foreach (var w in ws) Warehouses.Add(w);
-        SelectedWarehouse = Warehouses.FirstOrDefault(w => w.Id == keepWh);
+        // Mac dinh kho: giu kho dang chon -> kho thanh pham WH-TP -> kho dau tien
+        // (de trong thi bam nut chi bao loi, nguoi dung khong biet thieu gi).
+        SelectedWarehouse = Warehouses.FirstOrDefault(w => w.Id == keepWh)
+            ?? Warehouses.FirstOrDefault(w => string.Equals(w.Code, "WH-TP", StringComparison.OrdinalIgnoreCase))
+            ?? Warehouses.FirstOrDefault();
 
         await LoadDetailAsync();
     }
@@ -141,21 +157,47 @@ public sealed partial class FinishedGoodsViewModel : PageViewModel, IExportProvi
     // ProductLocked = true khi co don -> AutoCompleteBox mã hàng chuyen readonly tren UI.
     public bool ProductLocked => SelectedOrder is not null;
 
+    // Chua chon don -> hien dong nhac ngay tren form nhap kho.
+    public bool NoOrderSelected => SelectedOrder is null;
+
+    // Ma hang de HIEN THI theo don: tra trong danh muc; neu danh muc khong co
+    // thi dung ban ghi tam dung tu chinh don -> o "Mã hàng" khong bao gio bi trong.
+    private Product ProductOfOrder(ProductionOrder order) =>
+        Products.FirstOrDefault(p => p.Id == order.ProductId)
+        ?? new Product { Id = order.ProductId, Sku = order.ProductSku ?? "", Name = order.ProductName ?? "" };
+
     partial void OnSelectedOrderChanged(ProductionOrder? value)
     {
         // Auto-fill ma hang theo don dang chon (khop ProductId cua don).
         if (value is not null)
-            SelectedProduct = Products.FirstOrDefault(p => p.Id == value.ProductId);
+            SelectedProduct = ProductOfOrder(value);
+        ReceiveError = "";
         OnPropertyChanged(nameof(ProductLocked));
+        OnPropertyChanged(nameof(NoOrderSelected));
 
         if (_suppressSelectionHook) return;
         _ = LoadDetailAsync();
+    }
+
+
+    // Nap danh sach MAT HANG cua don dang chon (V007). Giu lai mat hang dang chon neu con.
+    private async Task LoadOrderItemsCoreAsync()
+    {
+        var keepItem = SelectedOrderItem?.Id;
+        var items = SelectedOrder is null
+            ? new List<ProductionOrderItem>()
+            : await _api.GetOrderItemsAsync(SelectedOrder.Id);
+        OrderItems.Clear();
+        foreach (var it in items) OrderItems.Add(it);
+        SelectedOrderItem = OrderItems.FirstOrDefault(i => i.Id == keepItem) ?? OrderItems.FirstOrDefault();
+        OnPropertyChanged(nameof(HasMultipleItems));
     }
 
     private async Task LoadDetailAsync()
     {
         Receipts.Clear();
         Losses.Clear();
+        await LoadOrderItemsCoreAsync();   // mat hang cua don (nhap kho TP theo tung mat hang)
         if (SelectedOrder is null) return;
 
         var (fy, fm) = FilterPeriod;
@@ -169,27 +211,32 @@ public sealed partial class FinishedGoodsViewModel : PageViewModel, IExportProvi
     [RelayCommand]
     private async Task ReceiveAsync()
     {
-        if (SelectedOrder is null || SelectedProduct is null || SelectedWarehouse is null)
-        {
-            Status = "Chọn đơn, mã hàng, kho.";
-            return;
-        }
-        if (QtyReceived <= 0)
-        {
-            Status = "Số lượng nhập > 0.";
-            return;
-        }
+        ReceiveError = "";
+        // Ma hang KHONG con la dieu kien: luon lay thang tu don (SelectedProduct chi de hien thi).
+        if (SelectedOrder is null) { ReceiveError = "Chọn đơn sản xuất ở cột trái trước khi nhập kho."; return; }
+        if (SelectedWarehouse is null) { ReceiveError = "Chọn kho nhập thành phẩm."; return; }
+        if (QtyReceived <= 0) { ReceiveError = "Số lượng nhập phải lớn hơn 0."; return; }
 
         await RunAsync("Đang nhập kho TP...", async () =>
         {
-            var id = await _api.CreateFinishedGoodsAsync(new
+            long id;
+            try
             {
-                productionOrderId = SelectedOrder!.Id,
-                productId = SelectedProduct!.Id,
-                warehouseId = SelectedWarehouse!.Id,
-                qtyReceived = QtyReceived,
-                note = (string?)null
-            });
+                id = await _api.CreateFinishedGoodsAsync(new
+                {
+                    productionOrderId = SelectedOrder!.Id,
+                    productionOrderItemId = SelectedOrderItem!.Id,
+                    productId = SelectedOrderItem!.ProductId,   // ma hang lay tu DONG don dang chon
+                    warehouseId = SelectedWarehouse!.Id,
+                    qtyReceived = QtyReceived,
+                    note = (string?)null
+                });
+            }
+            catch (ApiException ex)
+            {
+                ReceiveError = ex.Message;   // hien do ngay duoi form
+                throw;                       // RunAsync van ghi Status
+            }
             QtyReceived = 0;
             await LoadCoreAsync();
             Status = $"Đã nhập kho TP id={id}. Đơn COMPLETED.";
@@ -236,14 +283,25 @@ public sealed partial class FinishedGoodsViewModel : PageViewModel, IExportProvi
         });
     }
 
+    // Lenh nap bi bo qua vi dang ban -> chay lai ngay sau khi xong (chong lech du lieu).
+    private bool _reloadPending;
+
     private async Task RunAsync(string busy, Func<Task> a)
     {
-        if (IsBusy) return;
-        IsBusy = true;
-        Status = busy;
-        try { await a(); }
+        // Dang ban ma nguoi dung doi bo loc / bam lam moi: ghi nho de tu nap lai sau,
+        // KHONG nuot lenh (truoc day bang se lech so voi lua chon tren man hinh).
+        if (IsBusy) { _reloadPending = true; return; }
+        IsBusy = true; Status = busy;
+        try
+        {
+            do
+            {
+                _reloadPending = false;
+                await a();
+            } while (_reloadPending);
+        }
         catch (ApiException ex) { Status = $"Lỗi [{ex.Code}]: {ex.Message}"; }
         catch (Exception ex) { Status = $"Lỗi: {ex.Message}"; }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; _reloadPending = false; }
     }
 }

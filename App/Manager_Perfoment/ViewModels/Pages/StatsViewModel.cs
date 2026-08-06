@@ -9,7 +9,8 @@ namespace GM95.App.ManagerPerformance.ViewModels.Pages;
 /// <summary>
 /// Trang "Sổ &amp; thống kê": xem MOI chi so dang bang trong 1 khoang thoi gian —
 /// so NVL (ton dau/tong nhap/tong xuat/ton cuoi), nhap xuat chi tiet, san xuat theo ma hang.
-/// Chon ky theo THANG hoac TU NGAY – DEN NGAY.
+/// Chon ky theo THANG hoac TU NGAY – DEN NGAY (bo loc chi ap cho 3 bang tren).
+/// Kem 3 bang danh muc / anh chup hien tai (khong theo ky): dinh muc BOM, ma hang, kho NVL.
 /// </summary>
 public sealed partial class StatsViewModel : PageViewModel, IExportProvider
 {
@@ -48,6 +49,33 @@ public sealed partial class StatsViewModel : PageViewModel, IExportProvider
             ("SL lỗi (công đoạn)", p => p.DefectQty),
             ("TP nhập kho", p => p.FgQty),
             ("GT NVL xuất (VND)", p => p.IssueValue)),
+        ExportTable.Create<BomItemRow>("Định mức BOM", () => BomItems, rowDate: null,
+            ("SKU mã hàng", b => b.ProductSku),
+            ("Tên mã hàng", b => b.ProductName),
+            ("Phiên bản", b => b.Version),
+            ("Trạng thái", b => Converters.CodeToVietnameseConverter.Translate(b.Status)),
+            ("Mã NVL", b => b.MaterialSku),
+            ("Tên NVL", b => b.MaterialName),
+            ("ĐM/đơn vị", b => b.QtyPerUnit),
+            ("ĐVT NVL", b => b.MaterialUomName),
+            ("Hao hụt %", b => b.WastePct),
+            ("Ghi chú", b => b.Note)),
+        ExportTable.Create<Product>("Mã hàng", () => ProductList, rowDate: null,
+            ("ID", p => p.Id),
+            ("SKU", p => p.Sku),
+            ("Tên", p => p.Name),
+            ("ĐVT", p => p.UomName),
+            ("Hoạt động", p => p.IsActive)),
+        ExportTable.Create<MaterialStock>("Kho NVL", () => StockRows, rowDate: null,
+            ("Mã NVL", s => s.Sku),
+            ("Tên NVL", s => s.Name),
+            ("ĐVT", s => s.UomName),
+            ("Tồn thực", s => s.TotalOnHand),
+            ("Đã giữ chỗ", s => s.TotalReserved),
+            ("Khả dụng", s => s.TotalAvailable),
+            ("Ngưỡng tồn", s => s.ReorderLevel),
+            ("Đơn giá gần nhất", s => s.LastUnitCost),
+            ("Giá trị tồn", s => s.StockValue)),
     };
 
     private readonly ApiClient _api;
@@ -55,7 +83,7 @@ public sealed partial class StatsViewModel : PageViewModel, IExportProvider
     public StatsViewModel(ApiClient api) => _api = api;
 
     public override string Title => "Sổ & thống kê";
-    public override string Subtitle => "Sổ NVL, nhập xuất, sản xuất — theo tháng hoặc từ ngày đến ngày";
+    public override string Subtitle => "Sổ NVL, nhập xuất, sản xuất — theo tháng hoặc từ ngày đến ngày · kèm định mức BOM, mã hàng, kho NVL";
 
     [ObservableProperty] private string _status = "";
     [ObservableProperty] private bool _isBusy;
@@ -100,11 +128,16 @@ public sealed partial class StatsViewModel : PageViewModel, IExportProvider
         }
     }
 
-    // ===== Du lieu 3 bang =====
+    // ===== Du lieu 3 bang theo ky =====
     public ObservableCollection<MaterialLedgerRow> Ledger { get; } = new();          // da loc theo o tim
     private readonly List<MaterialLedgerRow> _allLedger = new();
     public ObservableCollection<StockTransaction> Transactions { get; } = new();
     public ObservableCollection<ProductionSummaryRow> Production { get; } = new();
+
+    // ===== Du lieu 3 bang danh muc / anh chup hien tai (KHONG co cot ngay -> khong loc theo ky) =====
+    public ObservableCollection<BomItemRow> BomItems { get; } = new();
+    public ObservableCollection<Product> ProductList { get; } = new();
+    public ObservableCollection<MaterialStock> StockRows { get; } = new();
 
     // O tim SKU/ten trong bang so NVL.
     [ObservableProperty] private string _ledgerSearch = "";
@@ -121,12 +154,38 @@ public sealed partial class StatsViewModel : PageViewModel, IExportProvider
     }
 
     // ===== Dai tong hop tren dau trang =====
-    [ObservableProperty] private string _sumInText = "0";
     [ObservableProperty] private string _sumOutText = "0";
     [ObservableProperty] private string _sumInValueText = "0";
     [ObservableProperty] private string _sumOutValueText = "0";
     [ObservableProperty] private string _sumOrderText = "0";
     [ObservableProperty] private string _sumFgText = "0";
+
+    // Dong so nhap/xuat dang chon (chuot phai vao bang "Nhập xuất chi tiết" de sua/xoa).
+    [ObservableProperty] private StockTransaction? _selectedTransaction;
+
+    /// <summary>Chuot phai -> "Sửa dòng": sua SL/don gia/ghi chu, ton kho tu cong tru theo chenh lech.</summary>
+    [RelayCommand]
+    private async Task EditTransactionAsync()
+    {
+        if (await StockTxnActions.EditAsync(_api, SelectedTransaction))
+            await RunAsync("Đang tải lại...", LoadCoreAsync);
+    }
+
+    /// <summary>Chuot phai -> "Xoá dòng": hoan lai ton kho + xoa dong phieu tuong ung.</summary>
+    [RelayCommand]
+    private async Task DeleteTransactionAsync()
+    {
+        var txn = SelectedTransaction;
+        if (txn is null) { Status = "Chọn một dòng trong sổ nhập/xuất để xoá."; return; }
+        try
+        {
+            if (!await StockTxnActions.DeleteAsync(_api, txn)) return;
+        }
+        catch (ApiException ex) { Status = $"Không xoá được: {ex.Message}"; return; }
+        SelectedTransaction = null;
+        await RunAsync("Đang tải lại...", LoadCoreAsync);
+        Status = $"Đã xoá 1 dòng sổ của {txn.MaterialSku}. Tồn kho đã được cập nhật lại.";
+    }
 
     public override Task OnActivatedAsync() => LoadAsync();
 
@@ -150,8 +209,20 @@ public sealed partial class StatsViewModel : PageViewModel, IExportProvider
         Production.Clear();
         foreach (var p in prod) Production.Add(p);
 
+        // 3 bang duoi day la danh muc / anh chup ton hien tai: nap KHONG kem khoang thoi gian.
+        var bomItems = await _api.GetAllBomItemsAsync(false);
+        BomItems.Clear();
+        foreach (var b in bomItems) BomItems.Add(b);
+
+        var products = await _api.GetProductsAsync(false);
+        ProductList.Clear();
+        foreach (var p in products) ProductList.Add(p);
+
+        var stock = await _api.GetStockAsync(false);
+        StockRows.Clear();
+        foreach (var s in stock) StockRows.Add(s);
+
         // Tong hop nhanh tren dau trang (tinh tu so NVL de khop moi loai giao dich).
-        SumInText = ledger.Sum(r => r.InQty).ToString("0.####");
         SumOutText = ledger.Sum(r => r.OutQty).ToString("0.####");
         SumInValueText = ledger.Sum(r => r.InValue).ToString("#,##0") + " đ";
         SumOutValueText = ledger.Sum(r => r.OutValue).ToString("#,##0") + " đ";
@@ -160,7 +231,8 @@ public sealed partial class StatsViewModel : PageViewModel, IExportProvider
 
         var label = from is null && to is null ? "toàn bộ thời gian"
             : $"{(from is null ? "…" : from.Value.ToString("dd/MM/yyyy"))} – {(to is null ? "…" : to.Value.ToString("dd/MM/yyyy"))}";
-        Status = $"Kỳ {label}: {_allLedger.Count} NVL · {Transactions.Count} giao dịch · {Production.Count} mã hàng có phát sinh.";
+        Status = $"Kỳ {label}: {_allLedger.Count} NVL · {Transactions.Count} giao dịch · {Production.Count} mã hàng có phát sinh"
+               + $" · danh mục (không theo kỳ): {BomItems.Count} dòng định mức · {ProductList.Count} mã hàng · {StockRows.Count} dòng tồn kho.";
     }
 
     // Doi bo loc trong luc dang tai: ghi nho va tu nap lai sau khi xong (khong nuot mat lua chon).

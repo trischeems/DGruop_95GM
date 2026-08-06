@@ -147,6 +147,33 @@ public sealed partial class MaterialsViewModel : PageViewModel, IExportProvider
 
     partial void OnSelectedStockRowChanged(MaterialStock? value) => _ = LoadHistoryAsync(value?.MaterialId);
 
+    // Dong so nhap/xuat dang chon (chuot phai vao bang lich su de sua/xoa).
+    [ObservableProperty] private StockTransaction? _selectedHistoryRow;
+
+    /// <summary>Chuot phai -> "Sửa dòng": sua SL/don gia/ghi chu, ton kho tu cong tru theo chenh lech.</summary>
+    [RelayCommand]
+    private async Task EditHistoryAsync()
+    {
+        if (await StockTxnActions.EditAsync(_api, SelectedHistoryRow))
+            await RunAsync("Đang tải lại...", LoadCoreAsync);   // nap lai ca ton kho lan so
+    }
+
+    /// <summary>Chuot phai -> "Xoá dòng": hoan lai ton kho + xoa dong phieu tuong ung.</summary>
+    [RelayCommand]
+    private async Task DeleteHistoryAsync()
+    {
+        var txn = SelectedHistoryRow;
+        if (txn is null) { Status = "Chọn một dòng trong sổ nhập/xuất để xoá."; return; }
+        try
+        {
+            if (!await StockTxnActions.DeleteAsync(_api, txn)) return;
+        }
+        catch (ApiException ex) { Status = $"Không xoá được: {ex.Message}"; return; }
+        SelectedHistoryRow = null;
+        await RunAsync("Đang tải lại...", LoadCoreAsync);
+        Status = $"Đã xoá 1 dòng sổ của {txn.MaterialSku}. Tồn kho đã được cập nhật lại.";
+    }
+
     // Hang sua tren dau bang danh muc: bam 1 dong -> tu nap du lieu vao cac field.
     [ObservableProperty] private Material? _selectedListMaterial;
     [ObservableProperty] private string _editSku = "";
@@ -166,21 +193,6 @@ public sealed partial class MaterialsViewModel : PageViewModel, IExportProvider
         EditStandardCost = value.StandardCost;
         EditIsActive = value.IsActive;
     }
-
-
-    // ===== Bo loc thang/nam ("Tất cả" = khong loc; "Cả năm" = ca nam dang chon) =====
-    public string[] FilterMonthOptions { get; } =
-        { "Tất cả", "Cả năm", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12" };
-    public int[] FilterYearOptions { get; } =
-        { DateTime.Now.Year - 2, DateTime.Now.Year - 1, DateTime.Now.Year, DateTime.Now.Year + 1 };
-    [ObservableProperty] private string _filterMonth = "T" + DateTime.Now.Month;
-    [ObservableProperty] private int _filterYear = DateTime.Now.Year;
-    partial void OnFilterMonthChanged(string value) => _ = LoadAsync();
-    partial void OnFilterYearChanged(int value) => _ = LoadAsync();
-    private (int? Year, int? Month) FilterPeriod =>
-        FilterMonth == "Tất cả" ? (null, null)
-        : FilterMonth == "Cả năm" ? (FilterYear, null)
-        : (FilterYear, int.Parse(FilterMonth.TrimStart('T')));
 
     public override Task OnActivatedAsync() => LoadAsync();
 
@@ -205,15 +217,14 @@ public sealed partial class MaterialsViewModel : PageViewModel, IExportProvider
         Warehouses.Clear(); foreach (var w in whs) Warehouses.Add(w);
         ReceiveWarehouse = Warehouses.FirstOrDefault(w => w.Id == keepWh);
 
-        var (fy, fm) = FilterPeriod;
-        var mats = await _api.GetMaterialsAsync(activeOnly: false, year: fy, month: fm);
+        var mats = await _api.GetMaterialsAsync(activeOnly: false);
         Materials.Clear(); foreach (var m in mats) Materials.Add(m);
         ApplyMaterialFilter();   // danh sach NVL cho dialog nhap kho
         ApplyCatalogFilter();    // danh muc tren trang (co o tim kiem)
         ReceiveMaterial = Materials.FirstOrDefault(m => m.Id == keepMat);
         SelectedListMaterial = Materials.FirstOrDefault(m => m.Id == keepListSel);
 
-        var stock = await _api.GetStockAsync(false, fy, fm);
+        var stock = await _api.GetStockAsync(false);
         Stock.Clear(); foreach (var s in stock) Stock.Add(s);
 
         // Lich su: chua chon NVL thi hien cac giao dich moi nhat (moi NVL).
@@ -398,13 +409,25 @@ public sealed partial class MaterialsViewModel : PageViewModel, IExportProvider
         });
     }
 
+    // Lenh nap bi bo qua vi dang ban -> chay lai ngay sau khi xong (chong lech du lieu).
+    private bool _reloadPending;
+
     private async Task RunAsync(string busy, Func<Task> action)
     {
-        if (IsBusy) return;
+        // Dang ban ma nguoi dung doi bo loc / bam lam moi: ghi nho de tu nap lai sau,
+        // KHONG nuot lenh (truoc day bang se lech so voi lua chon tren man hinh).
+        if (IsBusy) { _reloadPending = true; return; }
         IsBusy = true; Status = busy;
-        try { await action(); }
+        try
+        {
+            do
+            {
+                _reloadPending = false;
+                await action();
+            } while (_reloadPending);
+        }
         catch (ApiException ex) { Status = $"Lỗi [{ex.Code}]: {ex.Message}"; }
         catch (Exception ex) { Status = $"Lỗi: {ex.Message}"; }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; _reloadPending = false; }
     }
 }

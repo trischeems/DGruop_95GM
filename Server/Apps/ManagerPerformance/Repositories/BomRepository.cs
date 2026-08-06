@@ -17,6 +17,20 @@ public sealed class BomRepository : IBomRepository
         "FROM bom_items bi LEFT JOIN materials m ON m.id = bi.material_id " +
         "LEFT JOIN units_of_measure u ON u.id = m.uom_id";
 
+    // SELECT phang khop BomItemRowDto: dong dinh muc + header bom + ma hang + NVL + DVT ca hai ben.
+    // JOIN bom (khong LEFT) vi bom_items.bom_id NOT NULL -> moi dong luon co header.
+    private const string ItemRowSelect =
+        "SELECT bi.bom_id, b.version, b.status, " +
+        "b.product_id, p.sku AS product_sku, p.name AS product_name, pu.name AS product_uom_name, " +
+        "bi.material_id, m.sku AS material_sku, m.name AS material_name, mu.name AS material_uom_name, " +
+        "bi.qty_per_unit, bi.waste_pct, bi.note " +
+        "FROM bom_items bi " +
+        "JOIN bom b ON b.id = bi.bom_id " +
+        "LEFT JOIN products p ON p.id = b.product_id " +
+        "LEFT JOIN materials m ON m.id = bi.material_id " +
+        "LEFT JOIN units_of_measure pu ON pu.id = p.uom_id " +
+        "LEFT JOIN units_of_measure mu ON mu.id = m.uom_id";
+
     public Task<IEnumerable<BomDto>> ListAsync(TenantScope scope, long? productId)
     {
         var sql = $"SELECT {HeaderCols} FROM bom" +
@@ -32,6 +46,14 @@ public sealed class BomRepository : IBomRepository
     public Task<IEnumerable<BomItemDto>> ListItemsAsync(TenantScope scope, long bomId) =>
         scope.QueryAsync<BomItemDto>(
             $"{ItemSelect} WHERE bi.bom_id = @bomId ORDER BY bi.id", new { bomId });
+
+    public Task<IEnumerable<BomItemRowDto>> ListAllItemsAsync(TenantScope scope, bool activeOnly)
+    {
+        var sql = ItemRowSelect +
+                  (activeOnly ? " WHERE b.status = 'ACTIVE'" : "") +
+                  " ORDER BY p.sku, b.version DESC, m.sku";
+        return scope.QueryAsync<BomItemRowDto>(sql);
+    }
 
     public Task<string?> GetStatusAsync(TenantScope scope, long id) =>
         scope.QueryFirstOrDefaultAsync<string?>(

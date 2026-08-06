@@ -45,6 +45,13 @@ public sealed class MaterialIssueService
             if (it.QtyIssued <= 0) throw new ArgumentException("So luong xuat phai > 0.");
             if (it.UnitCost < 0) throw new ArgumentException("Don gia khong duoc am.");
         }
+        // Trung khi CUNG 1 NVL cap CUNG 1 mat hang 2 lan (khop khoa duy nhat moi o V007).
+        // Cung 1 NVL cap cho 2 MAT HANG khac nhau trong 1 phieu la hop le.
+        var dup = items.GroupBy(i => (i.MaterialId, i.ProductionOrderItemId))
+                       .FirstOrDefault(g => g.Count() > 1);
+        if (dup is not null)
+            throw new ArgumentException(
+                $"NVL id={dup.Key.MaterialId} bi lap cho cung 1 mat hang trong phieu. Moi NVL/mat hang chi 1 dong.");
 
         return _db.RunAsync(_tenant.Tenant, async scope =>
         {
@@ -68,7 +75,8 @@ public sealed class MaterialIssueService
                 var newReserved = Math.Max(0m, stock.Value.QtyReserved - it.QtyIssued);
 
                 await _repo.SetStockAsync(scope, req.WarehouseId, it.MaterialId, newOnHand, newReserved);
-                await _repo.InsertItemAsync(scope, issueId, it.MaterialId, it.QtyIssued, it.UnitCost);
+                await _repo.InsertItemAsync(
+                    scope, issueId, it.MaterialId, it.QtyIssued, it.UnitCost, it.ProductionOrderItemId);
 
                 // So cai xuat kho: quantity am, balance_after = ton on_hand sau khi tru.
                 await _repo.InsertTransactionAsync(

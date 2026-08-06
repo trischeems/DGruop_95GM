@@ -47,21 +47,25 @@ public sealed class ProductionPlanService
     public Task<long> CreateAsync(CreateProductionPlanRequest req, CancellationToken ct)
     {
         if (req.ProductionOrderId <= 0) throw new ArgumentException("productionOrderId khong hop le.");
+        if (req.ProductionOrderItemId <= 0) throw new ArgumentException("Chua chon mat hang de lap ke hoach.");
         if (req.PlannedQty <= 0) throw new ArgumentException("plannedQty phai > 0.");
         if (req.PlannedStart.HasValue && req.PlannedEnd.HasValue && req.PlannedEnd < req.PlannedStart)
             throw new ArgumentException("plannedEnd phai >= plannedStart.");
 
         return _db.RunAsync(_tenant.Tenant, async s =>
         {
-            // RANG BUOC: tong SL cac ke hoach cua don KHONG duoc vuot SL dat cua don.
-            // Khoa dong don (FOR UPDATE) chong race khi nhieu user cung them ke hoach.
-            var orderQty = await _repo.LockOrderQuantityAsync(s, req.ProductionOrderId)
-                ?? throw new ArgumentException($"Khong tim thay don san xuat id={req.ProductionOrderId}.");
-            var existing = await _repo.SumPlannedQtyAsync(s, req.ProductionOrderId, null);
-            if (existing + req.PlannedQty > orderQty)
+            // THU TU KHOA TOAN CUC: don -> ke hoach -> cong doan.
+            await _repo.LockOrderQuantityAsync(s, req.ProductionOrderId);
+
+            // RANG BUOC: tong SL ke hoach cua 1 MAT HANG khong duoc vuot SL dat cua mat hang do
+            // (don nhieu mat hang thi moi mat hang co han muc rieng).
+            var itemQty = await _repo.LockItemQuantityAsync(s, req.ProductionOrderItemId)
+                ?? throw new ArgumentException($"Khong tim thay mat hang id={req.ProductionOrderItemId} trong don.");
+            var existing = await _repo.SumPlannedQtyAsync(s, req.ProductionOrderItemId, null);
+            if (existing + req.PlannedQty > itemQty)
                 throw new ArgumentException(
-                    $"Tong SL ke hoach ({existing + req.PlannedQty:0.####}) vuot SL dat cua don ({orderQty:0.####}). " +
-                    $"Con lai co the lap: {orderQty - existing:0.####}.");
+                    $"Tong SL ke hoach ({existing + req.PlannedQty:0.####}) vuot SL dat cua mat hang ({itemQty:0.####}). " +
+                    $"Con lai co the lap: {itemQty - existing:0.####}.");
 
             return await _repo.InsertAsync(s, req);
         }, ct);
@@ -96,16 +100,24 @@ public sealed class ProductionPlanService
             var ok = await _repo.UpdateStatusAsync(s, id, req.Status);
 
             // ----- LIEN KET MODULE (cung transaction) -----
-            // Ke hoach DONE -> tu dong keo tien do cac cong doan cua don len TONG SL ke hoach da DONE
-            // (du SL don thi cong doan DONE) — khong can nhap tay nua.
-            if (ok && req.Status == "DONE" && orderQty.HasValue)
+            // Ke hoach DONE -> tu dong keo tien do cong doan cua RIENG MAT HANG do len tong SL
+            // cac ke hoach da DONE cua chinh mat hang do (du SL mat hang thi cong doan DONE).
+            if (ok && req.Status == "DONE")
             {
-                // Don chua bam "Khoi tao cong doan" thi tu sinh truoc (idempotent) —
-                // neu khong, tien do cua ke hoach DONE se mat khong ghi lai duoc (DONE la ket thuc).
-                await _steps.InitStepsAsync(s, cur.ProductionOrderId);
-                var doneQty = await _steps.SumDonePlannedQtyAsync(s, cur.ProductionOrderId);
-                await _steps.AutoProgressStepsAsync(s, cur.ProductionOrderId, doneQty, orderQty.Value);
-                await _steps.MarkOrderInProgressAsync(s, cur.ProductionOrderId);
+                var itemQty = await _repo.LockItemQuantityAsync(s, cur.ProductionOrderItemId);
+                if (itemQty.HasValue)
+                {
+                    // Mat hang chua khoi tao cong doan thi tu sinh truoc (idempotent) — neu khong,
+                    // tien do cua ke hoach DONE se mat khong ghi lai duoc (DONE la trang thai ket thuc).
+                    await _steps.InitStepsForItemAsync(s, cur.ProductionOrderItemId);
+                    var doneQty = await _steps.SumDonePlannedQtyForItemAsync(s, cur.ProductionOrderItemId);
+                    await _steps.AutoProgressItemStepsAsync(s, cur.ProductionOrderItemId, doneQty, itemQty.Value);
+                    await _steps.MarkOrderInProgressAsync(s, cur.ProductionOrderId);
+
+                    // Xong het cong doan CA DON -> dong not cac ke hoach anh em con do.
+                    if (await _steps.AreAllStepsDoneAsync(s, cur.ProductionOrderId))
+                        await _steps.MarkPlansDoneAsync(s, cur.ProductionOrderId);
+                }
             }
             // Ke hoach bat dau chay -> keo don CONFIRMED sang IN_PROGRESS cho khop.
             else if (ok && req.Status == "IN_PROGRESS")
@@ -129,8 +141,7 @@ public sealed class ProductionPlanService
             // Thu tu khoa toan cuc: don -> ke hoach (khop UpdateStatusAsync/ProductionStepService).
             var orderId = await _repo.GetPlanOrderIdAsync(s, id);
             if (orderId is null) return false;
-            var orderQty = await _repo.LockOrderQuantityAsync(s, orderId.Value)
-                ?? throw new ArgumentException("Khong tim thay don san xuat cua ke hoach.");
+            await _repo.LockOrderQuantityAsync(s, orderId.Value);
 
             var cur = await _repo.LockPlanAsync(s, id);
             if (cur is null) return false;
@@ -141,11 +152,13 @@ public sealed class ProductionPlanService
                 throw new ArgumentException(
                     $"Ke hoach da o trang thai ket thuc ({cur.Status}), khong sua duoc SL/chuyen.");
 
-            // Khi sua SL 1 ke hoach cung phai dam bao tong (khong tinh chinh no) + SL moi <= SL don.
-            var others = await _repo.SumPlannedQtyAsync(s, cur.ProductionOrderId, id);
-            if (others + req.PlannedQty > orderQty)
+            // Sua SL cung phai dam bao tong ke hoach cua MAT HANG do <= SL dat cua mat hang.
+            var itemQty = await _repo.LockItemQuantityAsync(s, cur.ProductionOrderItemId)
+                ?? throw new ArgumentException("Khong tim thay mat hang cua ke hoach.");
+            var others = await _repo.SumPlannedQtyAsync(s, cur.ProductionOrderItemId, id);
+            if (others + req.PlannedQty > itemQty)
                 throw new ArgumentException(
-                    $"Tong SL ke hoach ({others + req.PlannedQty:0.####}) vuot SL dat cua don ({orderQty:0.####}).");
+                    $"Tong SL ke hoach ({others + req.PlannedQty:0.####}) vuot SL dat cua mat hang ({itemQty:0.####}).");
 
             return await _repo.UpdateAsync(s, id, req);
         }, ct);
