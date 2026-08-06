@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <!-- May chi cai .NET moi hon (vd Ubuntu 26.04 chi co .NET 10) van chay duoc:
+         co runtime 8.0 thi dung 8.0, khong co thi tu nhay len ban major cao hon. -->
+    <RollForward>Major</RollForward>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>

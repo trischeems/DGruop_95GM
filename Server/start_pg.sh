@@ -15,10 +15,22 @@ set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-CONFIG_FILE="$SCRIPT_DIR/config.json"
-PG_HOME="$SCRIPT_DIR/pgsql"
-PG_DATA="$SCRIPT_DIR/pgdata"
-PG_LOG="$SCRIPT_DIR/pg_log.txt"
+# Script chay duoc ca khi nam trong Server/ lan khi copy ra goc du an:
+# tu vi tri script, tim thu muc Server (thu muc chua config.json).
+# Data dir / log LUON theo Server/ -> khong bao gio tao pgdata thu 2 o goc.
+if [[ -f "$SCRIPT_DIR/config.json" ]]; then
+    SERVER_DIR="$SCRIPT_DIR"
+elif [[ -f "$SCRIPT_DIR/Server/config.json" ]]; then
+    SERVER_DIR="$SCRIPT_DIR/Server"
+else
+    SERVER_DIR="$SCRIPT_DIR"
+fi
+
+CONFIG_FILE="$SERVER_DIR/config.json"
+PG_HOME="$SERVER_DIR/pgsql"
+PG_DATA="$SERVER_DIR/pgdata"
+PG_LOG="$SERVER_DIR/pg_log.txt"
+STOP_SCRIPT="$SERVER_DIR/stop_pg.sh"
 # Socket unix de o /tmp: thu muc mac dinh /var/run/postgresql cua Ubuntu
 # thuoc user "postgres", user thuong khong ghi duoc.
 PG_SOCKET_DIR="/tmp"
@@ -34,11 +46,13 @@ echo "=========================================================="
 echo "  GM95 - PostgreSQL 16 (Linux)"
 echo "=========================================================="
 echo "  Script dir : $SCRIPT_DIR"
+echo "  Server dir : $SERVER_DIR"
 echo "  Config     : $CONFIG_FILE"
 echo
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
     echo "[LOI] Khong tim thay config.json tai: \"$CONFIG_FILE\""
+    echo "      Dat script trong thu muc Server/ hoac o goc du an (canh thu muc Server/)."
     fail
 fi
 
@@ -202,6 +216,6 @@ echo
 echo "  Ket noi thu bang psql:"
 echo "  \"$PG_BIN/psql\" -h $PG_HOST -p $PG_PORT -U $PG_USER -d $PG_DBNAME"
 echo
-echo "  Dung server: chay  stop_pg.sh"
+echo "  Dung server: chay  \"$STOP_SCRIPT\""
 echo "=========================================================="
 exit 0

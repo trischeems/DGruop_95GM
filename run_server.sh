@@ -73,11 +73,17 @@ if [[ -z "$SRV_PORT" ]]; then
     fail
 fi
 
+# Program.cs bind Kestrel bang ListenLocalhost(port) -> HTTP thuan, KHONG TLS.
+# Nen URL thuc te LUON la http:// du config.json dat https=true.
+# (Muon HTTPS that: sua Program.cs -> ListenLocalhost(port, o => o.UseHttps()) + cert.)
 SCHEME="http"
-[[ "$SRV_HTTPS" == "true" ]] && SCHEME="https"
 
 echo "  Port   : $SRV_PORT"
 echo "  Scheme : $SCHEME"
+if [[ "$SRV_HTTPS" == "true" ]]; then
+    echo "  [LUU Y] config.json dat https=true nhung Program.cs dang bind HTTP thuan"
+    echo "          -> dung http://localhost:$SRV_PORT (dung nhu base_url cua app client)."
+fi
 echo
 
 # --- Bao dam PostgreSQL dang chay (goi start_pg.sh) ---
@@ -94,19 +100,11 @@ export ASPNETCORE_ENVIRONMENT="Development"
 export ASPNETCORE_URLS="$SCHEME://localhost:$SRV_PORT"
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
-# Khi https: bao dam co dev certificate cho Kestrel (tao neu chua co, khong loi neu da co).
-if [[ "$SCHEME" == "https" ]]; then
-    dotnet dev-certs https >/dev/null 2>&1 || true
-fi
-
 echo "[2/2] Build va chay server .NET 8..."
 echo
 echo "=========================================================="
 echo "  Server URL: $SCHEME://localhost:$SRV_PORT"
-if [[ "$SCHEME" == "https" ]]; then
-    echo "  (LUU Y: Program.cs hien bind ListenLocalhost khong TLS -> neu Kestrel"
-    echo "   log 'Now listening on: http://...' thi dung http://localhost:$SRV_PORT)"
-fi
+echo "  Health    : $SCHEME://localhost:$SRV_PORT/dgrpi/health"
 echo "  (Ctrl+C de dung server)"
 echo "=========================================================="
 echo
